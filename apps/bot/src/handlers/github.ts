@@ -184,15 +184,24 @@ function getCommitAvatar(
 	username: string,
 	body: GitHubWebhookPayload
 ): string | undefined {
+	let avatarUrl: string | undefined;
+
 	if (commit.author?.avatar_url) {
-		return commit.author.avatar_url;
+		avatarUrl = commit.author.avatar_url;
+	} else if (username !== 'unknown') {
+		avatarUrl = `https://github.com/${encodeURIComponent(username)}.png?size=16`; // Reduced size to 16px
+	} else {
+		avatarUrl = body.sender?.avatar_url;
 	}
 
-	if (username !== 'unknown') {
-		return `https://github.com/${encodeURIComponent(username)}.png?size=32`;
+	// If it's a GitHub avatar URL, force a smaller size via query parameter
+	if (avatarUrl && avatarUrl.includes('githubusercontent.com')) {
+		const url = new URL(avatarUrl);
+		url.searchParams.set('s', '16'); // Force 16px
+		return url.toString();
 	}
 
-	return body.sender?.avatar_url;
+	return avatarUrl;
 }
 
 /**
