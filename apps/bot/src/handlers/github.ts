@@ -80,22 +80,12 @@ const COLORS = {
 	BRANCH: 0x7ee787
 };
 
-function createBaseEmbed(sender?: {
-	login?: string;
-	avatar_url?: string;
-}): EmbedBuilder {
-	const name = sender?.login ?? 'GitHub Actions';
-	const embed = new EmbedBuilder()
-		.setFooter({
-			text: `Triggered by @${name}`,
-			iconURL: sender?.avatar_url
-		})
-		.setTimestamp();
-	return embed;
+function createBaseEmbed(): EmbedBuilder {
+	return new EmbedBuilder().setTimestamp();
 }
 
 function handlePushEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
-	const repo = body.repository?.name ?? 'unknown-repo';
+	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 	const repoUrl = body.repository?.html_url;
 	const branch = body.ref?.split('/').pop() ?? 'unknown-branch';
 	const commits =
@@ -103,12 +93,14 @@ function handlePushEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
 
 	embed
 		.setColor(COLORS.PUSH)
-		.setTitle(
-			`📦 [${repo}:${branch}] ${commits.length} new commit${commits.length === 1 ? '' : 's'}`
-		)
-		.setURL(repoUrl ?? null);
+		.setTitle(`🔗 Branch update: ${branch}`)
+		.setDescription(
+			`${commits.length} new commit${commits.length === 1 ? '' : 's'} pushed to ${branch}`
+		);
 
-	const displayCommits = commits.slice(0, 5);
+	const displayCommits = commits.slice(0, 3);
+	let commitsText = '';
+
 	for (const c of displayCommits) {
 		const sha = c.id ? c.id.substring(0, 7) : '0000000';
 		const message = c.message
@@ -117,18 +109,37 @@ function handlePushEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
 		const author = c.author?.username ?? c.author?.name ?? 'unknown';
 		const link = c.url ? `[\`${sha}\`](${c.url})` : `\`${sha}\``;
 
+		commitsText += `${link}  ${message.trim()}\n` + `> \`${author}\`\n\n`;
+	}
+
+	if (commitsText) {
 		embed.addFields({
 			name: '\u200b',
-			value: `${link} — \`${author}\`\n> ${message.trim()}`
+			value: commitsText.trim()
 		});
 	}
+
+	embed.addFields(
+		{
+			name: 'Repository',
+			value: repoUrl
+				? `[${repoFullName}](${repoUrl})`
+				: `\`${repoFullName}\``,
+			inline: true
+		},
+		{
+			name: 'Branch',
+			value: `\`${branch}\``,
+			inline: true
+		}
+	);
 }
 
 function handlePullRequestEvent(
 	body: GitHubWebhookPayload,
 	embed: EmbedBuilder
 ) {
-	const repo = body.repository?.name ?? 'unknown-repo';
+	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 	const action = body.action ?? 'updated';
 	const pr = body.pull_request;
 	const isMerged = action === 'closed' && pr?.merged;
@@ -142,12 +153,11 @@ function handlePullRequestEvent(
 	embed
 		.setColor(color)
 		.setTitle(`🔀 Pull Request ${actionLabel}: #${pr?.number}`)
-		.setURL(pr?.html_url ?? null)
 		.setDescription(
 			`**[${pr?.title ?? 'Untitled PR'}](${pr?.html_url})**${pr?.body ? `\n\n> ${pr.body.substring(0, 150)}...` : ''}`
 		)
 		.addFields(
-			{ name: 'Repository', value: `\`${repo}\``, inline: true },
+			{ name: 'Repository', value: `\`${repoFullName}\``, inline: true },
 			{
 				name: 'Author',
 				value: `\`${pr?.user?.login ?? 'unknown'}\``,
@@ -158,7 +168,7 @@ function handlePullRequestEvent(
 }
 
 function handleIssueEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
-	const repo = body.repository?.name ?? 'unknown-repo';
+	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 	const action = body.action ?? 'opened';
 	const issue = body.issue;
 	const color = action === 'closed' ? COLORS.PR_CLOSE : COLORS.ISSUE;
@@ -166,12 +176,11 @@ function handleIssueEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
 	embed
 		.setColor(color)
 		.setTitle(`📂 Issue ${action}: #${issue?.number}`)
-		.setURL(issue?.html_url ?? null)
 		.setDescription(
 			`**[${issue?.title ?? 'Untitled Issue'}](${issue?.html_url})**${issue?.body ? `\n\n> ${issue.body.substring(0, 150)}...` : ''}`
 		)
 		.addFields(
-			{ name: 'Repository', value: `\`${repo}\``, inline: true },
+			{ name: 'Repository', value: `\`${repoFullName}\``, inline: true },
 			{
 				name: 'Author',
 				value: `\`${issue?.user?.login ?? 'unknown'}\``,
@@ -182,20 +191,23 @@ function handleIssueEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
 }
 
 function handleReleaseEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
-	const repo = body.repository?.name ?? 'unknown-repo';
+	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 	const release = body.release;
 	const name = release?.name ?? release?.tag_name ?? 'New Release';
 
 	embed
 		.setColor(COLORS.RELEASE)
 		.setTitle(`🚀 Release Published: ${name} (${release?.tag_name ?? ''})`)
-		.setURL(release?.html_url ?? null)
 		.setDescription(
 			release?.body
 				? `${release.body.substring(0, 300)}...`
 				: 'No release notes provided.'
 		)
-		.addFields({ name: 'Repository', value: `\`${repo}\``, inline: true });
+		.addFields({
+			name: 'Repository',
+			value: `\`${repoFullName}\``,
+			inline: true
+		});
 }
 
 function handleCreateEvent(
@@ -203,16 +215,27 @@ function handleCreateEvent(
 	embed: EmbedBuilder
 ): boolean {
 	if (body.ref_type === 'branch') {
-		const repo = body.repository?.name ?? 'unknown-repo';
+		const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 		const branch = body.ref ?? 'unknown-branch';
-		const branchUrl = `${body.repository?.html_url}/tree/${branch}`;
+		const repoUrl = body.repository?.html_url;
+		const branchUrl = `${repoUrl}/tree/${branch}`;
+		const sender = body.sender?.login ?? 'unknown';
 
 		embed
 			.setColor(COLORS.BRANCH)
-			.setTitle(`🌿 New Branch Created`)
-			.setURL(branchUrl)
+			.setTitle(`🌿 Branch created: ${branch}`)
 			.setDescription(
-				`Branch \`${branch}\` was successfully created on \`${repo}\``
+				`New branch \`${branch}\` was created on \`${repoFullName}\``
+			)
+			.addFields(
+				{
+					name: 'Repository',
+					value: repoUrl
+						? `[${repoFullName}](${repoUrl})`
+						: `\`${repoFullName}\``,
+					inline: true
+				},
+				{ name: 'Creator', value: `\`${sender}\``, inline: true }
 			);
 		return true;
 	}
@@ -238,7 +261,7 @@ export async function handleGitHubEvent(
 	}
 
 	const channel = fetchedChannel as TextChannel;
-	const embed = createBaseEmbed(body.sender);
+	const embed = createBaseEmbed();
 	let hasEvent = false;
 
 	switch (event) {
