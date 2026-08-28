@@ -1,12 +1,10 @@
 import {
 	ContainerBuilder,
 	MessageFlags,
-	SectionBuilder,
 	SeparatorBuilder,
 	SeparatorSpacingSize,
 	TextChannel,
-	TextDisplayBuilder,
-	ThumbnailBuilder
+	TextDisplayBuilder
 } from 'discord.js';
 
 import { client } from '../core';
@@ -189,19 +187,19 @@ function getCommitAvatar(
 	}
 
 	if (username !== 'unknown') {
-		return `https://github.com/${encodeURIComponent(username)}.png?size=64`;
+		return `https://github.com/${encodeURIComponent(username)}.png?size=32`;
 	}
 
 	return body.sender?.avatar_url;
 }
 
 /**
- * Create a commit row with a thumbnail accessory.
+ * Format a commit entry using a standard TextDisplay component instead of a Section + Thumbnail.
  */
-function createCommitSection(
+function formatCommitText(
 	commit: GitHubCommit,
 	body: GitHubWebhookPayload
-): SectionBuilder {
+): string {
 	const sha = commit.id?.substring(0, 7) ?? '0000000';
 
 	const message = truncate(
@@ -223,31 +221,17 @@ function createCommitSection(
 		? `${authorName} · @${username} · ${relativeTime}`
 		: `${authorName} · @${username}`;
 
-	const section = new SectionBuilder();
-
-	section.addTextDisplayComponents(
-		new TextDisplayBuilder().setContent(
-			[`${shaDisplay}  **${message}**`, metadata].join('\n')
-		)
-	);
-
 	const avatarUrl = getCommitAvatar(commit, username, body);
 
-	if (avatarUrl) {
-		section.setThumbnailAccessory(
-			new ThumbnailBuilder({
-				media: {
-					url: avatarUrl
-				}
-			})
-		);
-	}
+	// Using a markdown icon representation or a tiny text indicator if preferred,
+	// since standard markdown image tags inside text blocks behave natively.
+	const avatarPrefix = avatarUrl ? `[👤](${avatarUrl}) ` : '';
 
-	return section;
+	return `${avatarPrefix}${shaDisplay}  **${message}**\n${metadata}`;
 }
 
 /**
- * Build the commit panel.
+ * Build the commit panel using text components.
  */
 function buildCommitPanel(
 	container: ContainerBuilder,
@@ -274,8 +258,11 @@ function buildCommitPanel(
 
 	for (let index = 0; index < displayCommits.length; index++) {
 		const commit = displayCommits[index];
+		const commitContent = formatCommitText(commit, body);
 
-		container.addSectionComponents(createCommitSection(commit, body));
+		container.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(commitContent)
+		);
 
 		if (index < displayCommits.length - 1) {
 			container.addSeparatorComponents(
