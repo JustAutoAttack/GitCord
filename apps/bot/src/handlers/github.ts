@@ -1,4 +1,4 @@
-import { TextChannel } from 'discord.js';
+import { TextChannel, EmbedBuilder } from 'discord.js';
 
 import { client } from '../core';
 import { ENV } from '../config';
@@ -7,12 +7,15 @@ export interface GitHubWebhookPayload {
 	repository?: {
 		full_name?: string;
 		name?: string;
+		html_url?: string;
 	};
 	pusher?: {
 		name?: string;
 	};
 	head_commit?: {
+		id?: string;
 		message?: string;
+		url?: string;
 		author?: {
 			username?: string;
 			name?: string;
@@ -22,6 +25,8 @@ export interface GitHubWebhookPayload {
 	action?: string;
 	pull_request?: {
 		title?: string;
+		html_url?: string;
+		number?: number;
 		user?: {
 			login?: string;
 		};
@@ -41,7 +46,6 @@ export async function handleGitHubEvent(
 ): Promise<string> {
 	const repoFullName = body.repository?.full_name;
 
-	// Hardcoded check: drop events that don't match your target repository
 	if (
 		repoFullName &&
 		repoFullName.toLowerCase() !== ALLOWED_REPOSITORY.toLowerCase()
@@ -56,17 +60,16 @@ export async function handleGitHubEvent(
 	}
 
 	const channel = fetchedChannel as TextChannel;
-	let message = '';
+	const embed = new EmbedBuilder().setColor(0x2b2d31);
+	let hasEvent = false;
 
 	switch (event) {
 		case 'push': {
 			const repo = body.repository?.name ?? 'unknown-repo';
-
-			// Extract branch name cleanly from 'refs/heads/branch-name'
+			const repoUrl = body.repository?.html_url;
 			const refParts = body.ref?.split('/') ?? [];
 			const branch = refParts[refParts.length - 1] ?? 'unknown-branch';
 
-			// Get user info (fall back to pusher name or sender login if author isn't explicit)
 			const author =
 				body.head_commit?.author?.username ??
 				body.head_commit?.author?.name ??
@@ -75,22 +78,50 @@ export async function handleGitHubEvent(
 				'someone';
 
 			const commitMsg = body.head_commit?.message ?? 'No commit message';
+			const commitUrl = body.head_commit?.url;
+			const shortCommitId = body.head_commit?.id
+				? body.head_commit.id.substring(0, 7)
+				: '';
 
-			message = [
-				`🔨 **New Push** to \`${repo}\``,
-				`• **Branch:** \`${branch}\``,
-				`• **User:** \`${author}\``,
-				`• **Commit:** "${commitMsg.trim()}"`
-			].join('\n');
+			embed
+				.setTitle(`New Push to ${repo}`)
+				.setURL(repoUrl ?? null)
+				.addFields(
+					{ name: 'Branch', value: `\`${branch}\``, inline: true },
+					{ name: 'Committer', value: `\`${author}\``, inline: true },
+					{
+						name: 'Commit',
+						value:
+							commitUrl && shortCommitId
+								? `[\`${shortCommitId}\`](${commitUrl}) - ${commitMsg.trim()}`
+								: commitMsg.trim()
+					}
+				)
+				.setTimestamp();
 
+			hasEvent = true;
 			break;
 		}
 		case 'pull_request': {
 			const repo = body.repository?.name ?? 'unknown-repo';
 			const action = body.action ?? 'updated';
 			const prTitle = body.pull_request?.title ?? 'Untitled PR';
+			const prUrl = body.pull_request?.html_url;
+			const prNumber = body.pull_request?.number;
 			const prUser = body.pull_request?.user?.login ?? 'unknown';
-			message = `🔀 **Pull Request ${action}** on \`${repo}\`: "${prTitle}" by \`${prUser}\``;
+
+			embed
+				.setTitle(`Pull Request ${action}: #${prNumber} ${prTitle}`)
+				.setURL(prUrl ?? null)
+				.setDescription(`[View Pull Request](${prUrl})`)
+				.addFields(
+					{ name: 'Repository', value: `\`${repo}\``, inline: true },
+					{ name: 'Author', value: `\`${prUser}\``, inline: true },
+					{ name: 'Action', value: `\`${action}\``, inline: true }
+				)
+				.setTimestamp();
+
+			hasEvent = true;
 			break;
 		}
 		case 'create': {
@@ -98,7 +129,27 @@ export async function handleGitHubEvent(
 				const repo = body.repository?.name ?? 'unknown-repo';
 				const branch = body.ref ?? 'unknown-branch';
 				const sender = body.sender?.login ?? 'someone';
-				message = `🌿 **New Branch** \`${branch}\` created on \`${repo}\` by \`${sender}\``;
+				const repoUrl = body.repository?.html_url;
+				const branchUrl = `${repoUrl}/tree/${branch}`;
+
+				embed
+					.setTitle(`🌿 New Branch Created: ${branch}`)
+					.setURL(branchUrl)
+					.addFields(
+						{
+							name: 'Repository',
+							value: `\`${repo}\``,
+							inline: true
+						},
+						{
+							name: 'Creator',
+							value: `\`${sender}\``,
+							inline: true
+						}
+					)
+					.setTimestamp();
+
+				hasEvent = true;
 				break;
 			}
 			break;
@@ -107,9 +158,9 @@ export async function handleGitHubEvent(
 			return `Event ${event} ignored`;
 	}
 
-	if (message) {
-		await channel.send(message);
-		return `Processed ${event} event successfully`;
+	if (hasEvent) {
+		await channel.send({ embeds: [embed] });
+		return `Processed ${event} event successfully with embed`;
 	}
 
 	return `Event ${event} yielded no message`;
