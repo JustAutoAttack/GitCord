@@ -1,6 +1,7 @@
 import {
 	ContainerBuilder,
 	MessageFlags,
+	SectionBuilder,
 	SeparatorBuilder,
 	SeparatorSpacingSize,
 	TextChannel,
@@ -19,7 +20,6 @@ export interface GitHubCommit {
 		username?: string;
 		name?: string;
 		email?: string;
-		avatar_url?: string;
 	};
 }
 
@@ -49,7 +49,6 @@ export interface GitHubWebhookPayload {
 		body?: string;
 		user?: {
 			login?: string;
-			avatar_url?: string;
 		};
 	};
 
@@ -60,7 +59,6 @@ export interface GitHubWebhookPayload {
 		body?: string;
 		user?: {
 			login?: string;
-			avatar_url?: string;
 		};
 	};
 
@@ -75,7 +73,6 @@ export interface GitHubWebhookPayload {
 
 	sender?: {
 		login?: string;
-		avatar_url?: string;
 		html_url?: string;
 	};
 
@@ -175,31 +172,12 @@ function getCommitUsername(
 }
 
 /**
- * Return the best available avatar.
+ * Create a commit row using a text-only TextDisplay component.
  */
-function getCommitAvatar(
-	commit: GitHubCommit,
-	username: string,
-	body: GitHubWebhookPayload
-): string | undefined {
-	if (commit.author?.avatar_url) {
-		return commit.author.avatar_url;
-	}
-
-	if (username !== 'unknown') {
-		return `https://github.com/${encodeURIComponent(username)}.png?size=32`;
-	}
-
-	return body.sender?.avatar_url;
-}
-
-/**
- * Format a commit entry using a standard TextDisplay component instead of a Section + Thumbnail.
- */
-function formatCommitText(
+function createCommitSection(
 	commit: GitHubCommit,
 	body: GitHubWebhookPayload
-): string {
+): TextDisplayBuilder {
 	const sha = commit.id?.substring(0, 7) ?? '0000000';
 
 	const message = truncate(
@@ -221,17 +199,13 @@ function formatCommitText(
 		? `${authorName} · @${username} · ${relativeTime}`
 		: `${authorName} · @${username}`;
 
-	const avatarUrl = getCommitAvatar(commit, username, body);
-
-	// Using a markdown icon representation or a tiny text indicator if preferred,
-	// since standard markdown image tags inside text blocks behave natively.
-	const avatarPrefix = avatarUrl ? `[👤](${avatarUrl}) ` : '';
-
-	return `${avatarPrefix}${shaDisplay}  **${message}**\n${metadata}`;
+	return new TextDisplayBuilder().setContent(
+		[`${shaDisplay}  **${message}**`, metadata].join('\n')
+	);
 }
 
 /**
- * Build the commit panel using text components.
+ * Build the commit panel.
  */
 function buildCommitPanel(
 	container: ContainerBuilder,
@@ -258,11 +232,8 @@ function buildCommitPanel(
 
 	for (let index = 0; index < displayCommits.length; index++) {
 		const commit = displayCommits[index];
-		const commitContent = formatCommitText(commit, body);
 
-		container.addTextDisplayComponents(
-			new TextDisplayBuilder().setContent(commitContent)
-		);
+		container.addTextDisplayComponents(createCommitSection(commit, body));
 
 		if (index < displayCommits.length - 1) {
 			container.addSeparatorComponents(
