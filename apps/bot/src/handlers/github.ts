@@ -5,7 +5,8 @@ import {
 	SeparatorBuilder,
 	SeparatorSpacingSize,
 	TextChannel,
-	TextDisplayBuilder
+	TextDisplayBuilder,
+	ThumbnailBuilder
 } from 'discord.js';
 
 import { client } from '../core';
@@ -183,27 +184,19 @@ function getCommitAvatar(
 	username: string,
 	body: GitHubWebhookPayload
 ): string | undefined {
-	let avatarUrl: string | undefined;
-
 	if (commit.author?.avatar_url) {
-		avatarUrl = commit.author.avatar_url;
-	} else if (username !== 'unknown') {
-		avatarUrl = `https://github.com/${encodeURIComponent(username)}.png?size=16`;
-	} else {
-		avatarUrl = body.sender?.avatar_url;
+		return commit.author.avatar_url;
 	}
 
-	if (avatarUrl && avatarUrl.includes('githubusercontent.com')) {
-		const url = new URL(avatarUrl);
-		url.searchParams.set('s', '16');
-		return url.toString();
+	if (username !== 'unknown') {
+		return `https://github.com/${encodeURIComponent(username)}.png?size=64`;
 	}
 
-	return avatarUrl;
+	return body.sender?.avatar_url;
 }
 
 /**
- * Create a commit row with an inline image prefix instead of a large thumbnail accessory.
+ * Create a commit row with a thumbnail accessory.
  */
 function createCommitSection(
 	commit: GitHubCommit,
@@ -230,21 +223,25 @@ function createCommitSection(
 		? `${authorName} · @${username} · ${relativeTime}`
 		: `${authorName} · @${username}`;
 
-	const avatarUrl = getCommitAvatar(commit, username, body);
-
-	const avatarPrefix = avatarUrl
-		? `[![](${avatarUrl})](${commit.url ?? ''}) `
-		: '';
-
 	const section = new SectionBuilder();
 
 	section.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(
-			[`${avatarPrefix}${shaDisplay}  **${message}**`, metadata].join(
-				'\n'
-			)
+			[`${shaDisplay}  **${message}**`, metadata].join('\n')
 		)
 	);
+
+	const avatarUrl = getCommitAvatar(commit, username, body);
+
+	if (avatarUrl) {
+		section.setThumbnailAccessory(
+			new ThumbnailBuilder({
+				media: {
+					url: avatarUrl
+				}
+			})
+		);
+	}
 
 	return section;
 }
