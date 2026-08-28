@@ -1,6 +1,7 @@
 import { TextChannel } from 'discord.js';
-import { client } from '../core/client.js';
-import { ENV } from '../config/env.js';
+
+import { client } from '../core';
+import { ENV } from '../config';
 
 export interface GitHubWebhookPayload {
 	repository?: {
@@ -12,7 +13,12 @@ export interface GitHubWebhookPayload {
 	};
 	head_commit?: {
 		message?: string;
+		author?: {
+			username?: string;
+			name?: string;
+		};
 	};
+	ref?: string;
 	action?: string;
 	pull_request?: {
 		title?: string;
@@ -21,7 +27,6 @@ export interface GitHubWebhookPayload {
 		};
 	};
 	ref_type?: string;
-	ref?: string;
 	sender?: {
 		login?: string;
 	};
@@ -56,9 +61,28 @@ export async function handleGitHubEvent(
 	switch (event) {
 		case 'push': {
 			const repo = body.repository?.name ?? 'unknown-repo';
-			const pusher = body.pusher?.name ?? 'someone';
+
+			// Extract branch name cleanly from 'refs/heads/branch-name'
+			const refParts = body.ref?.split('/') ?? [];
+			const branch = refParts[refParts.length - 1] ?? 'unknown-branch';
+
+			// Get user info (fall back to pusher name or sender login if author isn't explicit)
+			const author =
+				body.head_commit?.author?.username ??
+				body.head_commit?.author?.name ??
+				body.pusher?.name ??
+				body.sender?.login ??
+				'someone';
+
 			const commitMsg = body.head_commit?.message ?? 'No commit message';
-			message = `**New Commit** on \`${repo}\` by \`${pusher}\`: "${commitMsg.trim()}"`;
+
+			message = [
+				`🔨 **New Push** to \`${repo}\``,
+				`• **Branch:** \`${branch}\``,
+				`• **User:** \`${author}\``,
+				`• **Commit:** "${commitMsg.trim()}"`
+			].join('\n');
+
 			break;
 		}
 		case 'pull_request': {
@@ -66,7 +90,7 @@ export async function handleGitHubEvent(
 			const action = body.action ?? 'updated';
 			const prTitle = body.pull_request?.title ?? 'Untitled PR';
 			const prUser = body.pull_request?.user?.login ?? 'unknown';
-			message = `**Pull Request ${action}** on \`${repo}\`: "${prTitle}" by \`${prUser}\``;
+			message = `🔀 **Pull Request ${action}** on \`${repo}\`: "${prTitle}" by \`${prUser}\``;
 			break;
 		}
 		case 'create': {
@@ -74,7 +98,7 @@ export async function handleGitHubEvent(
 				const repo = body.repository?.name ?? 'unknown-repo';
 				const branch = body.ref ?? 'unknown-branch';
 				const sender = body.sender?.login ?? 'someone';
-				message = `**New Branch** \`${branch}\` created on \`${repo}\` by \`${sender}\``;
+				message = `🌿 **New Branch** \`${branch}\` created on \`${repo}\` by \`${sender}\``;
 				break;
 			}
 			break;
