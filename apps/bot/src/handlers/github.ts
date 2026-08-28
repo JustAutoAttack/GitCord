@@ -27,6 +27,7 @@ export interface GitHubWebhookPayload {
 		id?: string;
 		message?: string;
 		url?: string;
+		timestamp?: string;
 		author?: {
 			username?: string;
 			name?: string;
@@ -37,6 +38,7 @@ export interface GitHubWebhookPayload {
 		id?: string;
 		message?: string;
 		url?: string;
+		timestamp?: string;
 		author?: {
 			username?: string;
 			name?: string;
@@ -101,6 +103,9 @@ const COLORS = {
 
 const MAX_COMMITS = 5;
 
+/**
+ * Truncate text without breaking the Discord message layout.
+ */
 function truncate(text: string, maxLength: number): string {
 	if (text.length <= maxLength) {
 		return text;
@@ -109,20 +114,62 @@ function truncate(text: string, maxLength: number): string {
 	return `${text.substring(0, maxLength - 3)}...`;
 }
 
+/**
+ * Convert a GitHub ref into a clean branch name.
+ *
+ * refs/heads/main -> main
+ */
 function getBranchName(ref?: string): string {
-	return ref?.replace('refs/heads/', '') ?? 'unknown-branch';
+	if (!ref) {
+		return 'unknown-branch';
+	}
+
+	return ref.replace(/^refs\/heads\//, '').replace(/^refs\/tags\//, '');
 }
 
+/**
+ * Convert a GitHub timestamp into a Discord timestamp.
+ *
+ * Discord then renders:
+ *   10 minutes ago
+ *   2 hours ago
+ * etc.
+ *
+ * Hovering the timestamp gives the exact localized date/time.
+ */
+function discordRelativeTimestamp(timestamp?: string): string {
+	if (!timestamp) {
+		return '';
+	}
+
+	const date = new Date(timestamp);
+
+	if (Number.isNaN(date.getTime())) {
+		return '';
+	}
+
+	return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
+}
+
+/**
+ * Create the main Components V2 container.
+ */
 function createContainer(color: number): ContainerBuilder {
 	return new ContainerBuilder().setAccentColor(color);
 }
 
+/**
+ * Add a clean separator between sections.
+ */
 function addSeparator(container: ContainerBuilder): void {
 	container.addSeparatorComponents(
 		new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
 	);
 }
 
+/**
+ * Create the main GitTrack-style header.
+ */
 function createHeader(
 	container: ContainerBuilder,
 	title: string,
@@ -148,6 +195,19 @@ function createHeader(
 	container.addSectionComponents(section);
 }
 
+/**
+ * Build the commit list.
+ *
+ * Example:
+ *
+ * ### Commits
+ *
+ * `8f3d72c` **Refactor notification handlers**
+ * devuser456 · 10m ago
+ *
+ * `2b9e35a` **Add multi-channel notifications**
+ * johndoe123 · 25m ago
+ */
 function buildCommitPanel(commits: GitHubWebhookPayload['commits']): string {
 	if (!commits?.length) {
 		return '### Commits\n> No commits included in this push.';
@@ -155,7 +215,7 @@ function buildCommitPanel(commits: GitHubWebhookPayload['commits']): string {
 
 	const displayCommits = commits.slice(0, MAX_COMMITS);
 
-	const lines = displayCommits.map((commit) => {
+	const commitRows = displayCommits.map((commit) => {
 		const sha = commit.id?.substring(0, 7) ?? '0000000';
 
 		const message = truncate(
@@ -166,14 +226,22 @@ function buildCommitPanel(commits: GitHubWebhookPayload['commits']): string {
 		const author =
 			commit.author?.username ?? commit.author?.name ?? 'unknown';
 
-		const shaLink = commit.url
+		const relativeTime = discordRelativeTimestamp(commit.timestamp);
+
+		const shaDisplay = commit.url
 			? `[\`${sha}\`](${commit.url})`
 			: `\`${sha}\``;
 
-		return `${shaLink} **${message}**\n> ${author}`;
+		const metadata = relativeTime ? `${author} · ${relativeTime}` : author;
+
+		return [
+			`${shaDisplay}`,
+			`**${message}**`,
+			`<sub>${metadata}</sub>`
+		].join('\n');
 	});
 
-	let result = ['### Commits', ...lines].join('\n\n');
+	let result = ['### Commits', '', commitRows.join('\n\n')].join('\n');
 
 	const remaining = commits.length - displayCommits.length;
 
@@ -186,6 +254,9 @@ function buildCommitPanel(commits: GitHubWebhookPayload['commits']): string {
 	return result;
 }
 
+/**
+ * Add repository metadata at the bottom.
+ */
 function addRepositoryFooter(
 	container: ContainerBuilder,
 	repoFullName: string,
@@ -196,10 +267,10 @@ function addRepositoryFooter(
 		? `[${repoFullName}](${repoUrl})`
 		: `\`${repoFullName}\``;
 
-	let content = `**Repository:** ${repository}`;
+	let content = `**Repository**\n${repository}`;
 
 	if (extra) {
-		content += `\n${extra}`;
+		content += `\n\n${extra}`;
 	}
 
 	container.addTextDisplayComponents(
@@ -207,6 +278,21 @@ function addRepositoryFooter(
 	);
 }
 
+/**
+ * PUSH
+ *
+ * GitTrack-style:
+ *
+ * 🌿 Branch update: main
+ * 3 new commits pushed to main
+ *
+ * Commits
+ * SHA  Message
+ * author · time
+ *
+ * Repository
+ * Branch
+ */
 function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 
@@ -240,18 +326,22 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		container,
 		repoFullName,
 		repoUrl,
-		`**Branch:** \`${branch}\``
+		`**Branch**\n\`${branch}\``
 	);
 
 	return container;
 }
 
+/**
+ * PULL REQUEST
+ */
 function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 
 	const repoUrl = body.repository?.html_url;
 
 	const action = body.action ?? 'updated';
+
 	const pr = body.pull_request;
 
 	const isMerged = action === 'closed' && pr?.merged === true;
@@ -290,20 +380,24 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoFullName,
 		repoUrl,
 		[
-			`**Author:** \`${pr?.user?.login ?? 'unknown'}\``,
-			`**Status:** \`${actionLabel}\``
-		].join('\n')
+			`**Author**\n\`${pr?.user?.login ?? 'unknown'}\``,
+			`**Status**\n\`${actionLabel}\``
+		].join('\n\n')
 	);
 
 	return container;
 }
 
+/**
+ * ISSUE
+ */
 function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 
 	const repoUrl = body.repository?.html_url;
 
 	const action = body.action ?? 'opened';
+
 	const issue = body.issue;
 
 	const color = action === 'closed' ? COLORS.PR_CLOSE : COLORS.ISSUE;
@@ -332,14 +426,17 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoFullName,
 		repoUrl,
 		[
-			`**Author:** \`${issue?.user?.login ?? 'unknown'}\``,
-			`**Action:** \`${action}\``
-		].join('\n')
+			`**Author**\n\`${issue?.user?.login ?? 'unknown'}\``,
+			`**Action**\n\`${action}\``
+		].join('\n\n')
 	);
 
 	return container;
 }
 
+/**
+ * RELEASE
+ */
 function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 
@@ -349,7 +446,7 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	const name = release?.name ?? release?.tag_name ?? 'New Release';
 
-	const tag = release?.tag_name ? ` • \`${release.tag_name}\`` : '';
+	const tag = release?.tag_name ? `\`${release.tag_name}\`` : '';
 
 	const releaseNotes = release?.body
 		? truncate(release.body, 500)
@@ -359,17 +456,19 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	createHeader(
 		container,
-		`🚀 Release published${tag}`,
+		'🚀 Release published',
 		release?.html_url
-			? `**[${truncate(name, 150)}](${release.html_url})**`
-			: `**${truncate(name, 150)}**`
+			? `**[${truncate(name, 150)}](${release.html_url})**${
+					tag ? ` · ${tag}` : ''
+				}`
+			: `**${truncate(name, 150)}**${tag ? ` · ${tag}` : ''}`
 	);
 
 	addSeparator(container);
 
 	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(
-			`### Release Notes\n${releaseNotes}`
+			['### Release Notes', releaseNotes].join('\n\n')
 		)
 	);
 
@@ -380,6 +479,11 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	return container;
 }
 
+/**
+ * CREATE
+ *
+ * Currently handles branch creation.
+ */
 function handleCreateEvent(
 	body: GitHubWebhookPayload
 ): ContainerBuilder | null {
@@ -407,8 +511,8 @@ function handleCreateEvent(
 
 	createHeader(
 		container,
-		`🌿 Branch created: ${branch}`,
-		`A new branch ${branchDisplay} was created.`,
+		'🌿 Branch created',
+		`New branch ${branchDisplay} was created.`,
 		body.sender?.avatar_url
 	);
 
@@ -418,12 +522,15 @@ function handleCreateEvent(
 		container,
 		repoFullName,
 		repoUrl,
-		`**Creator:** \`${sender}\``
+		`**Creator**\n\`${sender}\``
 	);
 
 	return container;
 }
 
+/**
+ * Main GitHub event handler.
+ */
 export async function handleGitHubEvent(
 	event: string | undefined,
 	body: GitHubWebhookPayload
