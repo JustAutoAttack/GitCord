@@ -124,43 +124,28 @@ function addSeparator(container: ContainerBuilder): void {
 	);
 }
 
+/**
+ * Header without an avatar.
+ */
 function createHeader(
 	container: ContainerBuilder,
 	title: string,
-	description: string,
-	avatarUrl?: string
+	description: string
 ): void {
-	const section = new SectionBuilder();
-
-	section.addTextDisplayComponents(
+	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(`## ${title}\n${description}`)
 	);
-
-	if (avatarUrl) {
-		section.setThumbnailAccessory(
-			new ThumbnailBuilder({
-				media: {
-					url: avatarUrl
-				}
-			})
-		);
-	}
-
-	container.addSectionComponents(section);
 }
 
 /**
- * Convert a GitHub timestamp into a Discord
- * relative timestamp.
+ * Discord relative timestamp.
  *
- * Discord automatically updates this text:
+ * Discord updates this automatically.
  *
+ * Example:
  * 39 seconds ago
  * 2 minutes ago
  * 3 hours ago
- * 2 days ago
- *
- * Hovering over it shows the exact date/time.
  */
 function discordRelativeTimestamp(timestamp?: string): string {
 	if (!timestamp) {
@@ -177,11 +162,7 @@ function discordRelativeTimestamp(timestamp?: string): string {
 }
 
 /**
- * Get the GitHub username associated with
- * the commit.
- *
- * If GitHub doesn't provide a username in the
- * commit author data, fall back to the sender.
+ * Return the GitHub username for a commit.
  */
 function getCommitUsername(
 	commit: GitHubCommit,
@@ -196,12 +177,7 @@ function getCommitUsername(
 }
 
 /**
- * Get the best available avatar for a commit.
- *
- * GitHub's webhook payload does not always include
- * an avatar URL for the commit author, so when we
- * know the username we can use GitHub's public avatar
- * endpoint.
+ * Return the best available avatar.
  */
 function getCommitAvatar(
 	commit: GitHubCommit,
@@ -213,17 +189,17 @@ function getCommitAvatar(
 	}
 
 	if (username !== 'unknown') {
-		return `https://github.com/${encodeURIComponent(username)}.png?size=64`;
+		return `https://github.com/${encodeURIComponent(username)}.png?size=32`;
 	}
 
 	return body.sender?.avatar_url;
 }
 
 /**
- * Create an individual commit row.
+ * Create a commit row.
  *
- * The contributor avatar is placed on the far right
- * using Discord's SectionBuilder thumbnail accessory.
+ * The avatar is intentionally kept as a small
+ * thumbnail accessory on the right.
  */
 function createCommitSection(
 	commit: GitHubCommit,
@@ -274,7 +250,7 @@ function createCommitSection(
 }
 
 /**
- * Build the commit section.
+ * Build the commit panel.
  */
 function buildCommitPanel(
 	container: ContainerBuilder,
@@ -347,6 +323,21 @@ function addRepositoryFooter(
 }
 
 /**
+ * Add the time the Discord message was sent.
+ *
+ * Discord renders this in the user's local time.
+ */
+function addMessageTimestamp(container: ContainerBuilder): void {
+	const unixTimestamp = Math.floor(Date.now() / 1000);
+
+	addSeparator(container);
+
+	container.addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(`<t:${unixTimestamp}:f>`)
+	);
+}
+
+/**
  * PUSH EVENT
  */
 function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
@@ -366,8 +357,7 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		`🌿 Branch update: ${branch}`,
 		`${commits.length} new commit${
 			commits.length === 1 ? '' : 's'
-		} pushed to \`${branch}\``,
-		body.sender?.avatar_url
+		} pushed to \`${branch}\``
 	);
 
 	addSeparator(container);
@@ -380,8 +370,10 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		container,
 		repoFullName,
 		repoUrl,
-		[`**Branch**`, `\`${branch}\``].join('\n')
+		['**Branch**', `\`${branch}\``].join('\n')
 	);
+
+	addMessageTimestamp(container);
 
 	return container;
 }
@@ -423,8 +415,7 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		`🔀 Pull Request ${actionLabel}: #${pr?.number ?? 'unknown'}`,
 		`**[${truncate(title, 150)}](${
 			pr?.html_url ?? repoUrl ?? 'https://github.com'
-		})**${description}`,
-		pr?.user?.avatar_url
+		})**${description}`
 	);
 
 	addSeparator(container);
@@ -434,13 +425,15 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoFullName,
 		repoUrl,
 		[
-			`**Author**`,
+			'**Author**',
 			`\`${pr?.user?.login ?? 'unknown'}\``,
 			'',
-			`**Status**`,
+			'**Status**',
 			`\`${actionLabel}\``
 		].join('\n')
 	);
+
+	addMessageTimestamp(container);
 
 	return container;
 }
@@ -472,8 +465,7 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		`📂 Issue ${action}: #${issue?.number ?? 'unknown'}`,
 		`**[${truncate(title, 150)}](${
 			issue?.html_url ?? repoUrl ?? 'https://github.com'
-		})**${description}`,
-		issue?.user?.avatar_url
+		})**${description}`
 	);
 
 	addSeparator(container);
@@ -483,13 +475,15 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoFullName,
 		repoUrl,
 		[
-			`**Author**`,
+			'**Author**',
 			`\`${issue?.user?.login ?? 'unknown'}\``,
 			'',
-			`**Action**`,
+			'**Action**',
 			`\`${action}\``
 		].join('\n')
 	);
+
+	addMessageTimestamp(container);
 
 	return container;
 }
@@ -536,13 +530,13 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	addRepositoryFooter(container, repoFullName, repoUrl);
 
+	addMessageTimestamp(container);
+
 	return container;
 }
 
 /**
  * CREATE EVENT
- *
- * Currently handles branch creation.
  */
 function handleCreateEvent(
 	body: GitHubWebhookPayload
@@ -572,8 +566,7 @@ function handleCreateEvent(
 	createHeader(
 		container,
 		'🌿 Branch created',
-		`New branch ${branchDisplay} was created.`,
-		body.sender?.avatar_url
+		`New branch ${branchDisplay} was created.`
 	);
 
 	addSeparator(container);
@@ -582,8 +575,10 @@ function handleCreateEvent(
 		container,
 		repoFullName,
 		repoUrl,
-		[`**Creator**`, `\`${sender}\``].join('\n')
+		['**Creator**', `\`${sender}\``].join('\n')
 	);
+
+	addMessageTimestamp(container);
 
 	return container;
 }
