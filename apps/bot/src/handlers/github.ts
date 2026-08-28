@@ -147,9 +147,10 @@ export async function handleGitHubEvent(
 				const author =
 					c.author?.username ?? c.author?.name ?? 'unknown';
 
+				// Added a clean spacing gap (\n\n) between message and contributor
 				embed.addFields({
 					name: `Commit — \`${sha}\``,
-					value: `> ${message.trim()}\n👤 **Contributor:** \`${author}\``
+					value: `> ${message.trim()}\n\n👤 **Contributor:** \`${author}\``
 				});
 
 				if (c.url && actionRow.components.length < 5) {
