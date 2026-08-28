@@ -197,9 +197,6 @@ function getCommitAvatar(
 
 /**
  * Create a commit row.
- *
- * The avatar is intentionally kept as a small
- * thumbnail accessory on the right.
  */
 function createCommitSection(
 	commit: GitHubCommit,
