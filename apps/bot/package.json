@@ -10,7 +10,7 @@
 	"dependencies": {
 		"@hono/node-server": "^1.13.0",
 		"@ngrok/ngrok": "^1.7.0",
-		"discord.js": "^14.15.3",
+		"discord.js": "^14.27.0",
 		"dotenv": "^16.4.5",
 		"hono": "^4.5.11"
 	},

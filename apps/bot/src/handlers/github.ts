@@ -1,4 +1,13 @@
-import { TextChannel, EmbedBuilder } from 'discord.js';
+import {
+	ContainerBuilder,
+	MessageFlags,
+	SectionBuilder,
+	SeparatorBuilder,
+	SeparatorSpacingSize,
+	TextChannel,
+	TextDisplayBuilder,
+	ThumbnailBuilder
+} from 'discord.js';
 
 import { client } from '../core';
 import { ENV } from '../config';
@@ -9,9 +18,11 @@ export interface GitHubWebhookPayload {
 		name?: string;
 		html_url?: string;
 	};
+
 	pusher?: {
 		name?: string;
 	};
+
 	commits?: Array<{
 		id?: string;
 		message?: string;
@@ -21,6 +32,7 @@ export interface GitHubWebhookPayload {
 			name?: string;
 		};
 	}>;
+
 	head_commit?: {
 		id?: string;
 		message?: string;
@@ -30,8 +42,10 @@ export interface GitHubWebhookPayload {
 			name?: string;
 		};
 	};
+
 	ref?: string;
 	action?: string;
+
 	pull_request?: {
 		title?: string;
 		html_url?: string;
@@ -43,6 +57,7 @@ export interface GitHubWebhookPayload {
 			avatar_url?: string;
 		};
 	};
+
 	issue?: {
 		title?: string;
 		html_url?: string;
@@ -53,18 +68,22 @@ export interface GitHubWebhookPayload {
 			avatar_url?: string;
 		};
 	};
+
 	release?: {
 		name?: string;
 		tag_name?: string;
 		html_url?: string;
 		body?: string;
 	};
+
 	ref_type?: string;
+
 	sender?: {
 		login?: string;
 		avatar_url?: string;
 		html_url?: string;
 	};
+
 	[key: string]: unknown;
 }
 
@@ -80,173 +99,329 @@ const COLORS = {
 	BRANCH: 0x7ee787
 };
 
-function createBaseEmbed(sender?: {
-	login?: string;
-	avatar_url?: string;
-}): EmbedBuilder {
-	const name = sender?.login ?? 'GitHub';
-	return new EmbedBuilder()
-		.setFooter({ text: `GitHub • ${name}`, iconURL: sender?.avatar_url })
-		.setTimestamp();
+const MAX_COMMITS = 5;
+
+function truncate(text: string, maxLength: number): string {
+	if (text.length <= maxLength) {
+		return text;
+	}
+
+	return `${text.substring(0, maxLength - 3)}...`;
 }
 
-function handlePushEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
-	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-	const repoUrl = body.repository?.html_url;
-	const branch = body.ref?.split('/').pop() ?? 'unknown-branch';
-	const commits =
-		body.commits ?? (body.head_commit ? [body.head_commit] : []);
+function getBranchName(ref?: string): string {
+	return ref?.replace('refs/heads/', '') ?? 'unknown-branch';
+}
 
-	embed
-		.setColor(COLORS.PUSH)
-		.setTitle(`🔗 Branch update: ${branch}`)
-		.setDescription(
-			`${commits.length} new commit${commits.length === 1 ? '' : 's'} pushed to ${branch}`
-		);
+function createContainer(color: number): ContainerBuilder {
+	return new ContainerBuilder().setAccentColor(color);
+}
 
-	const displayCommits = commits.slice(0, 3);
-	let commitsText = '';
-
-	for (const c of displayCommits) {
-		const sha = c.id ? c.id.substring(0, 7) : '0000000';
-		const message = c.message
-			? c.message.split('\n')[0]
-			: 'No commit message';
-		const author = c.author?.username ?? c.author?.name ?? 'unknown';
-		const link = c.url ? `[\`${sha}\`](${c.url})` : `\`${sha}\``;
-
-		commitsText += `${link}  ${message.trim()}\n` + `> \`${author}\`\n\n`;
-	}
-
-	if (commitsText) {
-		embed.addFields({
-			name: '\u200b',
-			value: commitsText.trim(),
-			inline: false
-		});
-	}
-
-	embed.addFields(
-		{
-			name: 'Repository',
-			value: repoUrl
-				? `[${repoFullName}](${repoUrl})`
-				: `\`${repoFullName}\``,
-			inline: true
-		},
-		{
-			name: 'Branch',
-			value: `\`${branch}\``,
-			inline: true
-		}
+function addSeparator(container: ContainerBuilder): void {
+	container.addSeparatorComponents(
+		new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
 	);
 }
 
-function handlePullRequestEvent(
-	body: GitHubWebhookPayload,
-	embed: EmbedBuilder
-) {
+function createHeader(
+	container: ContainerBuilder,
+	title: string,
+	description: string,
+	avatarUrl?: string
+): void {
+	const section = new SectionBuilder();
+
+	section.addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(`## ${title}\n${description}`)
+	);
+
+	if (avatarUrl) {
+		section.setThumbnailAccessory(
+			new ThumbnailBuilder({
+				media: {
+					url: avatarUrl
+				}
+			})
+		);
+	}
+
+	container.addSectionComponents(section);
+}
+
+function buildCommitPanel(commits: GitHubWebhookPayload['commits']): string {
+	if (!commits?.length) {
+		return '### Commits\n> No commits included in this push.';
+	}
+
+	const displayCommits = commits.slice(0, MAX_COMMITS);
+
+	const lines = displayCommits.map((commit) => {
+		const sha = commit.id?.substring(0, 7) ?? '0000000';
+
+		const message = truncate(
+			commit.message?.split('\n')[0].trim() || 'No commit message',
+			120
+		);
+
+		const author =
+			commit.author?.username ?? commit.author?.name ?? 'unknown';
+
+		const shaLink = commit.url
+			? `[\`${sha}\`](${commit.url})`
+			: `\`${sha}\``;
+
+		return `${shaLink} **${message}**\n> ${author}`;
+	});
+
+	let result = ['### Commits', ...lines].join('\n\n');
+
+	const remaining = commits.length - displayCommits.length;
+
+	if (remaining > 0) {
+		result += `\n\n> +${remaining} more commit${
+			remaining === 1 ? '' : 's'
+		}`;
+	}
+
+	return result;
+}
+
+function addRepositoryFooter(
+	container: ContainerBuilder,
+	repoFullName: string,
+	repoUrl?: string,
+	extra?: string
+): void {
+	const repository = repoUrl
+		? `[${repoFullName}](${repoUrl})`
+		: `\`${repoFullName}\``;
+
+	let content = `**Repository:** ${repository}`;
+
+	if (extra) {
+		content += `\n${extra}`;
+	}
+
+	container.addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(content)
+	);
+}
+
+function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
+
+	const repoUrl = body.repository?.html_url;
+
+	const branch = getBranchName(body.ref);
+
+	const commits =
+		body.commits ?? (body.head_commit ? [body.head_commit] : []);
+
+	const container = createContainer(COLORS.PUSH);
+
+	createHeader(
+		container,
+		`🌿 Branch update: ${branch}`,
+		`${commits.length} new commit${
+			commits.length === 1 ? '' : 's'
+		} pushed to \`${branch}\``,
+		body.sender?.avatar_url
+	);
+
+	addSeparator(container);
+
+	container.addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(buildCommitPanel(commits))
+	);
+
+	addSeparator(container);
+
+	addRepositoryFooter(
+		container,
+		repoFullName,
+		repoUrl,
+		`**Branch:** \`${branch}\``
+	);
+
+	return container;
+}
+
+function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
+	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
+
+	const repoUrl = body.repository?.html_url;
+
 	const action = body.action ?? 'updated';
 	const pr = body.pull_request;
-	const isMerged = action === 'closed' && pr?.merged;
+
+	const isMerged = action === 'closed' && pr?.merged === true;
 
 	let color = COLORS.PR_OPEN;
-	if (isMerged) color = COLORS.PR_MERGED;
-	else if (action === 'closed') color = COLORS.PR_CLOSE;
+
+	if (isMerged) {
+		color = COLORS.PR_MERGED;
+	} else if (action === 'closed') {
+		color = COLORS.PR_CLOSE;
+	}
 
 	const actionLabel = isMerged ? 'merged' : action;
 
-	embed
-		.setColor(color)
-		.setTitle(`🔀 Pull Request ${actionLabel}: #${pr?.number}`)
-		.setDescription(
-			`**[${pr?.title ?? 'Untitled PR'}](${pr?.html_url})**${pr?.body ? `\n\n> ${pr.body.substring(0, 150)}...` : ''}`
-		)
-		.addFields(
-			{ name: 'Repository', value: `\`${repoFullName}\``, inline: true },
-			{
-				name: 'Author',
-				value: `\`${pr?.user?.login ?? 'unknown'}\``,
-				inline: true
-			},
-			{ name: 'Status', value: `\`${actionLabel}\``, inline: true }
-		);
+	const title = pr?.title ?? 'Untitled Pull Request';
+
+	const description = pr?.body
+		? `\n\n> ${truncate(pr.body.replace(/\n/g, ' '), 250)}`
+		: '';
+
+	const container = createContainer(color);
+
+	createHeader(
+		container,
+		`🔀 Pull Request ${actionLabel}: #${pr?.number ?? 'unknown'}`,
+		`**[${truncate(title, 150)}](${
+			pr?.html_url ?? repoUrl ?? 'https://github.com'
+		})**${description}`,
+		pr?.user?.avatar_url
+	);
+
+	addSeparator(container);
+
+	addRepositoryFooter(
+		container,
+		repoFullName,
+		repoUrl,
+		[
+			`**Author:** \`${pr?.user?.login ?? 'unknown'}\``,
+			`**Status:** \`${actionLabel}\``
+		].join('\n')
+	);
+
+	return container;
 }
 
-function handleIssueEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
+function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
+
+	const repoUrl = body.repository?.html_url;
+
 	const action = body.action ?? 'opened';
 	const issue = body.issue;
+
 	const color = action === 'closed' ? COLORS.PR_CLOSE : COLORS.ISSUE;
 
-	embed
-		.setColor(color)
-		.setTitle(`📂 Issue ${action}: #${issue?.number}`)
-		.setDescription(
-			`**[${issue?.title ?? 'Untitled Issue'}](${issue?.html_url})**${issue?.body ? `\n\n> ${issue.body.substring(0, 150)}...` : ''}`
-		)
-		.addFields(
-			{ name: 'Repository', value: `\`${repoFullName}\``, inline: true },
-			{
-				name: 'Author',
-				value: `\`${issue?.user?.login ?? 'unknown'}\``,
-				inline: true
-			},
-			{ name: 'Action', value: `\`${action}\``, inline: true }
-		);
+	const title = issue?.title ?? 'Untitled Issue';
+
+	const description = issue?.body
+		? `\n\n> ${truncate(issue.body.replace(/\n/g, ' '), 250)}`
+		: '';
+
+	const container = createContainer(color);
+
+	createHeader(
+		container,
+		`📂 Issue ${action}: #${issue?.number ?? 'unknown'}`,
+		`**[${truncate(title, 150)}](${
+			issue?.html_url ?? repoUrl ?? 'https://github.com'
+		})**${description}`,
+		issue?.user?.avatar_url
+	);
+
+	addSeparator(container);
+
+	addRepositoryFooter(
+		container,
+		repoFullName,
+		repoUrl,
+		[
+			`**Author:** \`${issue?.user?.login ?? 'unknown'}\``,
+			`**Action:** \`${action}\``
+		].join('\n')
+	);
+
+	return container;
 }
 
-function handleReleaseEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
+function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
+
+	const repoUrl = body.repository?.html_url;
+
 	const release = body.release;
+
 	const name = release?.name ?? release?.tag_name ?? 'New Release';
 
-	embed
-		.setColor(COLORS.RELEASE)
-		.setTitle(`🚀 Release Published: ${name} (${release?.tag_name ?? ''})`)
-		.setDescription(
-			release?.body
-				? `${release.body.substring(0, 300)}...`
-				: 'No release notes provided.'
+	const tag = release?.tag_name ? ` • \`${release.tag_name}\`` : '';
+
+	const releaseNotes = release?.body
+		? truncate(release.body, 500)
+		: 'No release notes provided.';
+
+	const container = createContainer(COLORS.RELEASE);
+
+	createHeader(
+		container,
+		`🚀 Release published${tag}`,
+		release?.html_url
+			? `**[${truncate(name, 150)}](${release.html_url})**`
+			: `**${truncate(name, 150)}**`
+	);
+
+	addSeparator(container);
+
+	container.addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(
+			`### Release Notes\n${releaseNotes}`
 		)
-		.addFields({
-			name: 'Repository',
-			value: `\`${repoFullName}\``,
-			inline: false
-		});
+	);
+
+	addSeparator(container);
+
+	addRepositoryFooter(container, repoFullName, repoUrl);
+
+	return container;
 }
 
 function handleCreateEvent(
-	body: GitHubWebhookPayload,
-	embed: EmbedBuilder
-): boolean {
-	if (body.ref_type === 'branch') {
-		const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-		const branch = body.ref ?? 'unknown-branch';
-		const repoUrl = body.repository?.html_url;
-		const branchUrl = `${repoUrl}/tree/${branch}`;
-		const sender = body.sender?.login ?? 'unknown';
-
-		embed
-			.setColor(COLORS.BRANCH)
-			.setTitle(`🌿 Branch created: ${branch}`)
-			.setDescription(
-				`New branch \`${branch}\` was created on \`${repoFullName}\``
-			)
-			.addFields(
-				{
-					name: 'Repository',
-					value: repoUrl
-						? `[${repoFullName}](${repoUrl})`
-						: `\`${repoFullName}\``,
-					inline: true
-				},
-				{ name: 'Creator', value: `\`${sender}\``, inline: true }
-			);
-		return true;
+	body: GitHubWebhookPayload
+): ContainerBuilder | null {
+	if (body.ref_type !== 'branch') {
+		return null;
 	}
-	return false;
+
+	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
+
+	const repoUrl = body.repository?.html_url;
+
+	const branch = body.ref ?? 'unknown-branch';
+
+	const sender = body.sender?.login ?? 'unknown';
+
+	const branchUrl = repoUrl
+		? `${repoUrl}/tree/${encodeURIComponent(branch)}`
+		: undefined;
+
+	const branchDisplay = branchUrl
+		? `[${branch}](${branchUrl})`
+		: `\`${branch}\``;
+
+	const container = createContainer(COLORS.BRANCH);
+
+	createHeader(
+		container,
+		`🌿 Branch created: ${branch}`,
+		`A new branch ${branchDisplay} was created.`,
+		body.sender?.avatar_url
+	);
+
+	addSeparator(container);
+
+	addRepositoryFooter(
+		container,
+		repoFullName,
+		repoUrl,
+		`**Creator:** \`${sender}\``
+	);
+
+	return container;
 }
 
 export async function handleGitHubEvent(
@@ -263,42 +438,48 @@ export async function handleGitHubEvent(
 	}
 
 	const fetchedChannel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
+
 	if (!fetchedChannel || !fetchedChannel.isTextBased()) {
 		throw new Error('Target Discord channel is invalid or not text-based.');
 	}
 
 	const channel = fetchedChannel as TextChannel;
-	const embed = createBaseEmbed(body.sender);
-	let hasEvent = false;
+
+	let container: ContainerBuilder | null = null;
 
 	switch (event) {
 		case 'push':
-			handlePushEvent(body, embed);
-			hasEvent = true;
+			container = handlePushEvent(body);
 			break;
+
 		case 'pull_request':
-			handlePullRequestEvent(body, embed);
-			hasEvent = true;
+			container = handlePullRequestEvent(body);
 			break;
+
 		case 'issues':
-			handleIssueEvent(body, embed);
-			hasEvent = true;
+			container = handleIssueEvent(body);
 			break;
+
 		case 'release':
-			handleReleaseEvent(body, embed);
-			hasEvent = true;
+			container = handleReleaseEvent(body);
 			break;
+
 		case 'create':
-			hasEvent = handleCreateEvent(body, embed);
+			container = handleCreateEvent(body);
 			break;
+
 		default:
 			return `Event ${event} ignored`;
 	}
 
-	if (hasEvent) {
-		await channel.send({ embeds: [embed] });
-		return `Processed ${event} event successfully`;
+	if (!container) {
+		return `Event ${event} yielded no message`;
 	}
 
-	return `Event ${event} yielded no message`;
+	await channel.send({
+		flags: MessageFlags.IsComponentsV2,
+		components: [container]
+	});
+
+	return `Processed ${event} event successfully`;
 }
