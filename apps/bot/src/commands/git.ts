@@ -15,18 +15,28 @@ export const data = new SlashCommandBuilder()
 	)
 	.addSubcommand((subcommand) =>
 		subcommand
-			.setName('log')
-			.setDescription('Fetch recent commit history')
+			.setName('checkout')
+			.setDescription('Fetch commit history for a specific branch')
 			.addStringOption((option) =>
 				option
 					.setName('branch')
 					.setDescription('Target branch name')
-					.setRequired(false)
+					.setRequired(true)
 			)
 			.addStringOption((option) =>
 				option
 					.setName('author')
-					.setDescription('Filter by GitHub username')
+					.setDescription('Filter by GitHub username or author name')
+					.setRequired(false)
+			)
+			.addIntegerOption((option) =>
+				option
+					.setName('limit')
+					.setDescription(
+						'Number of commits to display (default: 5, max: 10)'
+					)
+					.setMinValue(1)
+					.setMaxValue(10)
 					.setRequired(false)
 			)
 	)
@@ -49,22 +59,14 @@ function truncate(text: string, maxLength: number): string {
 export async function execute(interaction: ChatInputCommandInteraction) {
 	const subcommand = interaction.options.getSubcommand();
 
-	if (subcommand === 'log') {
+	if (subcommand === 'checkout') {
 		await interaction.deferReply();
-		const branch = interaction.options.getString('branch');
-		const author = interaction.options.getString('author');
+		const branch = interaction.options.getString('branch', true);
+		const authorFilter = interaction.options.getString('author');
+		const limit = interaction.options.getInteger('limit') ?? 5;
 
 		try {
-			// Build query params conditionally: if branch is provided, use it as sha. Otherwise, omit sha to search repository-wide.
-			const queryParams = new URLSearchParams();
-			if (branch) {
-				queryParams.append('sha', branch);
-			}
-			if (author) {
-				queryParams.append('author', author);
-			}
-
-			const url = `https://api.github.com/repos/JustAutoAttack/GitCord/commits?${queryParams.toString()}`;
+			const url = `https://api.github.com/repos/JustAutoAttack/GitCord/commits?sha=${encodeURIComponent(branch)}`;
 			const response = await fetch(url, {
 				headers: { 'User-Agent': 'GitCord-Bot' }
 			});
@@ -76,7 +78,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 				container.addTextDisplayComponents(
 					new TextDisplayBuilder().setContent(
-						`## ❌ GitHub API Error\nFailed to fetch logs from GitHub (Status code: \`${response.status}\`). Make sure the branch name or author is valid.`
+						`## ❌ GitHub API Error\nFailed to fetch logs from GitHub (Status code: \`${response.status}\`). Make sure the branch name \`${branch}\` exists.`
 					)
 				);
 
@@ -87,7 +89,23 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				return;
 			}
 
-			const commits = (await response.json()) as Array<any>;
+			let commits = (await response.json()) as Array<any>;
+
+			if (authorFilter) {
+				const query = authorFilter.toLowerCase().replace(/^@/, '');
+				commits = commits.filter((c) => {
+					const login = c.author?.login?.toLowerCase() ?? '';
+					const name = c.commit?.author?.name?.toLowerCase() ?? '';
+					const email = c.commit?.author?.email?.toLowerCase() ?? '';
+
+					// Match if the query matches either username, git config name, or email prefix
+					return (
+						login.includes(query) ||
+						name.includes(query) ||
+						email.includes(query)
+					);
+				});
+			}
 
 			if (!commits.length) {
 				const container = new ContainerBuilder().setAccentColor(
@@ -96,7 +114,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 				container.addTextDisplayComponents(
 					new TextDisplayBuilder().setContent(
-						`## ⚠️ No Commits Found\nNo commits found${branch ? ` for branch \`${branch}\`` : ''}${author ? ` by @${author}` : ''}.`
+						`## ⚠️ No Commits Found\nNo commits found for branch \`${branch}\`${authorFilter ? ` matching author \`${authorFilter}\`` : ''}.`
 					)
 				);
 
@@ -110,17 +128,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			const container = new ContainerBuilder().setAccentColor(0x2f81f7);
 
 			const scopeText = [
-				branch
-					? `Branch: \`${branch}\``
-					: 'Branch: `all (repository-wide)`',
-				author ? `Author: \`@${author}\`` : ''
+				`Branch: \`${branch}\``,
+				authorFilter ? `Author: \`${authorFilter}\`` : ''
 			]
 				.filter(Boolean)
 				.join(' · ');
 
 			container.addTextDisplayComponents(
 				new TextDisplayBuilder().setContent(
-					`## 📦 Recent Commits\n[JustAutoAttack/GitCord](https://github.com/JustAutoAttack/GitCord) · ${scopeText}`
+					`## 📦 Branch Commits\n[JustAutoAttack/GitCord](https://github.com/JustAutoAttack/GitCord) · ${scopeText}`
 				)
 			);
 
@@ -128,7 +144,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
 			);
 
-			const topCommits = commits.slice(0, 5);
+			const topCommits = commits.slice(0, limit);
 			for (let i = 0; i < topCommits.length; i++) {
 				const c = topCommits[i];
 				const sha = c.sha.substring(0, 7);
@@ -136,6 +152,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					c.commit.message.split('\n')[0].trim(),
 					140
 				);
+
+				// Always favor the GitHub account login if available, falling back to git config name
 				const authorName =
 					c.author?.login ?? c.commit.author.name ?? 'unknown';
 
