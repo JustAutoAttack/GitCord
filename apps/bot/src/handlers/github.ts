@@ -80,8 +80,14 @@ const COLORS = {
 	BRANCH: 0x7ee787
 };
 
-function createBaseEmbed(): EmbedBuilder {
-	return new EmbedBuilder().setTimestamp();
+function createBaseEmbed(sender?: {
+	login?: string;
+	avatar_url?: string;
+}): EmbedBuilder {
+	const name = sender?.login ?? 'GitHub';
+	return new EmbedBuilder()
+		.setFooter({ text: `GitHub • ${name}`, iconURL: sender?.avatar_url })
+		.setTimestamp();
 }
 
 function handlePushEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
@@ -115,7 +121,8 @@ function handlePushEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
 	if (commitsText) {
 		embed.addFields({
 			name: '\u200b',
-			value: commitsText.trim()
+			value: commitsText.trim(),
+			inline: false
 		});
 	}
 
@@ -206,7 +213,7 @@ function handleReleaseEvent(body: GitHubWebhookPayload, embed: EmbedBuilder) {
 		.addFields({
 			name: 'Repository',
 			value: `\`${repoFullName}\``,
-			inline: true
+			inline: false
 		});
 }
 
@@ -261,7 +268,7 @@ export async function handleGitHubEvent(
 	}
 
 	const channel = fetchedChannel as TextChannel;
-	const embed = createBaseEmbed();
+	const embed = createBaseEmbed(body.sender);
 	let hasEvent = false;
 
 	switch (event) {
