@@ -138,13 +138,13 @@ export async function handleGitHubEvent(
 				const author =
 					c.author?.username ?? c.author?.name ?? 'unknown';
 
-				const commitTitle = c.url
-					? `Commit — [\`${sha}\`](${c.url})`
-					: `Commit — \`${sha}\``;
+				const commitLink = c.url
+					? `[\`${sha}\`](${c.url})`
+					: `\`${sha}\``;
 
 				embed.addFields({
-					name: commitTitle,
-					value: `> ${message.trim()}\n\n👤 **Contributor:** \`${author}\``
+					name: '\u200b', // Keeps the field block clean
+					value: `${commitLink} — \`${author}\`\n> ${message.trim()}`
 				});
 			}
 
