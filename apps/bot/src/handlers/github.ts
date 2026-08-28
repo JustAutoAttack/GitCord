@@ -1,10 +1,4 @@
-import {
-	TextChannel,
-	EmbedBuilder,
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle
-} from 'discord.js';
+import { TextChannel, EmbedBuilder } from 'discord.js';
 
 import { client } from '../core';
 import { ENV } from '../config';
@@ -109,7 +103,6 @@ export async function handleGitHubEvent(
 	const channel = fetchedChannel as TextChannel;
 	const embed = new EmbedBuilder();
 	let hasEvent = false;
-	let actionRow: ActionRowBuilder<ButtonBuilder> | undefined;
 
 	const senderName = body.sender?.login ?? 'GitHub Actions';
 	const senderAvatar = body.sender?.avatar_url;
@@ -136,10 +129,8 @@ export async function handleGitHubEvent(
 				.setURL(repoUrl ?? null);
 
 			const displayCommits = commits.slice(0, 5);
-			actionRow = new ActionRowBuilder<ButtonBuilder>();
 
-			for (let i = 0; i < displayCommits.length; i++) {
-				const c = displayCommits[i];
+			for (const c of displayCommits) {
 				const sha = c.id ? c.id.substring(0, 7) : '0000000';
 				const message = c.message
 					? c.message.split('\n')[0]
@@ -147,24 +138,14 @@ export async function handleGitHubEvent(
 				const author =
 					c.author?.username ?? c.author?.name ?? 'unknown';
 
-				// Added a clean spacing gap (\n\n) between message and contributor
+				const commitTitle = c.url
+					? `Commit — [\`${sha}\`](${c.url})`
+					: `Commit — \`${sha}\``;
+
 				embed.addFields({
-					name: `Commit — \`${sha}\``,
+					name: commitTitle,
 					value: `> ${message.trim()}\n\n👤 **Contributor:** \`${author}\``
 				});
-
-				if (c.url && actionRow.components.length < 5) {
-					actionRow.addComponents(
-						new ButtonBuilder()
-							.setLabel(`View #${i + 1} (${sha})`)
-							.setStyle(ButtonStyle.Link)
-							.setURL(c.url)
-					);
-				}
-			}
-
-			if (actionRow.components.length === 0) {
-				actionRow = undefined;
 			}
 
 			hasEvent = true;
@@ -196,7 +177,7 @@ export async function handleGitHubEvent(
 				.setTitle(`🔀 Pull Request ${actionLabel}: #${prNumber}`)
 				.setURL(prUrl ?? null)
 				.setDescription(
-					`**${prTitle}**${prBody ? `\n\n> ${prBody.substring(0, 150)}...` : ''}`
+					`**[${prTitle}](${prUrl})**${prBody ? `\n\n> ${prBody.substring(0, 150)}...` : ''}`
 				)
 				.addFields(
 					{ name: 'Repository', value: `\`${repo}\``, inline: true },
@@ -207,15 +188,6 @@ export async function handleGitHubEvent(
 						inline: true
 					}
 				);
-
-			if (prUrl) {
-				actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-					new ButtonBuilder()
-						.setLabel('View Pull Request')
-						.setStyle(ButtonStyle.Link)
-						.setURL(prUrl)
-				);
-			}
 
 			hasEvent = true;
 			break;
@@ -237,22 +209,13 @@ export async function handleGitHubEvent(
 				.setTitle(`📂 Issue ${action}: #${issueNumber}`)
 				.setURL(issueUrl ?? null)
 				.setDescription(
-					`**${issueTitle}**${issueBody ? `\n\n> ${issueBody.substring(0, 150)}...` : ''}`
+					`**[${issueTitle}](${issueUrl})**${issueBody ? `\n\n> ${issueBody.substring(0, 150)}...` : ''}`
 				)
 				.addFields(
 					{ name: 'Repository', value: `\`${repo}\``, inline: true },
 					{ name: 'Author', value: `\`${issueUser}\``, inline: true },
 					{ name: 'Action', value: `\`${action}\``, inline: true }
 				);
-
-			if (issueUrl) {
-				actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-					new ButtonBuilder()
-						.setLabel('View Issue')
-						.setStyle(ButtonStyle.Link)
-						.setURL(issueUrl)
-				);
-			}
 
 			hasEvent = true;
 			break;
@@ -281,15 +244,6 @@ export async function handleGitHubEvent(
 					inline: true
 				});
 
-			if (releaseUrl) {
-				actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-					new ButtonBuilder()
-						.setLabel('View Release')
-						.setStyle(ButtonStyle.Link)
-						.setURL(releaseUrl)
-				);
-			}
-
 			hasEvent = true;
 			break;
 		}
@@ -308,16 +262,6 @@ export async function handleGitHubEvent(
 						`Branch \`${branch}\` was successfully created on \`${repo}\``
 					);
 
-				if (branchUrl) {
-					actionRow =
-						new ActionRowBuilder<ButtonBuilder>().addComponents(
-							new ButtonBuilder()
-								.setLabel('View Branch')
-								.setStyle(ButtonStyle.Link)
-								.setURL(branchUrl)
-						);
-				}
-
 				hasEvent = true;
 				break;
 			}
@@ -328,16 +272,8 @@ export async function handleGitHubEvent(
 	}
 
 	if (hasEvent) {
-		const payload: {
-			embeds: EmbedBuilder[];
-			components?: ActionRowBuilder<ButtonBuilder>[];
-		} = { embeds: [embed] };
-		if (actionRow && actionRow.components.length > 0) {
-			payload.components = [actionRow];
-		}
-
-		await channel.send(payload);
-		return `Processed ${event} event successfully with embed and action buttons`;
+		await channel.send({ embeds: [embed] });
+		return `Processed ${event} event successfully with embed`;
 	}
 
 	return `Event ${event} yielded no message`;
