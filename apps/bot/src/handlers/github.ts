@@ -12,6 +12,15 @@ export interface GitHubWebhookPayload {
 	pusher?: {
 		name?: string;
 	};
+	commits?: Array<{
+		id?: string;
+		message?: string;
+		url?: string;
+		author?: {
+			username?: string;
+			name?: string;
+		};
+	}>;
 	head_commit?: {
 		id?: string;
 		message?: string;
@@ -27,10 +36,28 @@ export interface GitHubWebhookPayload {
 		title?: string;
 		html_url?: string;
 		number?: number;
+		merged?: boolean;
+		body?: string;
 		user?: {
 			login?: string;
 			avatar_url?: string;
 		};
+	};
+	issue?: {
+		title?: string;
+		html_url?: string;
+		number?: number;
+		body?: string;
+		user?: {
+			login?: string;
+			avatar_url?: string;
+		};
+	};
+	release?: {
+		name?: string;
+		tag_name?: string;
+		html_url?: string;
+		body?: string;
 	};
 	ref_type?: string;
 	sender?: {
@@ -43,15 +70,16 @@ export interface GitHubWebhookPayload {
 
 const ALLOWED_REPOSITORY = 'JustAutoAttack/GitCord';
 
-// Professional Brand / Event Colors
-const EMBED_COLORS = {
+const EMBED_COLORS: Record<string, number> = {
 	PUSH: 0x2f81f7, // GitHub Blue
 	PR_OPEN: 0x238636, // GitHub Green
-	PR_CLOSE: 0xda3633, // GitHub Red/Pink
+	PR_CLOSE: 0xda3633, // GitHub Red
 	PR_MERGED: 0x8957e5, // GitHub Purple
+	ISSUE: 0xdb6d28, // GitHub Orange
+	RELEASE: 0xf0883e, // Gold / Amber
 	BRANCH: 0x7ee787, // Light Green
 	DEFAULT: 0x30363d // Dark Border Grey
-} as const;
+};
 
 export async function handleGitHubEvent(
 	event: string | undefined,
@@ -76,7 +104,6 @@ export async function handleGitHubEvent(
 	const embed = new EmbedBuilder();
 	let hasEvent = false;
 
-	// Common footer context for all GitHub embeds
 	const senderName = body.sender?.login ?? 'GitHub Actions';
 	const senderAvatar = body.sender?.avatar_url;
 	embed.setFooter({
@@ -91,37 +118,30 @@ export async function handleGitHubEvent(
 			const repoUrl = body.repository?.html_url;
 			const refParts = body.ref?.split('/') ?? [];
 			const branch = refParts[refParts.length - 1] ?? 'unknown-branch';
-
-			const author =
-				body.head_commit?.author?.username ??
-				body.head_commit?.author?.name ??
-				body.pusher?.name ??
-				body.sender?.login ??
-				'someone';
-
-			const commitMsg = body.head_commit?.message ?? 'No commit message';
-			const commitUrl = body.head_commit?.url;
-			const shortCommitId = body.head_commit?.id
-				? body.head_commit.id.substring(0, 7)
-				: '';
-
-			// Format commit message neatly (take only the first line for the title/field header if multi-line)
-			const firstLineMsg = commitMsg.split('\n')[0];
+			const commits =
+				body.commits ?? (body.head_commit ? [body.head_commit] : []);
 
 			embed
 				.setColor(EMBED_COLORS.PUSH)
-				.setTitle(`📦 New Push to ${repo}`)
-				.setURL(repoUrl ?? null)
-				.setDescription(
-					`Branch: \`${branch}\` • Committer: \`${author}\``
+				.setTitle(
+					`📦 [${repo}:${branch}] ${commits.length} new commit${commits.length === 1 ? '' : 's'}`
 				)
-				.addFields({
-					name: 'Latest Commit',
-					value:
-						commitUrl && shortCommitId
-							? `[\`${shortCommitId}\`](${commitUrl}) — ${firstLineMsg.trim()}`
-							: `— ${firstLineMsg.trim()}`
+				.setURL(repoUrl ?? null);
+
+			const displayCommits = commits.slice(0, 5);
+			for (const c of displayCommits) {
+				const sha = c.id ? c.id.substring(0, 7) : '0000000';
+				const message = c.message
+					? c.message.split('\n')[0]
+					: 'No commit message';
+				const author =
+					c.author?.username ?? c.author?.name ?? 'unknown';
+
+				embed.addFields({
+					name: `Commit — [\`${sha}\`](${c.url})`,
+					value: `> ${message.trim()}\n👤 **Contributor:** \`${author}\``
 				});
+			}
 
 			hasEvent = true;
 			break;
@@ -133,8 +153,8 @@ export async function handleGitHubEvent(
 			const prUrl = body.pull_request?.html_url;
 			const prNumber = body.pull_request?.number;
 			const prUser = body.pull_request?.user?.login ?? 'unknown';
+			const prBody = body.pull_request?.body;
 
-			// Dynamic color based on PR lifecycle action
 			let color = EMBED_COLORS.PR_OPEN;
 			if (action === 'closed' && body.pull_request?.merged) {
 				color = EMBED_COLORS.PR_MERGED;
@@ -151,7 +171,9 @@ export async function handleGitHubEvent(
 				.setColor(color)
 				.setTitle(`🔀 Pull Request ${actionLabel}: #${prNumber}`)
 				.setURL(prUrl ?? null)
-				.setDescription(`**[${prTitle}](${prUrl})**`)
+				.setDescription(
+					`**[${prTitle}](${prUrl})**${prBody ? `\n\n> ${prBody.substring(0, 150)}...` : ''}`
+				)
 				.addFields(
 					{ name: 'Repository', value: `\`${repo}\``, inline: true },
 					{ name: 'Author', value: `\`${prUser}\``, inline: true },
@@ -161,6 +183,61 @@ export async function handleGitHubEvent(
 						inline: true
 					}
 				);
+
+			hasEvent = true;
+			break;
+		}
+		case 'issues': {
+			const repo = body.repository?.name ?? 'unknown-repo';
+			const action = body.action ?? 'opened';
+			const issueTitle = body.issue?.title ?? 'Untitled Issue';
+			const issueUrl = body.issue?.html_url;
+			const issueNumber = body.issue?.number;
+			const issueUser = body.issue?.user?.login ?? 'unknown';
+			const issueBody = body.issue?.body;
+
+			let color = EMBED_COLORS.ISSUE;
+			if (action === 'closed') color = EMBED_COLORS.PR_CLOSE;
+
+			embed
+				.setColor(color)
+				.setTitle(`📂 Issue ${action}: #${issueNumber}`)
+				.setURL(issueUrl ?? null)
+				.setDescription(
+					`**[${issueTitle}](${issueUrl})**${issueBody ? `\n\n> ${issueBody.substring(0, 150)}...` : ''}`
+				)
+				.addFields(
+					{ name: 'Repository', value: `\`${repo}\``, inline: true },
+					{ name: 'Author', value: `\`${issueUser}\``, inline: true },
+					{ name: 'Action', value: `\`${action}\``, inline: true }
+				);
+
+			hasEvent = true;
+			break;
+		}
+		case 'release': {
+			const repo = body.repository?.name ?? 'unknown-repo';
+			const action = body.action ?? 'published';
+			const releaseName =
+				body.release?.name ?? body.release?.tag_name ?? 'New Release';
+			const releaseUrl = body.release?.html_url;
+			const tagName = body.release?.tag_name ?? '';
+			const releaseBody = body.release?.body;
+
+			embed
+				.setColor(EMBED_COLORS.RELEASE)
+				.setTitle(`🚀 Release ${action}: ${releaseName} (${tagName})`)
+				.setURL(releaseUrl ?? null)
+				.setDescription(
+					releaseBody
+						? `${releaseBody.substring(0, 300)}...`
+						: 'No release notes provided.'
+				)
+				.addFields({
+					name: 'Repository',
+					value: `\`${repo}\``,
+					inline: true
+				});
 
 			hasEvent = true;
 			break;
@@ -177,7 +254,7 @@ export async function handleGitHubEvent(
 					.setTitle(`🌿 New Branch Created`)
 					.setURL(branchUrl)
 					.setDescription(
-						`Branch \`${branch}\` was successfully pushed to \`${repo}\``
+						`Branch \`${branch}\` was successfully created on \`${repo}\``
 					);
 
 				hasEvent = true;

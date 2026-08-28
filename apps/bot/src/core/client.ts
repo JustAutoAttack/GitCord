@@ -1,6 +1,12 @@
-import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
+import {
+	Client,
+	GatewayIntentBits,
+	TextChannel,
+	EmbedBuilder
+} from 'discord.js';
 
 import { ENV } from '../config';
+import { handleInteraction } from '../handlers';
 
 export const client = new Client({
 	intents: [GatewayIntentBits.Guilds]
@@ -12,9 +18,15 @@ client.once('clientReady', async (c) => {
 	try {
 		const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
 		if (channel && channel.isTextBased()) {
-			await (channel as TextChannel).send(
-				'**Bot Engine is online and listening for changes!**'
-			);
+			const embed = new EmbedBuilder()
+				.setColor(0x238636) // GitHub Green
+				.setTitle('🟢 Bot Engine Online')
+				.setDescription(
+					'The system is active, listening for changes, and ready to track events.'
+				)
+				.setTimestamp();
+
+			await (channel as TextChannel).send({ embeds: [embed] });
 		}
 	} catch (error) {
 		console.error(
@@ -24,19 +36,30 @@ client.once('clientReady', async (c) => {
 	}
 });
 
+client.on('interactionCreate', async (interaction) => {
+	if (interaction.isChatInputCommand()) {
+		await handleInteraction(interaction);
+	}
+});
+
 export async function loginBot() {
 	await client.login(ENV.DISCORD_BOT_TOKEN);
 }
 
-// Graceful shutdown handler for terminal interruption (Ctrl+C, kill signals)
 async function gracefulShutdown(signal: string) {
 	console.log(`[Lifecycle] Received ${signal}. Shutting down gracefully...`);
 	try {
 		const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
 		if (channel && channel.isTextBased()) {
-			await (channel as TextChannel).send(
-				'**Bot Engine is going offline.**'
-			);
+			const embed = new EmbedBuilder()
+				.setColor(0xda3633) // GitHub Red
+				.setTitle('🔴 Bot Engine Offline')
+				.setDescription(
+					`Received system signal \`${signal}\`. Shutting down engine...`
+				)
+				.setTimestamp();
+
+			await (channel as TextChannel).send({ embeds: [embed] });
 		}
 	} catch (error) {
 		console.error(
