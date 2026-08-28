@@ -1,1 +1,3 @@
 # GitCord
+
+## Table of Contents
