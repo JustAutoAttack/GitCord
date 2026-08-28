@@ -1,7 +1,11 @@
 import {
+	ContainerBuilder,
+	MessageFlags,
+	SeparatorBuilder,
+	SeparatorSpacingSize,
 	SlashCommandBuilder,
 	ChatInputCommandInteraction,
-	EmbedBuilder
+	TextDisplayBuilder
 } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
@@ -34,92 +38,175 @@ export const data = new SlashCommandBuilder()
 			)
 	);
 
+function truncate(text: string, maxLength: number): string {
+	if (text.length <= maxLength) {
+		return text;
+	}
+
+	return `${text.substring(0, maxLength - 3)}...`;
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
 	const subcommand = interaction.options.getSubcommand();
 
 	if (subcommand === 'log') {
 		await interaction.deferReply();
-		const branch = interaction.options.getString('branch') ?? 'main';
+		const branch = interaction.options.getString('branch');
 		const author = interaction.options.getString('author');
 
 		try {
-			const url = `https://api.github.com/repos/JustAutoAttack/GitCord/commits?sha=${branch}${author ? `&author=${author}` : ''}`;
+			// Build query params conditionally: if branch is provided, use it as sha. Otherwise, omit sha to search repository-wide.
+			const queryParams = new URLSearchParams();
+			if (branch) {
+				queryParams.append('sha', branch);
+			}
+			if (author) {
+				queryParams.append('author', author);
+			}
+
+			const url = `https://api.github.com/repos/JustAutoAttack/GitCord/commits?${queryParams.toString()}`;
 			const response = await fetch(url, {
 				headers: { 'User-Agent': 'GitCord-Bot' }
 			});
 
 			if (!response.ok) {
-				const errorEmbed = new EmbedBuilder()
-					.setColor(0xda3633)
-					.setTitle('❌ GitHub API Error')
-					.setDescription(
-						`Failed to fetch logs from GitHub (Status code: \`${response.status}\`). Make sure the branch name \`${branch}\` exists.`
-					);
+				const container = new ContainerBuilder().setAccentColor(
+					0xda3633
+				);
 
-				await interaction.editReply({ embeds: [errorEmbed] });
+				container.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						`## ❌ GitHub API Error\nFailed to fetch logs from GitHub (Status code: \`${response.status}\`). Make sure the branch name or author is valid.`
+					)
+				);
+
+				await interaction.editReply({
+					flags: MessageFlags.IsComponentsV2,
+					components: [container]
+				});
 				return;
 			}
 
 			const commits = (await response.json()) as Array<any>;
-			if (!commits.length) {
-				const emptyEmbed = new EmbedBuilder()
-					.setColor(0x30363d)
-					.setTitle('⚠️ No Commits Found')
-					.setDescription(
-						`No commits found for branch \`${branch}\`${author ? ` by @${author}` : ''}.`
-					);
 
-				await interaction.editReply({ embeds: [emptyEmbed] });
+			if (!commits.length) {
+				const container = new ContainerBuilder().setAccentColor(
+					0x30363d
+				);
+
+				container.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						`## ⚠️ No Commits Found\nNo commits found${branch ? ` for branch \`${branch}\`` : ''}${author ? ` by @${author}` : ''}.`
+					)
+				);
+
+				await interaction.editReply({
+					flags: MessageFlags.IsComponentsV2,
+					components: [container]
+				});
+				return;
 			}
 
-			const embed = new EmbedBuilder()
-				.setColor(0x2f81f7)
-				.setTitle(`📦 Recent Commits · JustAutoAttack/GitCord`)
-				.setDescription(
-					`Branch: \`${branch}\`${author ? ` • Author: \`@${author}\`` : ''}`
+			const container = new ContainerBuilder().setAccentColor(0x2f81f7);
+
+			const scopeText = [
+				branch
+					? `Branch: \`${branch}\``
+					: 'Branch: `all (repository-wide)`',
+				author ? `Author: \`@${author}\`` : ''
+			]
+				.filter(Boolean)
+				.join(' · ');
+
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					`## 📦 Recent Commits\n[JustAutoAttack/GitCord](https://github.com/JustAutoAttack/GitCord) · ${scopeText}`
 				)
-				.setTimestamp();
+			);
+
+			container.addSeparatorComponents(
+				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+			);
 
 			const topCommits = commits.slice(0, 5);
-			for (const c of topCommits) {
+			for (let i = 0; i < topCommits.length; i++) {
+				const c = topCommits[i];
 				const sha = c.sha.substring(0, 7);
-				const commitMessage = c.commit.message.split('\n')[0];
+				const commitMessage = truncate(
+					c.commit.message.split('\n')[0].trim(),
+					140
+				);
 				const authorName =
 					c.author?.login ?? c.commit.author.name ?? 'unknown';
 
 				const commitDate = c.commit.author?.date;
 				const timestampTag = commitDate
 					? `<t:${Math.floor(new Date(commitDate).getTime() / 1000)}:R>`
-					: 'Unknown time';
+					: '';
 
-				embed.addFields({
-					name: `Commit — [\`${sha}\`](${c.html_url})`,
-					value: `> ${commitMessage.trim()}\n👤 **Contributor:** \`${authorName}\` • 🕒 ${timestampTag}`
-				});
-			}
+				const shaDisplay = c.html_url
+					? `[\`${sha}\`](${c.html_url})`
+					: `\`${sha}\``;
+				const metadata = timestampTag
+					? `${authorName} · ${timestampTag}`
+					: authorName;
 
-			await interaction.editReply({ embeds: [embed] });
-		} catch (error) {
-			console.error(error);
-			const catchEmbed = new EmbedBuilder()
-				.setColor(0xda3633)
-				.setTitle('❌ Execution Error')
-				.setDescription(
-					'An error occurred while communicating with the GitHub API.'
+				container.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						[`${shaDisplay}  **${commitMessage}**`, metadata].join(
+							'\n'
+						)
+					)
 				);
 
-			await interaction.editReply({ embeds: [catchEmbed] });
-		}
-	} else if (subcommand === 'status') {
-		const statusEmbed = new EmbedBuilder()
-			.setColor(0x238636)
-			.setTitle('🛠️ Repository Status')
-			.setDescription(
-				'Repo status check component is active and running smoothly.'
+				if (i < topCommits.length - 1) {
+					container.addSeparatorComponents(
+						new SeparatorBuilder().setSpacing(
+							SeparatorSpacingSize.Small
+						)
+					);
+				}
+			}
+
+			const unixTimestamp = Math.floor(Date.now() / 1000);
+			container.addSeparatorComponents(
+				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+			);
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(`<t:${unixTimestamp}:f>`)
 			);
 
+			await interaction.editReply({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container]
+			});
+		} catch (error) {
+			console.error(error);
+			const container = new ContainerBuilder().setAccentColor(0xda3633);
+
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					'## ❌ Execution Error\nAn error occurred while communicating with the GitHub API.'
+				)
+			);
+
+			await interaction.editReply({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container]
+			});
+		}
+	} else if (subcommand === 'status') {
+		const container = new ContainerBuilder().setAccentColor(0x238636);
+
+		container.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'## 🛠️ Repository Status\nRepo status check component is active and running smoothly.'
+			)
+		);
+
 		await interaction.reply({
-			embeds: [statusEmbed],
+			flags: MessageFlags.IsComponentsV2,
+			components: [container],
 			ephemeral: true
 		});
 	}
