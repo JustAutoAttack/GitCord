@@ -1,7 +1,6 @@
 import {
 	ContainerBuilder,
 	MessageFlags,
-	SectionBuilder,
 	SeparatorBuilder,
 	SeparatorSpacingSize,
 	TextChannel,
@@ -20,6 +19,7 @@ export interface GitHubCommit {
 		username?: string;
 		name?: string;
 		email?: string;
+		login?: string;
 	};
 }
 
@@ -119,9 +119,6 @@ function addSeparator(container: ContainerBuilder): void {
 	);
 }
 
-/**
- * Header without an avatar.
- */
 function createHeader(
 	container: ContainerBuilder,
 	title: string,
@@ -132,16 +129,6 @@ function createHeader(
 	);
 }
 
-/**
- * Discord relative timestamp.
- *
- * Discord updates this automatically.
- *
- * Example:
- * 39 seconds ago
- * 2 minutes ago
- * 3 hours ago
- */
 function discordRelativeTimestamp(timestamp?: string): string {
 	if (!timestamp) {
 		return '';
@@ -156,14 +143,12 @@ function discordRelativeTimestamp(timestamp?: string): string {
 	return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
 }
 
-/**
- * Return the GitHub username for a commit.
- */
 function getCommitUsername(
 	commit: GitHubCommit,
 	body: GitHubWebhookPayload
 ): string {
 	return (
+		commit.author?.login ??
 		commit.author?.username ??
 		body.sender?.login ??
 		body.pusher?.name ??
@@ -171,9 +156,6 @@ function getCommitUsername(
 	);
 }
 
-/**
- * Create a commit row using a text-only TextDisplay component.
- */
 function createCommitSection(
 	commit: GitHubCommit,
 	body: GitHubWebhookPayload
@@ -187,8 +169,6 @@ function createCommitSection(
 
 	const username = getCommitUsername(commit, body);
 
-	const authorName = commit.author?.name ?? username;
-
 	const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
 	const shaDisplay = commit.url
@@ -196,17 +176,14 @@ function createCommitSection(
 		: `\`${sha}\``;
 
 	const metadata = relativeTime
-		? `${authorName} · @${username} · ${relativeTime}`
-		: `${authorName} · @${username}`;
+		? `@${username} · ${relativeTime}`
+		: `@${username}`;
 
 	return new TextDisplayBuilder().setContent(
 		[`${shaDisplay}  **${message}**`, metadata].join('\n')
 	);
 }
 
-/**
- * Build the commit panel.
- */
 function buildCommitPanel(
 	container: ContainerBuilder,
 	commits: GitHubCommit[],
@@ -253,9 +230,6 @@ function buildCommitPanel(
 	}
 }
 
-/**
- * Add repository metadata.
- */
 function addRepositoryFooter(
 	container: ContainerBuilder,
 	repoFullName: string,
@@ -277,11 +251,6 @@ function addRepositoryFooter(
 	);
 }
 
-/**
- * Add the time the Discord message was sent.
- *
- * Discord renders this in the user's local time.
- */
 function addMessageTimestamp(container: ContainerBuilder): void {
 	const unixTimestamp = Math.floor(Date.now() / 1000);
 
@@ -292,16 +261,10 @@ function addMessageTimestamp(container: ContainerBuilder): void {
 	);
 }
 
-/**
- * PUSH EVENT
- */
 function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-
 	const repoUrl = body.repository?.html_url;
-
 	const branch = getBranchName(body.ref);
-
 	const commits =
 		body.commits ?? (body.head_commit ? [body.head_commit] : []);
 
@@ -316,9 +279,7 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	);
 
 	addSeparator(container);
-
 	buildCommitPanel(container, commits, body);
-
 	addSeparator(container);
 
 	addRepositoryFooter(
@@ -333,20 +294,13 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	return container;
 }
 
-/**
- * PULL REQUEST EVENT
- */
 function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-
 	const repoUrl = body.repository?.html_url;
-
 	const action = body.action ?? 'updated';
-
 	const pr = body.pull_request;
 
 	const isMerged = action === 'closed' && pr?.merged === true;
-
 	let color = COLORS.PR_OPEN;
 
 	if (isMerged) {
@@ -356,9 +310,7 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	}
 
 	const actionLabel = isMerged ? 'merged' : action;
-
 	const title = pr?.title ?? 'Untitled Pull Request';
-
 	const description = pr?.body
 		? `\n\n> ${truncate(pr.body.replace(/\n/g, ' '), 250)}`
 		: '';
@@ -381,7 +333,7 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoUrl,
 		[
 			'**Author**',
-			`\`${pr?.user?.login ?? 'unknown'}\``,
+			`\`@${pr?.user?.login ?? 'unknown'}\``,
 			'',
 			'**Status**',
 			`\`${actionLabel}\``
@@ -393,22 +345,14 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	return container;
 }
 
-/**
- * ISSUE EVENT
- */
 function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-
 	const repoUrl = body.repository?.html_url;
-
 	const action = body.action ?? 'opened';
-
 	const issue = body.issue;
 
 	const color = action === 'closed' ? COLORS.PR_CLOSE : COLORS.ISSUE;
-
 	const title = issue?.title ?? 'Untitled Issue';
-
 	const description = issue?.body
 		? `\n\n> ${truncate(issue.body.replace(/\n/g, ' '), 250)}`
 		: '';
@@ -431,7 +375,7 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoUrl,
 		[
 			'**Author**',
-			`\`${issue?.user?.login ?? 'unknown'}\``,
+			`\`@${issue?.user?.login ?? 'unknown'}\``,
 			'',
 			'**Action**',
 			`\`${action}\``
@@ -443,20 +387,13 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	return container;
 }
 
-/**
- * RELEASE EVENT
- */
 function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-
 	const repoUrl = body.repository?.html_url;
-
 	const release = body.release;
 
 	const name = release?.name ?? release?.tag_name ?? 'New Release';
-
 	const tag = release?.tag_name ? `\`${release.tag_name}\`` : '';
-
 	const releaseNotes = release?.body
 		? truncate(release.body, 500)
 		: 'No release notes provided.';
@@ -482,17 +419,12 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	);
 
 	addSeparator(container);
-
 	addRepositoryFooter(container, repoFullName, repoUrl);
-
 	addMessageTimestamp(container);
 
 	return container;
 }
 
-/**
- * CREATE EVENT
- */
 function handleCreateEvent(
 	body: GitHubWebhookPayload
 ): ContainerBuilder | null {
@@ -501,11 +433,8 @@ function handleCreateEvent(
 	}
 
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
-
 	const repoUrl = body.repository?.html_url;
-
 	const branch = body.ref ?? 'unknown-branch';
-
 	const sender = body.sender?.login ?? 'unknown';
 
 	const branchUrl = repoUrl
@@ -530,7 +459,7 @@ function handleCreateEvent(
 		container,
 		repoFullName,
 		repoUrl,
-		['**Creator**', `\`${sender}\``].join('\n')
+		['**Creator**', `\`@${sender}\``].join('\n')
 	);
 
 	addMessageTimestamp(container);
@@ -538,9 +467,6 @@ function handleCreateEvent(
 	return container;
 }
 
-/**
- * MAIN GITHUB EVENT HANDLER
- */
 export async function handleGitHubEvent(
 	event: string | undefined,
 	body: GitHubWebhookPayload

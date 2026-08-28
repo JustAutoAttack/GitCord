@@ -26,7 +26,7 @@ export const data = new SlashCommandBuilder()
 			.addStringOption((option) =>
 				option
 					.setName('author')
-					.setDescription('Filter by GitHub username or author name')
+					.setDescription('Filter by GitHub username')
 					.setRequired(false)
 			)
 			.addIntegerOption((option) =>
@@ -95,15 +95,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				const query = authorFilter.toLowerCase().replace(/^@/, '');
 				commits = commits.filter((c) => {
 					const login = c.author?.login?.toLowerCase() ?? '';
-					const name = c.commit?.author?.name?.toLowerCase() ?? '';
 					const email = c.commit?.author?.email?.toLowerCase() ?? '';
 
-					// Match if the query matches either username, git config name, or email prefix
-					return (
-						login.includes(query) ||
-						name.includes(query) ||
-						email.includes(query)
-					);
+					return login.includes(query) || email.includes(query);
 				});
 			}
 
@@ -114,7 +108,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 				container.addTextDisplayComponents(
 					new TextDisplayBuilder().setContent(
-						`## ⚠️ No Commits Found\nNo commits found for branch \`${branch}\`${authorFilter ? ` matching author \`${authorFilter}\`` : ''}.`
+						`## ⚠️ No Commits Found\nNo commits found for branch \`${branch}\`${authorFilter ? ` matching username \`@${authorFilter.replace(/^@/, '')}\`` : ''}.`
 					)
 				);
 
@@ -129,7 +123,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 			const scopeText = [
 				`Branch: \`${branch}\``,
-				authorFilter ? `Author: \`${authorFilter}\`` : ''
+				authorFilter
+					? `Author: \`@${authorFilter.replace(/^@/, '')}\``
+					: ''
 			]
 				.filter(Boolean)
 				.join(' · ');
@@ -153,9 +149,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					140
 				);
 
-				// Always favor the GitHub account login if available, falling back to git config name
-				const authorName =
-					c.author?.login ?? c.commit.author.name ?? 'unknown';
+				const username = c.author?.login ?? 'unknown';
 
 				const commitDate = c.commit.author?.date;
 				const timestampTag = commitDate
@@ -166,8 +160,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					? `[\`${sha}\`](${c.html_url})`
 					: `\`${sha}\``;
 				const metadata = timestampTag
-					? `${authorName} · ${timestampTag}`
-					: authorName;
+					? `@${username} · ${timestampTag}`
+					: `@${username}`;
 
 				container.addTextDisplayComponents(
 					new TextDisplayBuilder().setContent(
