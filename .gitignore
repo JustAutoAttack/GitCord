@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs & caches
+dist/
+build/
+.turbo/
+.next/
+out/
+.vite/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Database (SQLite)
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tauri specific build files (if Tauri ends up in dashboard)
+src-tauri/target/
