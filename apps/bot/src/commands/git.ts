@@ -149,7 +149,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					140
 				);
 
-				const username = c.author?.login ?? 'unknown';
+				const email = c.commit?.author?.email ?? '';
+				const emailHandle = email.includes('@')
+					? email.split('@')[0]
+					: '';
+				const username = (c.author?.login ?? emailHandle) || 'unknown';
 
 				const commitDate = c.commit.author?.date;
 				const timestampTag = commitDate
