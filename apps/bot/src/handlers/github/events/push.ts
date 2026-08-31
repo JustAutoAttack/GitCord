@@ -1,6 +1,6 @@
 import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
 import { GitHubWebhookPayload } from '../types';
-import { COLORS, MAX_COMMITS } from '../constants';
+import { COLORS } from '../constants';
 import {
 	createContainer,
 	addSeparator,
@@ -41,9 +41,8 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			new TextDisplayBuilder().setContent(`**${commitLabel}**`)
 		);
 
-		const displayCommits = commits.slice(0, MAX_COMMITS);
-		for (let i = 0; i < displayCommits.length; i++) {
-			const commit = displayCommits[i];
+		for (let i = 0; i < commits.length; i++) {
+			const commit = commits[i];
 			const sha = commit.id?.substring(0, 7) ?? '0000000';
 			const message = truncate(
 				commit.message?.split('\n')[0].trim() || 'No commit message',
@@ -65,18 +64,9 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 				)
 			);
 
-			if (i < displayCommits.length - 1) {
+			if (i < commits.length - 1) {
 				addSeparator(container);
 			}
-		}
-
-		const remaining = commits.length - displayCommits.length;
-		if (remaining > 0) {
-			container.addTextDisplayComponents(
-				new TextDisplayBuilder().setContent(
-					`> +${remaining} more commit${remaining === 1 ? '' : 's'}`
-				)
-			);
 		}
 	}
 
