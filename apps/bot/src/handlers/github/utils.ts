@@ -53,7 +53,17 @@ export function getCommitUsername(
 	commit: GitHubCommit,
 	body: GitHubWebhookPayload
 ): string {
-	return commit.author?.login ?? 'unknown';
+	return (
+		commit.author?.login ??
+		commit.author?.username ??
+		commit.committer?.login ??
+		commit.committer?.username ??
+		commit.author?.name ??
+		commit.committer?.name ??
+		body.sender?.login ??
+		body.pusher?.name ??
+		'unknown'
+	);
 }
 
 export function buildHeader(

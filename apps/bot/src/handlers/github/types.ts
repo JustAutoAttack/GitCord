@@ -9,6 +9,12 @@ export interface GitHubCommit {
 		email?: string;
 		login?: string;
 	};
+	committer?: {
+		username?: string;
+		name?: string;
+		email?: string;
+		login?: string;
+	};
 }
 
 export interface GitHubWebhookPayload {
