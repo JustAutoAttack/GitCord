@@ -1,12 +1,70 @@
 import {
+	ChatInputCommandInteraction,
 	ContainerBuilder,
 	MessageFlags,
 	SeparatorBuilder,
 	SeparatorSpacingSize,
 	SlashCommandBuilder,
-	ChatInputCommandInteraction,
 	TextDisplayBuilder
 } from 'discord.js';
+
+interface GitHubAuthor {
+	name?: string;
+	email?: string;
+	date?: string;
+}
+
+interface GitHubUser {
+	login?: string;
+	id?: number;
+	avatar_url?: string;
+	html_url?: string;
+}
+
+interface GitHubCommitInner {
+	author?: GitHubAuthor;
+	committer?: GitHubAuthor;
+	message: string;
+	tree?: {
+		sha: string;
+		url: string;
+	};
+	url?: string;
+	comment_count?: number;
+}
+
+interface GitHubCommitResponse {
+	sha: string;
+	node_id?: string;
+	commit: GitHubCommitInner;
+	url?: string;
+	html_url: string;
+	comments_url?: string;
+	author?: GitHubUser | null;
+	committer?: GitHubUser | null;
+	parents?: Array<{
+		sha: string;
+		url: string;
+		html_url?: string;
+	}>;
+}
+
+interface GitHubRepositoryResponse {
+	full_name: string;
+	html_url: string;
+	default_branch: string;
+	created_at: string;
+	size?: number;
+}
+
+interface GitHubBranchResponse {
+	name: string;
+	commit: {
+		sha: string;
+		url: string;
+	};
+	protected?: boolean;
+}
 
 export const data = new SlashCommandBuilder()
 	.setName('git')
@@ -43,20 +101,19 @@ export const data = new SlashCommandBuilder()
 	.addSubcommand((subcommand) =>
 		subcommand
 			.setName('status')
-			.setDescription(
-				'Check active repository status and open PR overview'
-			)
+			.setDescription('Check active repository status overview')
 	);
 
 function truncate(text: string, maxLength: number): string {
 	if (text.length <= maxLength) {
 		return text;
 	}
-
 	return `${text.substring(0, maxLength - 3)}...`;
 }
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+export async function execute(
+	interaction: ChatInputCommandInteraction
+): Promise<void> {
 	const subcommand = interaction.options.getSubcommand();
 
 	if (subcommand === 'checkout') {
@@ -72,15 +129,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			});
 
 			if (!response.ok) {
-				const container = new ContainerBuilder().setAccentColor(
-					0xda3633
-				);
-
-				container.addTextDisplayComponents(
-					new TextDisplayBuilder().setContent(
-						`## ❌ GitHub API Error\nFailed to fetch logs from GitHub (Status code: \`${response.status}\`). Make sure the branch name \`${branch}\` exists.`
-					)
-				);
+				const container = new ContainerBuilder()
+					.setAccentColor(0xda3633)
+					.addTextDisplayComponents(
+						new TextDisplayBuilder().setContent(
+							`**API Error**\nFailed to fetch logs from GitHub (Status code: \`${response.status}\`). Make sure the branch \`${branch}\` exists.`
+						)
+					);
 
 				await interaction.editReply({
 					flags: MessageFlags.IsComponentsV2,
@@ -89,28 +144,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				return;
 			}
 
-			let commits = (await response.json()) as Array<any>;
+			let commits = (await response.json()) as GitHubCommitResponse[];
 
 			if (authorFilter) {
 				const query = authorFilter.toLowerCase().replace(/^@/, '');
 				commits = commits.filter((c) => {
 					const login = c.author?.login?.toLowerCase() ?? '';
 					const email = c.commit?.author?.email?.toLowerCase() ?? '';
-
 					return login.includes(query) || email.includes(query);
 				});
 			}
 
 			if (!commits.length) {
-				const container = new ContainerBuilder().setAccentColor(
-					0x30363d
-				);
-
-				container.addTextDisplayComponents(
-					new TextDisplayBuilder().setContent(
-						`## ⚠️ No Commits Found\nNo commits found for branch \`${branch}\`${authorFilter ? ` matching username \`@${authorFilter.replace(/^@/, '')}\`` : ''}.`
-					)
-				);
+				const container = new ContainerBuilder()
+					.setAccentColor(0x30363d)
+					.addTextDisplayComponents(
+						new TextDisplayBuilder().setContent(
+							`**No Commits Found**\nNo commits found for branch \`${branch}\`${authorFilter ? ` matching username \`@${authorFilter.replace(/^@/, '')}\`` : ''}.`
+						)
+					);
 
 				await interaction.editReply({
 					flags: MessageFlags.IsComponentsV2,
@@ -132,7 +184,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 			container.addTextDisplayComponents(
 				new TextDisplayBuilder().setContent(
-					`## 📦 Branch Commits\n[JustAutoAttack/GitCord](https://github.com/JustAutoAttack/GitCord) · ${scopeText}`
+					`### Branch Commits\n[JustAutoAttack/GitCord](https://github.com/JustAutoAttack/GitCord) · ${scopeText}`
 				)
 			);
 
@@ -149,11 +201,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					140
 				);
 
-				const email = c.commit?.author?.email ?? '';
-				const emailHandle = email.includes('@')
-					? email.split('@')[0]
-					: '';
-				const username = (c.author?.login ?? emailHandle) || 'unknown';
+				const username =
+					c.author?.login ?? c.commit.author?.name ?? 'unknown';
 
 				const commitDate = c.commit.author?.date;
 				const timestampTag = commitDate
@@ -164,14 +213,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					? `[\`${sha}\`](${c.html_url})`
 					: `\`${sha}\``;
 				const metadata = timestampTag
-					? `@${username} · ${timestampTag}`
+					? `@${username}  ·  ${timestampTag}`
 					: `@${username}`;
 
 				container.addTextDisplayComponents(
 					new TextDisplayBuilder().setContent(
-						[`${shaDisplay}  **${commitMessage}**`, metadata].join(
-							'\n'
-						)
+						`${shaDisplay}  **${commitMessage}**\n${metadata}`
 					)
 				);
 
@@ -189,7 +236,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
 			);
 			container.addTextDisplayComponents(
-				new TextDisplayBuilder().setContent(`<t:${unixTimestamp}:f>`)
+				new TextDisplayBuilder().setContent(
+					`[JustAutoAttack/GitCord](https://github.com/JustAutoAttack/GitCord)  ·  <t:${unixTimestamp}:f>`
+				)
 			);
 
 			await interaction.editReply({
@@ -198,13 +247,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			});
 		} catch (error) {
 			console.error(error);
-			const container = new ContainerBuilder().setAccentColor(0xda3633);
-
-			container.addTextDisplayComponents(
-				new TextDisplayBuilder().setContent(
-					'## ❌ Execution Error\nAn error occurred while communicating with the GitHub API.'
-				)
-			);
+			const container = new ContainerBuilder()
+				.setAccentColor(0xda3633)
+				.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						'**Execution Error**\nAn error occurred while communicating with the GitHub API.'
+					)
+				);
 
 			await interaction.editReply({
 				flags: MessageFlags.IsComponentsV2,
@@ -212,18 +261,133 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			});
 		}
 	} else if (subcommand === 'status') {
-		const container = new ContainerBuilder().setAccentColor(0x238636);
+		await interaction.deferReply({ ephemeral: true });
 
-		container.addTextDisplayComponents(
-			new TextDisplayBuilder().setContent(
-				'## 🛠️ Repository Status\nRepo status check component is active and running smoothly.'
-			)
-		);
+		try {
+			const repoRes = await fetch(
+				'https://api.github.com/repos/JustAutoAttack/GitCord',
+				{ headers: { 'User-Agent': 'GitCord-Bot' } }
+			);
+			const branchesRes = await fetch(
+				'https://api.github.com/repos/JustAutoAttack/GitCord/branches',
+				{ headers: { 'User-Agent': 'GitCord-Bot' } }
+			);
+			const contributorsRes = await fetch(
+				'https://api.github.com/repos/JustAutoAttack/GitCord/contributors?per_page=1',
+				{ headers: { 'User-Agent': 'GitCord-Bot' } }
+			);
+			const commitsRes = await fetch(
+				'https://api.github.com/repos/JustAutoAttack/GitCord/commits?per_page=1',
+				{ headers: { 'User-Agent': 'GitCord-Bot' } }
+			);
 
-		await interaction.reply({
-			flags: MessageFlags.IsComponentsV2,
-			components: [container],
-			ephemeral: true
-		});
+			if (!repoRes.ok || !branchesRes.ok) {
+				throw new Error('Failed to fetch repository metadata.');
+			}
+
+			const repoData = (await repoRes.json()) as GitHubRepositoryResponse;
+			const branchesData =
+				(await branchesRes.json()) as GitHubBranchResponse[];
+			const commitsData =
+				(await commitsRes.json()) as GitHubCommitResponse[];
+
+			const repoName = repoData.full_name;
+			const repoUrl = repoData.html_url;
+			const defaultBranch = repoData.default_branch;
+			const createdAt = Math.floor(
+				new Date(repoData.created_at).getTime() / 1000
+			);
+			const sizeKb = repoData.size ?? 0;
+			const repoSize =
+				sizeKb > 1024
+					? `${(sizeKb / 1024).toFixed(1)} MB`
+					: `${sizeKb} KB`;
+
+			const branchCount = branchesData.length;
+			const defaultBranchObj = branchesData.find(
+				(b) => b.name === defaultBranch
+			);
+			const latestSha = defaultBranchObj
+				? defaultBranchObj.commit.sha.substring(0, 7)
+				: (commitsData[0]?.sha?.substring(0, 7) ?? '0000000');
+			const latestShaUrl = defaultBranchObj
+				? `https://github.com/${repoName}/commit/${defaultBranchObj.commit.sha}`
+				: undefined;
+
+			let contributorCount = '1+';
+			const linkHeader = contributorsRes.headers.get('link');
+			if (linkHeader) {
+				const match = linkHeader.match(/page=(\d+)[^>]*>; rel="last"/);
+				if (match && match[1]) contributorCount = match[1];
+			} else if (contributorsRes.ok) {
+				const list = (await contributorsRes.json()) as GitHubUser[];
+				contributorCount = String(
+					Array.isArray(list) ? list.length : 1
+				);
+			}
+
+			const container = new ContainerBuilder().setAccentColor(0x238636);
+
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					`### Repository Status\nOverview of active statistics`
+				)
+			);
+
+			container.addSeparatorComponents(
+				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+			);
+
+			const shaDisplay = latestShaUrl
+				? `[\`${latestSha}\`](${latestShaUrl})`
+				: `\`${latestSha}\``;
+
+			const bodyContent = [
+				`Default Branch: \`${defaultBranch}\``,
+				`Latest Commit: ${shaDisplay}`,
+				`Total Branches: \`${branchCount}\``,
+				`Contributors: \`${contributorCount}\``,
+				`Repository Size: \`${repoSize}\``,
+				`Created At: <t:${createdAt}:f>`
+			].join('\n');
+
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(bodyContent)
+			);
+
+			container.addSeparatorComponents(
+				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+			);
+
+			const unixTimestamp = Math.floor(Date.now() / 1000);
+			const repoDisplay = repoUrl
+				? `[${repoName}](${repoUrl})`
+				: `\`${repoName}\``;
+
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					`${repoDisplay}  ·  <t:${unixTimestamp}:f>`
+				)
+			);
+
+			await interaction.editReply({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container]
+			});
+		} catch (error) {
+			console.error(error);
+			const container = new ContainerBuilder()
+				.setAccentColor(0xda3633)
+				.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						'**Status Error**\nFailed to retrieve active repository statistics from GitHub.'
+					)
+				);
+
+			await interaction.editReply({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container]
+			});
+		}
 	}
 }
