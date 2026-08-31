@@ -24,7 +24,7 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	buildHeader(
 		container,
 		`Branch Update: \`${branch}\``,
-		`${commits.length} new commit${commits.length === 1 ? '' : 's'} pushed`
+		`Pushed events recorded`
 	);
 
 	addSeparator(container);
@@ -32,12 +32,13 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	if (!commits.length) {
 		container.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(
-				'**Commits**\n> No commits included in this push.'
+				'**0 Commits**\n> No commits included in this push.'
 			)
 		);
 	} else {
+		const commitLabel = `${commits.length} Commit${commits.length === 1 ? '' : 's'}`;
 		container.addTextDisplayComponents(
-			new TextDisplayBuilder().setContent('**Commits**')
+			new TextDisplayBuilder().setContent(`**${commitLabel}**`)
 		);
 
 		const displayCommits = commits.slice(0, MAX_COMMITS);
