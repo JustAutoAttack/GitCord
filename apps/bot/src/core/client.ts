@@ -2,7 +2,9 @@ import {
 	Client,
 	GatewayIntentBits,
 	TextChannel,
-	EmbedBuilder
+	ContainerBuilder,
+	TextDisplayBuilder,
+	MessageFlags
 } from 'discord.js';
 
 import { ENV } from '../config';
@@ -18,15 +20,18 @@ client.once('clientReady', async (c) => {
 	try {
 		const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
 		if (channel && channel.isTextBased()) {
-			const embed = new EmbedBuilder()
-				.setColor(0x238636) // GitHub Green
-				.setTitle('🟢 Bot Engine Online')
-				.setDescription(
-					'The system is active, listening for changes, and ready to track events.'
-				)
-				.setTimestamp();
+			const container = new ContainerBuilder()
+				.setAccentColor(0x238636) // GitHub Green
+				.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						'**Bot Engine Online**\nSystem is active, listening for changes, and tracking repository events.'
+					)
+				);
 
-			await (channel as TextChannel).send({ embeds: [embed] });
+			await (channel as TextChannel).send({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container]
+			});
 		}
 	} catch (error) {
 		console.error(
@@ -51,15 +56,18 @@ async function gracefulShutdown(signal: string) {
 	try {
 		const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
 		if (channel && channel.isTextBased()) {
-			const embed = new EmbedBuilder()
-				.setColor(0xda3633) // GitHub Red
-				.setTitle('🔴 Bot Engine Offline')
-				.setDescription(
-					`Received system signal \`${signal}\`. Shutting down engine...`
-				)
-				.setTimestamp();
+			const container = new ContainerBuilder()
+				.setAccentColor(0xda3633) // GitHub Red
+				.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(
+						`**Bot Engine Offline**\nReceived system signal \`${signal}\`. Shutting down engine...`
+					)
+				);
 
-			await (channel as TextChannel).send({ embeds: [embed] });
+			await (channel as TextChannel).send({
+				flags: MessageFlags.IsComponentsV2,
+				components: [container]
+			});
 		}
 	} catch (error) {
 		console.error(

@@ -29,18 +29,13 @@ export interface GitHubWebhookPayload {
 		name?: string;
 		html_url?: string;
 	};
-
 	pusher?: {
 		name?: string;
 	};
-
 	commits?: GitHubCommit[];
-
 	head_commit?: GitHubCommit;
-
 	ref?: string;
 	action?: string;
-
 	pull_request?: {
 		title?: string;
 		html_url?: string;
@@ -51,7 +46,6 @@ export interface GitHubWebhookPayload {
 			login?: string;
 		};
 	};
-
 	issue?: {
 		title?: string;
 		html_url?: string;
@@ -61,21 +55,17 @@ export interface GitHubWebhookPayload {
 			login?: string;
 		};
 	};
-
 	release?: {
 		name?: string;
 		tag_name?: string;
 		html_url?: string;
 		body?: string;
 	};
-
 	ref_type?: string;
-
 	sender?: {
 		login?: string;
 		html_url?: string;
 	};
-
 	[key: string]: unknown;
 }
 
@@ -94,18 +84,12 @@ const COLORS = {
 const MAX_COMMITS = 5;
 
 function truncate(text: string, maxLength: number): string {
-	if (text.length <= maxLength) {
-		return text;
-	}
-
+	if (text.length <= maxLength) return text;
 	return `${text.substring(0, maxLength - 3)}...`;
 }
 
 function getBranchName(ref?: string): string {
-	if (!ref) {
-		return 'unknown-branch';
-	}
-
+	if (!ref) return 'unknown-branch';
 	return ref.replace(/^refs\/heads\//, '').replace(/^refs\/tags\//, '');
 }
 
@@ -122,24 +106,17 @@ function addSeparator(container: ContainerBuilder): void {
 function createHeader(
 	container: ContainerBuilder,
 	title: string,
-	description: string
+	subtitle: string
 ): void {
 	container.addTextDisplayComponents(
-		new TextDisplayBuilder().setContent(`## ${title}\n${description}`)
+		new TextDisplayBuilder().setContent(`### ${title}\n${subtitle}`)
 	);
 }
 
 function discordRelativeTimestamp(timestamp?: string): string {
-	if (!timestamp) {
-		return '';
-	}
-
+	if (!timestamp) return '';
 	const date = new Date(timestamp);
-
-	if (Number.isNaN(date.getTime())) {
-		return '';
-	}
-
+	if (Number.isNaN(date.getTime())) return '';
 	return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
 }
 
@@ -161,20 +138,16 @@ function createCommitSection(
 	body: GitHubWebhookPayload
 ): TextDisplayBuilder {
 	const sha = commit.id?.substring(0, 7) ?? '0000000';
-
 	const message = truncate(
 		commit.message?.split('\n')[0].trim() || 'No commit message',
 		140
 	);
-
 	const username = getCommitUsername(commit, body);
-
 	const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
 	const shaDisplay = commit.url
 		? `[\`${sha}\`](${commit.url})`
 		: `\`${sha}\``;
-
 	const metadata = relativeTime
 		? `@${username} · ${relativeTime}`
 		: `@${username}`;
@@ -192,35 +165,29 @@ function buildCommitPanel(
 	if (!commits.length) {
 		container.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(
-				['### Commits', '> No commits included in this push.'].join(
-					'\n'
-				)
+				'**Commits**\n> No commits included in this push.'
 			)
 		);
-
 		return;
 	}
 
 	container.addTextDisplayComponents(
-		new TextDisplayBuilder().setContent('### Commits')
+		new TextDisplayBuilder().setContent('**Commits**')
 	);
 
 	const displayCommits = commits.slice(0, MAX_COMMITS);
 
 	for (let index = 0; index < displayCommits.length; index++) {
-		const commit = displayCommits[index];
-
-		container.addTextDisplayComponents(createCommitSection(commit, body));
+		container.addTextDisplayComponents(
+			createCommitSection(displayCommits[index], body)
+		);
 
 		if (index < displayCommits.length - 1) {
-			container.addSeparatorComponents(
-				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-			);
+			addSeparator(container);
 		}
 	}
 
 	const remaining = commits.length - displayCommits.length;
-
 	if (remaining > 0) {
 		container.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(
@@ -241,7 +208,6 @@ function addRepositoryFooter(
 		: `\`${repoFullName}\``;
 
 	let content = `**Repository**\n${repository}`;
-
 	if (extra) {
 		content += `\n\n${extra}`;
 	}
@@ -253,9 +219,7 @@ function addRepositoryFooter(
 
 function addMessageTimestamp(container: ContainerBuilder): void {
 	const unixTimestamp = Math.floor(Date.now() / 1000);
-
 	addSeparator(container);
-
 	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(`<t:${unixTimestamp}:f>`)
 	);
@@ -272,7 +236,7 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	createHeader(
 		container,
-		`🌿 Branch update: ${branch}`,
+		`Push · ${branch}`,
 		`${commits.length} new commit${
 			commits.length === 1 ? '' : 's'
 		} pushed to \`${branch}\``
@@ -288,7 +252,6 @@ function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 		repoUrl,
 		['**Branch**', `\`${branch}\``].join('\n')
 	);
-
 	addMessageTimestamp(container);
 
 	return container;
@@ -302,12 +265,8 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	const isMerged = action === 'closed' && pr?.merged === true;
 	let color = COLORS.PR_OPEN;
-
-	if (isMerged) {
-		color = COLORS.PR_MERGED;
-	} else if (action === 'closed') {
-		color = COLORS.PR_CLOSE;
-	}
+	if (isMerged) color = COLORS.PR_MERGED;
+	else if (action === 'closed') color = COLORS.PR_CLOSE;
 
 	const actionLabel = isMerged ? 'merged' : action;
 	const title = pr?.title ?? 'Untitled Pull Request';
@@ -319,7 +278,7 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	createHeader(
 		container,
-		`🔀 Pull Request ${actionLabel}: #${pr?.number ?? 'unknown'}`,
+		`Pull Request #${pr?.number ?? 'unknown'} · ${actionLabel}`,
 		`**[${truncate(title, 150)}](${
 			pr?.html_url ?? repoUrl ?? 'https://github.com'
 		})**${description}`
@@ -339,7 +298,6 @@ function handlePullRequestEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			`\`${actionLabel}\``
 		].join('\n')
 	);
-
 	addMessageTimestamp(container);
 
 	return container;
@@ -361,7 +319,7 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	createHeader(
 		container,
-		`📂 Issue ${action}: #${issue?.number ?? 'unknown'}`,
+		`Issue #${issue?.number ?? 'unknown'} · ${action}`,
 		`**[${truncate(title, 150)}](${
 			issue?.html_url ?? repoUrl ?? 'https://github.com'
 		})**${description}`
@@ -381,7 +339,6 @@ function handleIssueEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			`\`${action}\``
 		].join('\n')
 	);
-
 	addMessageTimestamp(container);
 
 	return container;
@@ -402,7 +359,7 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	createHeader(
 		container,
-		'🚀 Release published',
+		'Release Published',
 		release?.html_url
 			? `**[${truncate(name, 150)}](${release.html_url})**${
 					tag ? ` · ${tag}` : ''
@@ -414,7 +371,7 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(
-			['### Release Notes', releaseNotes].join('\n\n')
+			['**Release Notes**', releaseNotes].join('\n\n')
 		)
 	);
 
@@ -428,9 +385,7 @@ function handleReleaseEvent(body: GitHubWebhookPayload): ContainerBuilder {
 function handleCreateEvent(
 	body: GitHubWebhookPayload
 ): ContainerBuilder | null {
-	if (body.ref_type !== 'branch') {
-		return null;
-	}
+	if (body.ref_type !== 'branch') return null;
 
 	const repoFullName = body.repository?.full_name ?? 'unknown/repo';
 	const repoUrl = body.repository?.html_url;
@@ -440,7 +395,6 @@ function handleCreateEvent(
 	const branchUrl = repoUrl
 		? `${repoUrl}/tree/${encodeURIComponent(branch)}`
 		: undefined;
-
 	const branchDisplay = branchUrl
 		? `[${branch}](${branchUrl})`
 		: `\`${branch}\``;
@@ -449,8 +403,8 @@ function handleCreateEvent(
 
 	createHeader(
 		container,
-		'🌿 Branch created',
-		`New branch ${branchDisplay} was created.`
+		'Branch Created',
+		`New branch ${branchDisplay} was initialized.`
 	);
 
 	addSeparator(container);
@@ -461,7 +415,6 @@ function handleCreateEvent(
 		repoUrl,
 		['**Creator**', `\`@${sender}\``].join('\n')
 	);
-
 	addMessageTimestamp(container);
 
 	return container;
@@ -481,43 +434,34 @@ export async function handleGitHubEvent(
 	}
 
 	const fetchedChannel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
-
 	if (!fetchedChannel || !fetchedChannel.isTextBased()) {
 		throw new Error('Target Discord channel is invalid or not text-based.');
 	}
 
 	const channel = fetchedChannel as TextChannel;
-
 	let container: ContainerBuilder | null = null;
 
 	switch (event) {
 		case 'push':
 			container = handlePushEvent(body);
 			break;
-
 		case 'pull_request':
 			container = handlePullRequestEvent(body);
 			break;
-
 		case 'issues':
 			container = handleIssueEvent(body);
 			break;
-
 		case 'release':
 			container = handleReleaseEvent(body);
 			break;
-
 		case 'create':
 			container = handleCreateEvent(body);
 			break;
-
 		default:
 			return `Event ${event} ignored`;
 	}
 
-	if (!container) {
-		return `Event ${event} yielded no message`;
-	}
+	if (!container) return `Event ${event} yielded no message`;
 
 	await channel.send({
 		flags: MessageFlags.IsComponentsV2,
