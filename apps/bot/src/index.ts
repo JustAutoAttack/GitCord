@@ -1,10 +1,12 @@
 import {
 	exposeWebhookServer,
 	logger,
+	registerWebhookRouter,
 	startWebhookServer,
 	validateEnvironment
-} from './core';
-import { connectDiscord } from './discord';
+} from '@core';
+import { connectDiscord } from '@discord';
+import { webhookRouter } from '@features/github';
 
 async function main(): Promise<void> {
 	try {
@@ -13,6 +15,8 @@ async function main(): Promise<void> {
 		validateEnvironment();
 
 		await connectDiscord();
+
+		registerWebhookRouter(webhookRouter);
 
 		startWebhookServer();
 

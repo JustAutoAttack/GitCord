@@ -10,7 +10,7 @@ import {
 	handlePullRequestEvent,
 	handlePushEvent,
 	handleReleaseEvent
-} from '../events';
+} from '../handlers';
 import { GitHubWebhookPayload } from '../types';
 
 export const webhookRouter = new Hono();
