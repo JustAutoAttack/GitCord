@@ -37,18 +37,14 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	addSeparator(container);
 
-	// All rendered inside a fenced code block, so sha/title/author share the
-	// same monospace font — that's the only way column padding actually
-	// lines up in Discord. Trade-off: sha is no longer a clickable link.
-	const SHA_WIDTH = 7;
-	const COLUMN_GAP = 2;
-	const leftColWidth = SHA_WIDTH + COLUMN_GAP;
+	// Fixed indent for the author/time sub-line. Not derived from the sha
+	// length — the sha renders in Discord's monospace code font while this
+	// indent is plain text, so the widths never actually line up regardless
+	// of how it's computed. A fixed indent just reads as intentional.
+	const SUBLINE_INDENT = '\u00A0\u00A0\u00A0\u00A0';
 
 	const commitLines = displayedCommits.map((commit) => {
-		const sha = (commit.id?.substring(0, 7) ?? 'unknown').padEnd(
-			SHA_WIDTH,
-			' '
-		);
+		const sha = commit.id?.substring(0, 7) ?? 'unknown';
 
 		const message =
 			commit.message?.split('\n')[0]?.trim() || 'No commit message';
@@ -71,19 +67,24 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 		const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
-		const authorLine = `${authorDisplay}${relativeTime ? ` · ${relativeTime}` : ''}`;
+		const shaDisplay = commit.url
+			? `[\`${sha}\`](${commit.url})`
+			: `\`${sha}\``;
 
-		const blank = ' '.repeat(leftColWidth);
-
-		return [`${sha}  ${truncatedMessage}`, `${blank}${authorLine}`].join(
-			'\n'
-		);
+		return [
+			`${shaDisplay} ${truncatedMessage}`,
+			`${SUBLINE_INDENT}${authorDisplay}${relativeTime ? ` · ${relativeTime}` : ''}`
+		].join('\n');
 	});
 
 	const commitContent =
 		commitLines.length > 0
-			? '```\n' + commitLines.join('\n\n') + '\n```'
-			: '```\nNo commits included in payload.\n```';
+			? commitLines
+					.join('\n\n')
+					.split('\n')
+					.map((line) => `> ${line}`)
+					.join('\n')
+			: '> No commits included in payload.';
 
 	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(commitContent)
