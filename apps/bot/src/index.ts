@@ -6,6 +6,8 @@ import {
 import { logger, validateEnvironment } from '@core';
 import { connectDiscord, disconnectDiscord } from '@discord';
 
+let shuttingDown = false;
+
 async function main(): Promise<void> {
 	try {
 		logger.info('Starting GitCord...');
@@ -21,12 +23,17 @@ async function main(): Promise<void> {
 		logger.info('GitCord startup completed successfully.');
 	} catch (error) {
 		logger.error('Startup failed:', error);
-
-		process.exit(1);
+		process.exitCode = 1;
 	}
 }
 
 async function shutdown(signal: string): Promise<void> {
+	if (shuttingDown) {
+		return;
+	}
+
+	shuttingDown = true;
+
 	logger.info(`Received ${signal}. Shutting down GitCord...`);
 
 	try {
@@ -36,8 +43,7 @@ async function shutdown(signal: string): Promise<void> {
 		logger.info('GitCord shutdown completed successfully.');
 	} catch (error) {
 		logger.error('Shutdown failed:', error);
-	} finally {
-		process.exit(0);
+		process.exitCode = 1;
 	}
 }
 

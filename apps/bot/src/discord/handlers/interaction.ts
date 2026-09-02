@@ -1,15 +1,11 @@
-import { ChatInputCommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
-import { commands as github_commands } from '@features/github';
+import { commands as githubCommands } from '@features/github';
 
 export async function handleInteraction(
 	interaction: ChatInputCommandInteraction
 ): Promise<void> {
-	if (!interaction.isChatInputCommand()) {
-		return;
-	}
-
-	const matchedCommand = github_commands.find(
+	const matchedCommand = githubCommands.find(
 		(command) => command.data.name === interaction.commandName
 	);
 

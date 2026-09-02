@@ -40,16 +40,17 @@ export async function exposeWebhookServer(): Promise<void> {
 
 	try {
 		tunnel = await ngrok.forward({
-			addr: ENV.PORT,
+			addr: `http://localhost:${ENV.PORT}`,
 			authtoken: ENV.NGROK_AUTHTOKEN
 		});
 
 		const publicUrl = tunnel.url();
 
 		if (!publicUrl) {
+			await tunnel.close().catch(() => undefined);
 			tunnel = null;
 
-			throw new Error('ngrok did not return a public URL');
+			throw new Error('ngrok did not return a public URL.');
 		}
 
 		logger.info(`Public webhook tunnel active: ${publicUrl}`);
@@ -66,21 +67,26 @@ export async function exposeWebhookServer(): Promise<void> {
 
 export async function stopWebhookServer(): Promise<void> {
 	if (tunnel) {
-		try {
-			await tunnel.close();
+		const activeTunnel = tunnel;
+		tunnel = null;
 
+		try {
+			await activeTunnel.close();
 			logger.info('Public webhook tunnel closed.');
 		} catch (error) {
 			logger.error('Failed to close public webhook tunnel:', error);
-		} finally {
-			tunnel = null;
 		}
 	}
 
 	if (server) {
-		server.close();
+		const activeServer = server;
 		server = null;
 
-		logger.info('Webhook server stopped.');
+		try {
+			activeServer.close();
+			logger.info('Webhook server stopped.');
+		} catch (error) {
+			logger.error('Failed to stop webhook server:', error);
+		}
 	}
 }
