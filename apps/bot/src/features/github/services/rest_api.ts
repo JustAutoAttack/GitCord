@@ -1,5 +1,5 @@
 import { GITHUB_API_BASE, REPOSITORY } from '../constants';
-import { ApiBranch, ApiCommit, ApiRepository } from '../types';
+import { ApiBranch, ApiCommit, ApiContributor, ApiRepository } from '../types';
 
 async function request<T>(endpoint: string): Promise<T> {
 	const response = await fetch(`${GITHUB_API_BASE}${endpoint}`, {
@@ -30,4 +30,8 @@ export async function getCommits(branch?: string): Promise<ApiCommit[]> {
 	const query = branch ? `?sha=${encodeURIComponent(branch)}` : '';
 
 	return request<ApiCommit[]>(`/repos/${REPOSITORY}/commits${query}`);
+}
+
+export async function getContributors(): Promise<ApiContributor[]> {
+	return request<ApiContributor[]>(`/repos/${REPOSITORY}/contributors`);
 }

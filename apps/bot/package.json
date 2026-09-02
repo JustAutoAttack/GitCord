@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
-		"deploy": "tsx src/core/deploy_commands.ts",
+		"deploy": "tsx src/discord/deploy_commands.ts",
 		"build": "tsup src/index.ts --format cjs --dts"
 	},
 	"dependencies": {

@@ -48,3 +48,7 @@ export interface ApiBranch {
 
 	protected?: boolean;
 }
+
+export interface ApiContributor extends ApiUser {
+	contributions?: number;
+}
