@@ -1,4 +1,8 @@
-import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
+import {
+	ContainerBuilder,
+	TextDisplayBuilder,
+	SectionBuilder
+} from 'discord.js';
 
 import { CONFIG } from '@core';
 import {
@@ -76,9 +80,11 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			? commitLines.join('\n\n')
 			: 'No commits included in payload.';
 
-	container.addTextDisplayComponents(
+	const commitsSection = new SectionBuilder().addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(commitContent)
 	);
+
+	container.addSectionComponents(commitsSection);
 
 	if (body.repository?.full_name) {
 		buildFooter(
