@@ -3,7 +3,9 @@ import {
 	startWebhookServer,
 	stopWebhookServer
 } from '@app';
+
 import { logger, validateEnvironment } from '@core';
+
 import { connectDiscord, disconnectDiscord } from '@discord';
 
 let shuttingDown = false;
@@ -23,6 +25,7 @@ async function main(): Promise<void> {
 		logger.info('GitCord startup completed successfully.');
 	} catch (error) {
 		logger.error('Startup failed:', error);
+
 		process.exitCode = 1;
 	}
 }
@@ -43,6 +46,7 @@ async function shutdown(signal: string): Promise<void> {
 		logger.info('GitCord shutdown completed successfully.');
 	} catch (error) {
 		logger.error('Shutdown failed:', error);
+
 		process.exitCode = 1;
 	}
 }

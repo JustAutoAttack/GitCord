@@ -54,7 +54,6 @@ export async function exposeWebhookServer(): Promise<void> {
 		}
 
 		logger.info(`Public webhook tunnel active: ${publicUrl}`);
-
 		logger.info(`GitHub webhook endpoint: ${publicUrl}/webhook/github`);
 	} catch (error) {
 		tunnel = null;

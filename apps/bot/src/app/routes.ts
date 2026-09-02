@@ -78,7 +78,11 @@ export function registerRoutes(app: Hono): void {
 
 			return c.text('Webhook processed', 200);
 		} catch (error) {
-			logger.error('GitHub webhook processing failed:', error);
+			console.error('GitHub webhook processing failed:', error);
+
+			if (error instanceof Error) {
+				console.error(error.stack);
+			}
 
 			return c.text(
 				error instanceof Error

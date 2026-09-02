@@ -1,8 +1,8 @@
-import { TextDisplayBuilder, ContainerBuilder } from 'discord.js';
+import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
 
 import { CONFIG } from '@core';
 import { buildFooter, buildHeader, createContainer } from '@shared';
-import { GitHubWebhookPayload } from '../types';
+import type { GitHubWebhookPayload } from '../types';
 import {
 	discordRelativeTimestamp,
 	getBranchName,
@@ -12,25 +12,34 @@ import {
 export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	const branchName = getBranchName(body.ref);
 	const commits = body.commits ?? [];
+
 	const commitLimit = Math.min(
 		CONFIG.limits.defaultCommitLimit,
 		CONFIG.limits.maxCommitLimit
 	);
+
 	const displayedCommits = commits.slice(0, commitLimit);
+
 	const commitLines = displayedCommits.map((commit) => {
 		const sha = commit.id?.substring(0, 7) ?? 'unknown';
+
 		const message =
 			commit.message?.split('\n')[0].trim() ?? 'No commit message';
+
+		const maxLength = CONFIG.limits.maxCommitMessageLength;
+
 		const truncatedMessage =
-			message.length > CONFIG.limits.maxCommitMessageLength
-				? `${message.substring(
-						0,
-						CONFIG.limits.maxCommitMessageLength - 3
-					)}...`
+			message.length > maxLength
+				? `${message.substring(0, maxLength - 3)}...`
 				: message;
-		const username = getCommitUsername(commit, body);
-		const authorName = commit.author?.name ?? username;
+
+		const username =
+			getCommitUsername(commit, body) || body.pusher?.name || 'unknown';
+
+		const authorName = commit.author?.name || username || 'Unknown author';
+
 		const relativeTime = discordRelativeTimestamp(commit.timestamp);
+
 		const shaDisplay = commit.url
 			? `[\`${sha}\`](${commit.url})`
 			: `\`${sha}\``;
