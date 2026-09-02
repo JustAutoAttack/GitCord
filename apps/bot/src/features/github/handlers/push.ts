@@ -37,12 +37,6 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	addSeparator(container);
 
-	// Fixed indent for the author/time sub-line. Not derived from the sha
-	// length — the sha renders in Discord's monospace code font while this
-	// indent is plain text, so the widths never actually line up regardless
-	// of how it's computed. A fixed indent just reads as intentional.
-	const SUBLINE_INDENT = '\u00A0\u00A0\u00A0\u00A0';
-
 	const commitLines = displayedCommits.map((commit) => {
 		const sha = commit.id?.substring(0, 7) ?? 'unknown';
 
@@ -71,9 +65,13 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			? `[\`${sha}\`](${commit.url})`
 			: `\`${sha}\``;
 
+		// Line 1: hash (left) + title (right of it). Hash never appears again.
+		// Line 2: Discord subtext ("-# ") for author/time — this is what
+		// pushes it visually subordinate/right-of, since proportional-vs-
+		// monospace widths can never be manually aligned with spaces.
 		return [
 			`${shaDisplay} ${truncatedMessage}`,
-			`${SUBLINE_INDENT}${authorDisplay}${relativeTime ? ` · ${relativeTime}` : ''}`
+			`-# ${authorDisplay}${relativeTime ? ` · ${relativeTime}` : ''}`
 		].join('\n');
 	});
 
