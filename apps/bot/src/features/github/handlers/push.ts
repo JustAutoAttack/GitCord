@@ -63,6 +63,7 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 				? `${authorName} · @${username}`
 				: authorName;
 
+				
 		const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
 		const shaDisplay = commit.url
