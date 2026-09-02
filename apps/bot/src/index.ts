@@ -1,16 +1,29 @@
-import { loginBot, startServer } from './core';
+import {
+	exposeWebhookServer,
+	logger,
+	startWebhookServer,
+	validateEnvironment
+} from './core';
+import { connectDiscord } from './discord';
 
-async function main() {
+async function main(): Promise<void> {
 	try {
-		// Start Discord Bot Gateway Connection
-		await loginBot();
+		logger.info('Starting GitCord...');
 
-		// Start Hono Webhook Server
-		startServer();
+		validateEnvironment();
+
+		await connectDiscord();
+
+		startWebhookServer();
+
+		await exposeWebhookServer();
+
+		logger.info('GitCord startup completed successfully.');
 	} catch (error) {
-		console.error('[Bootstrap Error]', error);
+		logger.error('Startup failed:', error);
+
 		process.exit(1);
 	}
 }
 
-main();
+void main();

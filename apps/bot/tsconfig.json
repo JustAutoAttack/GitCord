@@ -4,12 +4,30 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"lib": ["ES2022"],
+
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"outDir": "dist",
-		"rootDir": "./src"
+
+		"rootDir": "./src",
+		"outDir": "./dist",
+
+		"paths": {
+			"@core": ["./src/core/index.ts"],
+			"@core/*": ["./src/core/*"],
+
+			"@discord": ["./src/discord/index.ts"],
+			"@discord/*": ["./src/discord/*"],
+
+			"@shared": ["./src/shared/index.ts"],
+			"@shared/*": ["./src/shared/*"],
+
+			"@features": ["./src/features/index.ts"],
+			"@features/*": ["./src/features/*"]
+		}
 	},
-	"include": ["src/**/*"]
+
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

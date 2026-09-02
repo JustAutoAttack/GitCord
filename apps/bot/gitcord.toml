@@ -1,0 +1,20 @@
+[logger]
+level = "INFO"
+timestampFormat = "ISO"
+
+[colors]
+discordBotOnline = "#238636"
+discordBotOffline = "#da3633"
+githubPushEvent = "#2f81f7"
+githubPullRequestEvent = "#238636"
+githubIssuesEvent = "#8957e5"
+githubCreateEvent = "#da3633"
+githubForkEvent = "#db6d28"
+githubWatchEvent = "#f0883e"
+githubReleaseEvent = "#7ee787"
+
+[limits]
+maxCommitMessageLength = 140
+maxDescriptionLength = 250
+defaultCommitLimit = 5
+maxCommitLimit = 40
