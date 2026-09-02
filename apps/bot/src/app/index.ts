@@ -2,21 +2,15 @@ import { serve, type ServerType } from '@hono/node-server';
 import ngrok, { type Listener } from '@ngrok/ngrok';
 import { Hono } from 'hono';
 
-import { ENV } from './env';
-import { logger } from './logger';
+import { ENV, logger } from '@core';
+import { registerRoutes } from './routes';
 
 export const app = new Hono();
 
+registerRoutes(app);
+
 let server: ServerType | null = null;
 let tunnel: Listener | null = null;
-
-app.get('/', (c) => {
-	return c.text('GitHub Discord Bot Engine is running!');
-});
-
-export function registerWebhookRouter(router: Hono): void {
-	app.route('/webhook', router);
-}
 
 export function startWebhookServer(): void {
 	if (server) {
@@ -54,10 +48,12 @@ export async function exposeWebhookServer(): Promise<void> {
 
 		if (!publicUrl) {
 			tunnel = null;
+
 			throw new Error('ngrok did not return a public URL');
 		}
 
 		logger.info(`Public webhook tunnel active: ${publicUrl}`);
+
 		logger.info(`GitHub webhook endpoint: ${publicUrl}/webhook/github`);
 	} catch (error) {
 		tunnel = null;
@@ -72,6 +68,7 @@ export async function stopWebhookServer(): Promise<void> {
 	if (tunnel) {
 		try {
 			await tunnel.close();
+
 			logger.info('Public webhook tunnel closed.');
 		} catch (error) {
 			logger.error('Failed to close public webhook tunnel:', error);

@@ -7,7 +7,7 @@ import {
 	TextDisplayBuilder
 } from 'discord.js';
 
-import { ENV, CONFIG, logger, stopWebhookServer } from '@core';
+import { CONFIG, ENV, logger } from '@core';
 import { handleInteraction } from './handlers';
 
 export const client = new Client({
@@ -67,16 +67,8 @@ export async function connectDiscord(): Promise<void> {
 	await client.login(ENV.DISCORD_BOT_TOKEN);
 }
 
-let shuttingDown = false;
-
 export async function disconnectDiscord(signal: string): Promise<void> {
-	if (shuttingDown) {
-		return;
-	}
-
-	shuttingDown = true;
-
-	logger.info(`Received ${signal}. Disconnecting from Discord...`);
+	logger.info(`Disconnecting from Discord after ${signal}...`);
 
 	try {
 		const channel = await getNotificationChannel();
@@ -98,21 +90,9 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 	} catch (error) {
 		logger.error('Failed to send Discord offline notification:', error);
 	} finally {
-		await stopWebhookServer();
-
 		client.destroy();
-
-		process.exit(0);
 	}
 }
-
-process.once('SIGINT', () => {
-	void disconnectDiscord('SIGINT');
-});
-
-process.once('SIGTERM', () => {
-	void disconnectDiscord('SIGTERM');
-});
 
 client.on('interactionCreate', async (interaction) => {
 	if (!interaction.isChatInputCommand()) {

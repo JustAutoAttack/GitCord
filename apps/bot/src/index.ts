@@ -1,12 +1,10 @@
 import {
 	exposeWebhookServer,
-	logger,
-	registerWebhookRouter,
 	startWebhookServer,
-	validateEnvironment
-} from '@core';
-import { connectDiscord } from '@discord';
-import { webhookRouter } from '@features/github';
+	stopWebhookServer
+} from '@app';
+import { logger, validateEnvironment } from '@core';
+import { connectDiscord, disconnectDiscord } from '@discord';
 
 async function main(): Promise<void> {
 	try {
@@ -15,8 +13,6 @@ async function main(): Promise<void> {
 		validateEnvironment();
 
 		await connectDiscord();
-
-		registerWebhookRouter(webhookRouter);
 
 		startWebhookServer();
 
@@ -29,5 +25,28 @@ async function main(): Promise<void> {
 		process.exit(1);
 	}
 }
+
+async function shutdown(signal: string): Promise<void> {
+	logger.info(`Received ${signal}. Shutting down GitCord...`);
+
+	try {
+		await stopWebhookServer();
+		await disconnectDiscord(signal);
+
+		logger.info('GitCord shutdown completed successfully.');
+	} catch (error) {
+		logger.error('Shutdown failed:', error);
+	} finally {
+		process.exit(0);
+	}
+}
+
+process.once('SIGINT', () => {
+	void shutdown('SIGINT');
+});
+
+process.once('SIGTERM', () => {
+	void shutdown('SIGTERM');
+});
 
 void main();
