@@ -1,8 +1,4 @@
-import {
-	ContainerBuilder,
-	TextDisplayBuilder,
-	SectionBuilder
-} from 'discord.js';
+import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
 
 import { CONFIG } from '@core';
 import {
@@ -63,7 +59,6 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 				? `${authorName} · @${username}`
 				: authorName;
 
-				
 		const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
 		const shaDisplay = commit.url
@@ -81,11 +76,9 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			? commitLines.join('\n\n')
 			: 'No commits included in payload.';
 
-	const commitsSection = new SectionBuilder().addTextDisplayComponents(
+	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(commitContent)
 	);
-
-	container.addSectionComponents(commitsSection);
 
 	if (body.repository?.full_name) {
 		buildFooter(
