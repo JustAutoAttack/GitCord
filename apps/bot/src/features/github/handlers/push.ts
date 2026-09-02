@@ -31,7 +31,7 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	buildHeader(
 		container,
-		`Branch Update: ${branchName}`,
+		`Branch Update: \`${branchName}\``,
 		`${commits.length} Commit${commits.length === 1 ? '' : 's'}`
 	);
 
