@@ -1,8 +1,15 @@
 import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
 
 import { CONFIG } from '@core';
-import { buildFooter, buildHeader, createContainer } from '@shared';
+import {
+	buildFooter,
+	buildHeader,
+	createContainer,
+	addSeparator
+} from '@shared';
+
 import type { GitHubWebhookPayload } from '../types';
+
 import {
 	discordRelativeTimestamp,
 	getBranchName,
@@ -10,7 +17,7 @@ import {
 } from '../utils';
 
 export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
-	const branchName = getBranchName(body.ref);
+	const branchName = getBranchName(body.ref) || 'unknown';
 	const commits = body.commits ?? [];
 
 	const commitLimit = Math.min(
@@ -20,11 +27,21 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	const displayedCommits = commits.slice(0, commitLimit);
 
+	const container = createContainer(CONFIG.colors.githubPushEvent);
+
+	buildHeader(
+		container,
+		`Branch Update: ${branchName}`,
+		`${commits.length} Commit${commits.length === 1 ? '' : 's'}`
+	);
+
+	addSeparator(container);
+
 	const commitLines = displayedCommits.map((commit) => {
 		const sha = commit.id?.substring(0, 7) ?? 'unknown';
 
 		const message =
-			commit.message?.split('\n')[0].trim() ?? 'No commit message';
+			commit.message?.split('\n')[0]?.trim() || 'No commit message';
 
 		const maxLength = CONFIG.limits.maxCommitMessageLength;
 
@@ -35,7 +52,7 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 		const username = getCommitUsername(commit, body);
 
-		const authorName = commit.author?.name ?? username;
+		const authorName = commit.author?.name ?? username ?? 'Unknown';
 
 		const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
@@ -45,24 +62,14 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 		return [
 			`${shaDisplay} ${truncatedMessage}`,
-			`${authorName}${relativeTime ? ` · ${relativeTime}` : ''}`
+			`${authorName}${username ? ` · @${username}` : ''}${relativeTime ? ` · ${relativeTime}` : ''}`
 		].join('\n');
 	});
 
-	const subtitle = `${commits.length} new commit${
-		commits.length === 1 ? '' : 's'
-	} pushed to ${branchName}`;
-
-	const container = createContainer(CONFIG.colors.githubPushEvent);
-
-	buildHeader(container, `Branch update: ${branchName}`, subtitle);
-
-	const commitContent = [
-		'### Commits',
+	const commitContent =
 		commitLines.length > 0
 			? commitLines.join('\n\n')
-			: 'No commits included in payload.'
-	].join('\n');
+			: 'No commits included in payload.';
 
 	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(commitContent)
