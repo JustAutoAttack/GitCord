@@ -1,4 +1,4 @@
-import { ContainerBuilder } from 'discord.js';
+import { TextDisplayBuilder, ContainerBuilder } from 'discord.js';
 
 import { CONFIG } from '@core';
 import { buildFooter, buildHeader, createContainer } from '@shared';
@@ -42,18 +42,14 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			}`
 		].join('\n');
 	});
+
 	const subtitle = `${commits.length} new commit${
 		commits.length === 1 ? '' : 's'
 	} pushed to ${branchName}`;
+
 	const container = createContainer(CONFIG.colors.githubPushEvent);
 
 	buildHeader(container, `Branch update: ${branchName}`, subtitle);
-
-	if (commitLines.length > 0) {
-		container.addTextDisplayComponents({
-			setContent: () => ''
-		} as never);
-	}
 
 	const commitContent = [
 		'### Commits',
@@ -63,9 +59,7 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 	].join('\n');
 
 	container.addTextDisplayComponents(
-		new (require('discord.js').TextDisplayBuilder)().setContent(
-			commitContent
-		)
+		new TextDisplayBuilder().setContent(commitContent)
 	);
 
 	if (body.repository?.full_name) {
