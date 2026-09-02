@@ -73,8 +73,12 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 	const commitContent =
 		commitLines.length > 0
-			? commitLines.join('\n\n')
-			: 'No commits included in payload.';
+			? commitLines
+					.join('\n\n')
+					.split('\n')
+					.map((line) => `> ${line}`)
+					.join('\n')
+			: '> No commits included in payload.';
 
 	container.addTextDisplayComponents(
 		new TextDisplayBuilder().setContent(commitContent)
