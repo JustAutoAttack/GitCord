@@ -33,10 +33,9 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 				? `${message.substring(0, maxLength - 3)}...`
 				: message;
 
-		const username =
-			getCommitUsername(commit, body) || body.pusher?.name || 'unknown';
+		const username = getCommitUsername(commit, body);
 
-		const authorName = commit.author?.name || username || 'Unknown author';
+		const authorName = commit.author?.name ?? username;
 
 		const relativeTime = discordRelativeTimestamp(commit.timestamp);
 
@@ -46,9 +45,7 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 
 		return [
 			`${shaDisplay} ${truncatedMessage}`,
-			`${authorName} · @${username}${
-				relativeTime ? ` · ${relativeTime}` : ''
-			}`
+			`${authorName}${relativeTime ? ` · ${relativeTime}` : ''}`
 		].join('\n');
 	});
 
