@@ -65,10 +65,16 @@ export function handlePushEvent(body: GitHubWebhookPayload): ContainerBuilder {
 			? `[\`${sha}\`](${commit.url})`
 			: `\`${sha}\``;
 
-		return [
-			`${shaDisplay} ${truncatedMessage}`,
-			`${authorDisplay}${relativeTime ? ` · ${relativeTime}` : ''}`
+		// Non-breaking spaces so Discord doesn't trim the indent on the second line,
+		// roughly lining the author/time up under the title (sha column + 1 gap).
+		const indent = '\u00A0'.repeat(sha.length + 2);
+
+		const rightColumn = [
+			truncatedMessage,
+			`${indent}${authorDisplay}${relativeTime ? ` · ${relativeTime}` : ''}`
 		].join('\n');
+
+		return `${shaDisplay} ${rightColumn}`;
 	});
 
 	const commitContent =
