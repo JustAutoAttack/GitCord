@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ES2022"],
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"paths": {
+			"@core": ["./src/core"],
+			"@core/*": ["./src/core/*"],
+			"@domain": ["./src/domain"],
+			"@domain/*": ["./src/domain/*"],
+			"@database": ["./src/database"],
+			"@database/*": ["./src/database/*"],
+			"@gateway": ["./src/gateway"],
+			"@gateway/*": ["./src/gateway/*"],
+			"@services": ["./src/services"],
+			"@services/*": ["./src/services/*"]
+		}
+	}
+}

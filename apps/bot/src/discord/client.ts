@@ -1,10 +1,8 @@
 import {
 	Client,
-	ContainerBuilder,
+	EmbedBuilder,
 	GatewayIntentBits,
-	MessageFlags,
-	TextChannel,
-	TextDisplayBuilder
+	TextChannel
 } from 'discord.js';
 
 import { CONFIG, ENV, logger } from '@core';
@@ -44,17 +42,13 @@ client.once('clientReady', async (discordClient) => {
 			return;
 		}
 
-		const container = new ContainerBuilder()
-			.setAccentColor(CONFIG.colors.discordBotOnline)
-			.addTextDisplayComponents(
-				new TextDisplayBuilder().setContent(
-					'**Bot Engine Online**\nSystem is active, listening for changes, and tracking repository events.'
-				)
-			);
+		const embed = new EmbedBuilder()
+			.setColor(CONFIG.colors.discordBotOnline)
+			.setTitle('System Update')
+			.setDescription('System ready.');
 
 		await channel.send({
-			flags: MessageFlags.IsComponentsV2,
-			components: [container]
+			embeds: [embed]
 		});
 	} catch (error) {
 		logger.error('Failed to send Discord online notification:', error);
@@ -74,17 +68,13 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 		const channel = await getNotificationChannel();
 
 		if (channel) {
-			const container = new ContainerBuilder()
-				.setAccentColor(CONFIG.colors.discordBotOffline)
-				.addTextDisplayComponents(
-					new TextDisplayBuilder().setContent(
-						`**Bot Engine Offline**\nReceived system signal \`${signal}\`. Shutting down engine...`
-					)
-				);
+			const embed = new EmbedBuilder()
+				.setColor(CONFIG.colors.discordBotOffline)
+				.setTitle('System Update')
+				.setDescription(`Shutting down (${signal}).`);
 
 			await channel.send({
-				flags: MessageFlags.IsComponentsV2,
-				components: [container]
+				embeds: [embed]
 			});
 		}
 	} catch (error) {

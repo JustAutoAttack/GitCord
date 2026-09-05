@@ -1,44 +1,32 @@
-import {
-	ContainerBuilder,
-	TextDisplayBuilder,
-	SeparatorBuilder,
-	SeparatorSpacingSize
-} from 'discord.js';
+import { ComponentType, SeparatorSpacingSize } from 'discord.js';
 
-export function createContainer(color: number): ContainerBuilder {
-	return new ContainerBuilder().setAccentColor(color);
+export function createHeader(title: string, subtitle: string) {
+	return {
+		type: ComponentType.TextDisplay as const,
+		content: `### ${title}\n${subtitle}`
+	};
 }
 
-export function buildHeader(
-	container: ContainerBuilder,
-	title: string,
-	subtitle: string
-): void {
-	container.addTextDisplayComponents(
-		new TextDisplayBuilder().setContent(`### ${title}\n${subtitle}`)
-	);
+export function createText(content: string) {
+	return {
+		type: ComponentType.TextDisplay as const,
+		content
+	};
 }
 
-export function addSeparator(container: ContainerBuilder): void {
-	container.addSeparatorComponents(
-		new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-	);
+export function createSeparator() {
+	return {
+		type: ComponentType.Separator as const,
+		spacing: SeparatorSpacingSize.Small
+	};
 }
 
-export function buildFooter(
-	container: ContainerBuilder,
-	name: string,
-	url?: string
-): void {
-	addSeparator(container);
-
+export function createFooter(name: string, url?: string) {
 	const display = url ? `[${name}](${url})` : `\`${name}\``;
-
 	const unixTimestamp = Math.floor(Date.now() / 1000);
 
-	container.addTextDisplayComponents(
-		new TextDisplayBuilder().setContent(
-			`${display}  ·  <t:${unixTimestamp}:f>`
-		)
-	);
+	return {
+		type: ComponentType.TextDisplay as const,
+		content: `${display}  ·  <t:${unixTimestamp}:f>`
+	};
 }

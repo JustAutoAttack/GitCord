@@ -1,0 +1,769 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GitCord Server API",
+    "version": "0.1.0",
+    "description": "API documentation for GitCord backend services"
+  },
+  "components": {
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness Probe",
+        "description": "Immediate process responsiveness check.",
+        "responses": {
+          "200": {
+            "description": "Server process is responsive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "UP"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-08-17T17:55:00.000Z"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number",
+                      "example": 3600
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "up",
+                                "down"
+                              ]
+                            },
+                            "latencyMs": {
+                              "type": "number",
+                              "example": 0.82
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness Probe",
+        "description": "Validates SQLite database connection.",
+        "responses": {
+          "200": {
+            "description": "Database connection is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "UP"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-08-17T17:55:00.000Z"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number",
+                      "example": 3600
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "up",
+                                "down"
+                              ]
+                            },
+                            "latencyMs": {
+                              "type": "number",
+                              "example": 0.82
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database connection is offline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "UP"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-08-17T17:55:00.000Z"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number",
+                      "example": 3600
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "up",
+                                "down"
+                              ]
+                            },
+                            "latencyMs": {
+                              "type": "number",
+                              "example": 0.82
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Full Diagnostic Health Check",
+        "description": "Provides process uptime and database status details.",
+        "responses": {
+          "200": {
+            "description": "Service is fully operational",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "UP"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-08-17T17:55:00.000Z"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number",
+                      "example": 3600
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "up",
+                                "down"
+                              ]
+                            },
+                            "latencyMs": {
+                              "type": "number",
+                              "example": 0.82
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is degraded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "UP"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-08-17T17:55:00.000Z"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number",
+                      "example": 3600
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "up",
+                                "down"
+                              ]
+                            },
+                            "latencyMs": {
+                              "type": "number",
+                              "example": 0.82
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repo-configs": {
+      "get": {
+        "tags": [
+          "Repo Configurations"
+        ],
+        "summary": "List repository configurations",
+        "description": "Returns all repository configurations.",
+        "responses": {
+          "200": {
+            "description": "Repository configurations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "example": "cfg_123456"
+                      },
+                      "guildId": {
+                        "type": "string",
+                        "example": "123456789012345678"
+                      },
+                      "commandChannelId": {
+                        "type": "string",
+                        "example": "123456789012345679"
+                      },
+                      "notificationChannelId": {
+                        "type": "string",
+                        "example": "123456789012345680"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "example": "2026-08-17T14:30:00.000Z"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "example": "2026-08-01T10:00:00.000Z"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "guildId",
+                      "commandChannelId",
+                      "notificationChannelId",
+                      "updatedAt",
+                      "createdAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Repo Configurations"
+        ],
+        "summary": "Create repository configuration",
+        "description": "Creates a new repository configuration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "guildId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345678"
+                  },
+                  "commandChannelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345679"
+                  },
+                  "notificationChannelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345680"
+                  }
+                },
+                "required": [
+                  "guildId",
+                  "commandChannelId",
+                  "notificationChannelId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Repository configuration created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cfg_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "commandChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "notificationChannelId": {
+                      "type": "string",
+                      "example": "123456789012345680"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "commandChannelId",
+                    "notificationChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/api/v1/repo-configs/{id}": {
+      "get": {
+        "tags": [
+          "Repo Configurations"
+        ],
+        "summary": "Get repository configuration",
+        "description": "Returns a repository configuration by ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Repo Configuration ID",
+              "example": "cfg_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Repository configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cfg_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "commandChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "notificationChannelId": {
+                      "type": "string",
+                      "example": "123456789012345680"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "commandChannelId",
+                    "notificationChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Repository configuration not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Repo Configurations"
+        ],
+        "summary": "Update repository configuration",
+        "description": "Updates an existing repository configuration.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Repo Configuration ID",
+              "example": "cfg_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "guildId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345678"
+                  },
+                  "commandChannelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345679"
+                  },
+                  "notificationChannelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345680"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Repository configuration updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cfg_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "commandChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "notificationChannelId": {
+                      "type": "string",
+                      "example": "123456789012345680"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "commandChannelId",
+                    "notificationChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "Repository configuration not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Repo Configurations"
+        ],
+        "summary": "Delete repository configuration",
+        "description": "Deletes an existing repository configuration.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Repo Configuration ID",
+              "example": "cfg_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Repository configuration deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Operation completed successfully"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Repository configuration not found"
+          }
+        }
+      }
+    },
+    "/api/v1/repo-configs/command-channel/{commandChannelId}": {
+      "get": {
+        "tags": [
+          "Repo Configurations"
+        ],
+        "summary": "Get repository configuration by command channel",
+        "description": "Returns the repository configuration associated with a command channel.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Command Channel ID",
+              "example": "123456789012345679"
+            },
+            "required": true,
+            "name": "commandChannelId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Repository configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cfg_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "commandChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "notificationChannelId": {
+                      "type": "string",
+                      "example": "123456789012345680"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "commandChannelId",
+                    "notificationChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Repository configuration not found"
+          }
+        }
+      }
+    }
+  }
+}
