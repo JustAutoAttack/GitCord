@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 
-import { repoConfigsRouter } from './repo_configs';
+import { repoConfigsRouter } from './repo-configs';
 
 export const v1Router = new OpenAPIHono();
 

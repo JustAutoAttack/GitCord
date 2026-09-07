@@ -39,6 +39,7 @@ describe('RepoConfigsRepo', () => {
 		}
 	});
 
+	// --- Create & Find By ID ---
 	it('creates and finds a config by id', async () => {
 		const input = {
 			id: 'config-1',
@@ -62,6 +63,7 @@ describe('RepoConfigsRepo', () => {
 		expect(found).toEqual(created);
 	});
 
+	// --- Find All Records ---
 	it('finds all configuration records', async () => {
 		await repo.create({
 			id: 'config-1',
@@ -82,6 +84,7 @@ describe('RepoConfigsRepo', () => {
 		expect(all.map((c) => c.id)).toEqual(['config-1', 'config-2']);
 	});
 
+	// --- Find By Custom Field ---
 	it('finds a record by command channel ID', async () => {
 		await repo.create({
 			id: 'config-1',
@@ -98,6 +101,7 @@ describe('RepoConfigsRepo', () => {
 		expect(missing).toBeUndefined();
 	});
 
+	// --- Update Record ---
 	it('updates an existing configuration record', async () => {
 		await repo.create({
 			id: 'config-1',
@@ -117,6 +121,7 @@ describe('RepoConfigsRepo', () => {
 		expect(updated?.updatedAt).not.toEqual(updated?.createdAt);
 	});
 
+	// --- Update Non-Existent ---
 	it('returns undefined when updating a non-existent record', async () => {
 		const updated = await repo.update('missing', {
 			guildId: 'guild-new'
@@ -125,6 +130,26 @@ describe('RepoConfigsRepo', () => {
 		expect(updated).toBeUndefined();
 	});
 
+	// --- Partial Update Preservation ---
+	it('preserves existing fields when performing a partial update', async () => {
+		await repo.create({
+			id: 'config-1',
+			guildId: 'guild-1',
+			commandChannelId: 'cmd-1',
+			notificationChannelId: 'notif-1'
+		});
+
+		await repo.update('config-1', {
+			commandChannelId: 'cmd-updated'
+		});
+
+		const found = await repo.findById('config-1');
+		expect(found?.guildId).toBe('guild-1');
+		expect(found?.commandChannelId).toBe('cmd-updated');
+		expect(found?.notificationChannelId).toBe('notif-1');
+	});
+
+	// --- Delete Record ---
 	it('deletes an existing record and returns it', async () => {
 		await repo.create({
 			id: 'config-1',
@@ -140,8 +165,34 @@ describe('RepoConfigsRepo', () => {
 		expect(found).toBeUndefined();
 	});
 
+	// --- Delete Non-Existent ---
 	it('returns undefined when deleting a non-existent record', async () => {
 		const deleted = await repo.delete('missing');
 		expect(deleted).toBeUndefined();
+	});
+
+	// --- Constraint: Duplicate Primary Key ---
+	it('throws an error when creating a record with a duplicate primary key id', async () => {
+		const input = {
+			id: 'config-1',
+			guildId: 'guild-1',
+			commandChannelId: 'cmd-1',
+			notificationChannelId: 'notif-1'
+		};
+
+		await repo.create(input);
+
+		await expect(repo.create(input)).rejects.toThrow();
+	});
+
+	// --- Constraint: NOT NULL Violation ---
+	it('throws an error when violating a NOT NULL constraint', async () => {
+		const invalidInput = {
+			id: 'config-2',
+			guildId: 'guild-1',
+			notificationChannelId: 'notif-1'
+		};
+
+		await expect(repo.create(invalidInput as any)).rejects.toThrow();
 	});
 });

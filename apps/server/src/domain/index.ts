@@ -1,1 +1,1 @@
-export * from './repo_config';
+export * from './repo-config';

@@ -1,1 +1,1 @@
-export * as rest_api from './rest_api';
+export * as rest_api from './rest-api';

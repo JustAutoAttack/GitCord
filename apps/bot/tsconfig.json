@@ -10,27 +10,23 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 
-		"rootDir": "./src",
+		"rootDir": ".",
 		"outDir": "./dist",
 
 		"paths": {
 			"@app": ["./src/app/index.ts"],
 			"@app/*": ["./src/app/*"],
-
 			"@core": ["./src/core/index.ts"],
 			"@core/*": ["./src/core/*"],
-
 			"@discord": ["./src/discord/index.ts"],
 			"@discord/*": ["./src/discord/*"],
-
 			"@shared": ["./src/shared/index.ts"],
 			"@shared/*": ["./src/shared/*"],
-
 			"@features": ["./src/features/index.ts"],
 			"@features/*": ["./src/features/*"]
 		}
 	},
 
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "scripts/**/*"],
 	"exclude": ["node_modules", "dist"]
 }

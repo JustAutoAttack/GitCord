@@ -3,4 +3,4 @@ export * from './services';
 export * from './types';
 export * from './constants';
 export * from './utils';
-export * from './event_handlers';
+export * from './event-handlers';

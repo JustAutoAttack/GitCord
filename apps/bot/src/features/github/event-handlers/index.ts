@@ -3,7 +3,7 @@ import { ContainerBuilder } from 'discord.js';
 import type { GitHubWebhookPayload } from '../types';
 import { handleCreateEvent } from './create';
 import { handleIssueEvent } from './issue';
-import { handlePullRequestEvent } from './pull_request';
+import { handlePullRequestEvent } from './pull-request';
 import { handlePushEvent } from './push';
 import { handleReleaseEvent } from './release';
 

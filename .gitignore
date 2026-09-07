@@ -10,6 +10,9 @@ build/
 out/
 .vite/
 
+# Testing & Coverage
+coverage/
+
 # Environment variables
 .env
 .env.*
