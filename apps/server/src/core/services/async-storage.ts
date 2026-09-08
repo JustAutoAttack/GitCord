@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks';
 
-import { AppError, ErrorCode } from '../errors';
+import { AppError, ErrorCode } from '@core';
 
 export interface RequestContextData {
 	readonly serverRequestId: string;

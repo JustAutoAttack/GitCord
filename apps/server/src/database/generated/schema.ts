@@ -4,6 +4,7 @@ import { sqliteTable, AnySQLiteColumn, uniqueIndex, text } from "drizzle-orm/sql
 export const repoConfigs = sqliteTable("repo_configs", {
 	id: text().primaryKey().notNull(),
 	guildId: text("guild_id").notNull(),
+	repositoryUrl: text("repository_url").notNull(),
 	commandChannelId: text("command_channel_id").notNull(),
 	notificationChannelId: text("notification_channel_id").notNull(),
 	updatedAt: text("updated_at").notNull(),

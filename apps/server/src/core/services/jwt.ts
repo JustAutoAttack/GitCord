@@ -1,5 +1,4 @@
-import { JwtBody, JwtHeader, JwtPayload } from '../types';
-import { ENV } from '../env';
+import { JwtBody, JwtHeader, JwtPayload, ENV } from '@core';
 import { cryptoService } from './crypto';
 
 export class JwtService {

@@ -6,18 +6,9 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile =
 	nodeEnv === 'production' ? '.env.production' : '.env.development';
 
-const result = dotenv.config({
-	path: path.resolve(process.cwd(), envFile),
-	override: true
+dotenv.config({
+	path: path.resolve(process.cwd(), envFile)
 });
-
-if (result.error) {
-	console.error(
-		`Failed to load environment file from ${envFile}:`,
-		result.error
-	);
-	process.exit(1);
-}
 
 const envSchema = z.object({
 	SERVER_DOCS_URL: z
@@ -28,12 +19,16 @@ const envSchema = z.object({
 
 export type EnvDTO = z.infer<typeof envSchema>;
 
-const _env = envSchema.safeParse(process.env);
+export function getEnv(customEnv = process.env): EnvDTO {
+	const _env = envSchema.safeParse(customEnv);
 
-if (!_env.success) {
-	console.error('Invalid environment variables:');
-	console.error(JSON.stringify(_env.error.format(), null, 2));
-	process.exit(1);
+	if (!_env.success) {
+		throw new Error(
+			`Invalid environment variables:\n${JSON.stringify(_env.error.format(), null, 2)}`
+		);
+	}
+
+	return _env.data;
 }
 
-export const ENV: EnvDTO = _env.data;
+export const ENV = getEnv();

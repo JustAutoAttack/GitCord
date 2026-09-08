@@ -1,46 +1,49 @@
+import path from 'node:path';
 import dotenv from 'dotenv';
+import { z } from 'zod';
 
-import { resolveRootPath } from '@shared';
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFile =
+	nodeEnv === 'production' ? '.env.production' : '.env.development';
 
-dotenv.config({
-	path: resolveRootPath('.env')
+const result = dotenv.config({
+	path: path.resolve(process.cwd(), envFile),
+	override: true
 });
 
-export interface Environment {
-	PORT: number;
-	DISCORD_BOT_TOKEN: string;
-	DISCORD_CHANNEL_ID: string;
-	DISCORD_CLIENT_SECRET: string;
-	DISCORD_CLIENT_ID: string;
-	DISCORD_GUILD_ID: string;
-	NGROK_AUTHTOKEN: string;
+if (result.error) {
+	console.error(
+		`Failed to load environment file from ${envFile}:`,
+		result.error
+	);
+	process.exit(1);
 }
 
-export const ENV: Environment = {
-	PORT: Number(process.env.PORT) || 3000,
-	DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN ?? '',
-	DISCORD_CHANNEL_ID: process.env.DISCORD_CHANNEL_ID ?? '',
-	DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET ?? '',
-	DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID ?? '',
-	DISCORD_GUILD_ID: process.env.DISCORD_GUILD_ID ?? '',
-	NGROK_AUTHTOKEN: process.env.NGROK_AUTHTOKEN ?? ''
-};
+const envSchema = z.object({
+	PORT: z
+		.string()
+		.default('3000')
+		.transform((val) => parseInt(val, 10))
+		.pipe(z.number().positive('PORT must be a positive number')),
+	DISCORD_BOT_TOKEN: z.string().min(1, 'DISCORD_BOT_TOKEN is required'),
+	DISCORD_CHANNEL_ID: z.string().min(1, 'DISCORD_CHANNEL_ID is required'),
+	DISCORD_CLIENT_SECRET: z
+		.string()
+		.min(1, 'DISCORD_CLIENT_SECRET is required'),
+	DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required'),
+	DISCORD_GUILD_ID: z.string().min(1, 'DISCORD_GUILD_ID is required'),
+	NGROK_AUTHTOKEN: z.string().min(1, 'NGROK_AUTHTOKEN is required'),
+	SERVER_API_URL: z.string().url('SERVER_API_URL must be a valid URL')
+});
 
-export function validateEnvironment(): void {
-	const requiredVariables: Array<keyof Environment> = [
-		'DISCORD_BOT_TOKEN',
-		'DISCORD_CHANNEL_ID',
-		'DISCORD_CLIENT_SECRET',
-		'DISCORD_CLIENT_ID',
-		'DISCORD_GUILD_ID',
-		'NGROK_AUTHTOKEN'
-	];
+export type EnvDTO = z.infer<typeof envSchema>;
 
-	const missingVariables = requiredVariables.filter((name) => !ENV[name]);
+const _env = envSchema.safeParse(process.env);
 
-	if (missingVariables.length > 0) {
-		throw new Error(
-			`Missing required environment variables: ${missingVariables.join(', ')}`
-		);
-	}
+if (!_env.success) {
+	console.error('Invalid environment variables:');
+	console.error(JSON.stringify(_env.error.format(), null, 2));
+	process.exit(1);
 }
+
+export const ENV: EnvDTO = _env.data;

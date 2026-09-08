@@ -4,7 +4,7 @@ import openapiTS, { astToString } from 'openapi-typescript';
 
 import { ENV } from '../src/env';
 
-const SCHEMA_OUTPUT_PATH: string = 'src/schema.ts';
+const SCHEMA_OUTPUT_PATH: string = 'src/generated/schema.ts';
 
 async function generate() {
 	console.log(`Fetching OpenAPI spec from ${ENV.SERVER_DOCS_URL}...`);

@@ -1,20 +1,32 @@
 {
 	"name": "@gitcord/server-api",
 	"version": "0.1.0",
-	"main": "./src/index.ts",
-	"types": "./src/index.ts",
+	"description": "Typed OpenAPI client library for the GitCord server",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc --project tsconfig.app.json",
+		"typecheck": "tsc --project tsconfig.app.json --noEmit",
+		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
+		"generate:client": "tsx scripts/generate-client.ts",
+		"test": "vitest",
+		"test:run": "vitest run",
+		"test:coverage": "vitest run --coverage"
+	},
 	"dependencies": {
 		"openapi-fetch": "^0.13.0",
-		"zod": "^4.5.4"
+		"dotenv": "^16.4.0",
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.1",
-		"dotenv": "^16.4.0",
+		"@types/node": "^22.0.0",
+		"@vitest/coverage-v8": "^5.0.0",
 		"openapi-typescript": "^7.0.0",
-		"tsx": "^4.0.0",
-		"typescript": "^5.0.0"
-	},
-	"scripts": {
-		"generate:client": "tsx scripts/generate-client.ts"
+		"tsc-alias": "^1.9.1",
+		"tsx": "^4.19.0",
+		"typescript": "^5.5.0",
+		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^5.0.0"
 	}
 }

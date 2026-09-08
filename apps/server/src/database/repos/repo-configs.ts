@@ -7,12 +7,14 @@ import { BaseRepo } from './base';
 export interface CreateRepoConfigData {
 	id: string;
 	guildId: string;
+	repositoryUrl: string;
 	commandChannelId: string;
 	notificationChannelId: string;
 }
 
 export interface UpdateRepoConfigData {
 	guildId?: string;
+	repositoryUrl?: string;
 	commandChannelId?: string;
 	notificationChannelId?: string;
 }

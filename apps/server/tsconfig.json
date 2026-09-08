@@ -16,6 +16,8 @@
 		"paths": {
 			"@core": ["./src/core"],
 			"@core/*": ["./src/core/*"],
+			"@app": ["./src/app"],
+			"@app/*": ["./src/app/*"],
 			"@domain": ["./src/domain"],
 			"@domain/*": ["./src/domain/*"],
 			"@database": ["./src/database"],

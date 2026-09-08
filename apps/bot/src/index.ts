@@ -1,11 +1,9 @@
+import { checkServerHealth, logger } from '@core';
 import {
 	exposeWebhookServer,
 	startWebhookServer,
 	stopWebhookServer
 } from '@app';
-
-import { logger, validateEnvironment } from '@core';
-
 import { connectDiscord, disconnectDiscord } from '@discord';
 
 let shuttingDown = false;
@@ -14,7 +12,9 @@ async function main(): Promise<void> {
 	try {
 		logger.info('Starting GitCord...');
 
-		validateEnvironment();
+		logger.info('Checking GitCord server health...');
+		await checkServerHealth();
+		logger.info('GitCord server is healthy.');
 
 		await connectDiscord();
 

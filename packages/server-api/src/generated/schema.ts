@@ -222,7 +222,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Repo Configurations
+         * List repository configurations
          * @description Returns all repository configurations.
          */
         get: {
@@ -234,7 +234,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of repository configurations retrieved */
+                /** @description Repository configurations */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -245,6 +245,11 @@ export interface paths {
                             id: string;
                             /** @example 123456789012345678 */
                             guildId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
                             /** @example 123456789012345679 */
                             commandChannelId: string;
                             /** @example 123456789012345680 */
@@ -260,7 +265,7 @@ export interface paths {
         };
         put?: never;
         /**
-         * Create Repo Configuration
+         * Create repository configuration
          * @description Creates a new repository configuration.
          */
         post: {
@@ -270,11 +275,16 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
+            requestBody: {
                 content: {
                     "application/json": {
                         /** @example 123456789012345678 */
                         guildId: string;
+                        /**
+                         * Format: uri
+                         * @example https://github.com/gitcord-org/core-service
+                         */
+                        repositoryUrl: string;
                         /** @example 123456789012345679 */
                         commandChannelId: string;
                         /** @example 123456789012345680 */
@@ -283,7 +293,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Repository configuration created successfully */
+                /** @description Repository configuration created */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -294,6 +304,11 @@ export interface paths {
                             id: string;
                             /** @example 123456789012345678 */
                             guildId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
                             /** @example 123456789012345679 */
                             commandChannelId: string;
                             /** @example 123456789012345680 */
@@ -305,17 +320,12 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid input payload */
+                /** @description Invalid request */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };
@@ -333,8 +343,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Repo Configuration by ID
-         * @description Returns a single repository configuration by its ID.
+         * Get repository configuration
+         * @description Returns a repository configuration by ID.
          */
         get: {
             parameters: {
@@ -347,7 +357,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Repository configuration retrieved */
+                /** @description Repository configuration */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -358,6 +368,11 @@ export interface paths {
                             id: string;
                             /** @example 123456789012345678 */
                             guildId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
                             /** @example 123456789012345679 */
                             commandChannelId: string;
                             /** @example 123456789012345680 */
@@ -374,19 +389,14 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };
         put?: never;
         post?: never;
         /**
-         * Delete Repo Configuration
+         * Delete repository configuration
          * @description Deletes an existing repository configuration.
          */
         delete: {
@@ -400,7 +410,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Repository configuration deleted successfully */
+                /** @description Repository configuration deleted */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -419,20 +429,15 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };
         options?: never;
         head?: never;
         /**
-         * Update Repo Configuration
-         * @description Updates guild ID or channel IDs for a specific repository configuration.
+         * Update repository configuration
+         * @description Updates an existing repository configuration.
          */
         patch: {
             parameters: {
@@ -443,11 +448,16 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
+            requestBody: {
                 content: {
                     "application/json": {
                         /** @example 123456789012345678 */
                         guildId?: string;
+                        /**
+                         * Format: uri
+                         * @example https://github.com/gitcord-org/another-repo
+                         */
+                        repositoryUrl?: string;
                         /** @example 123456789012345679 */
                         commandChannelId?: string;
                         /** @example 123456789012345680 */
@@ -456,7 +466,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Repository configuration updated successfully */
+                /** @description Repository configuration updated */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -467,6 +477,11 @@ export interface paths {
                             id: string;
                             /** @example 123456789012345678 */
                             guildId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
                             /** @example 123456789012345679 */
                             commandChannelId: string;
                             /** @example 123456789012345680 */
@@ -478,29 +493,19 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid input payload */
+                /** @description Invalid request */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        };
-                    };
+                    content?: never;
                 };
                 /** @description Repository configuration not found */
                 404: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };
@@ -514,8 +519,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Repo Configuration by Command Channel ID
-         * @description Returns a single repository configuration matching the specified command channel ID.
+         * Get repository configuration by command channel
+         * @description Returns the repository configuration associated with a command channel.
          */
         get: {
             parameters: {
@@ -528,7 +533,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Repository configuration retrieved */
+                /** @description Repository configuration */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -539,6 +544,11 @@ export interface paths {
                             id: string;
                             /** @example 123456789012345678 */
                             guildId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
                             /** @example 123456789012345679 */
                             commandChannelId: string;
                             /** @example 123456789012345680 */
@@ -555,12 +565,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };

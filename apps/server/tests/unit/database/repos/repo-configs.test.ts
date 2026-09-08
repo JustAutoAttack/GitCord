@@ -23,6 +23,7 @@ describe('RepoConfigsRepo', () => {
             CREATE TABLE repo_configs (
                 id TEXT PRIMARY KEY,
                 guild_id TEXT NOT NULL,
+                repository_url TEXT NOT NULL,
                 command_channel_id TEXT NOT NULL,
                 notification_channel_id TEXT NOT NULL,
                 created_at TEXT NOT NULL,
@@ -44,6 +45,7 @@ describe('RepoConfigsRepo', () => {
 		const input = {
 			id: 'config-1',
 			guildId: 'guild-123',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'cmd-chan-1',
 			notificationChannelId: 'notif-chan-1'
 		};
@@ -53,6 +55,7 @@ describe('RepoConfigsRepo', () => {
 		expect(created).toMatchObject({
 			id: 'config-1',
 			guildId: 'guild-123',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'cmd-chan-1',
 			notificationChannelId: 'notif-chan-1'
 		});
@@ -68,6 +71,7 @@ describe('RepoConfigsRepo', () => {
 		await repo.create({
 			id: 'config-1',
 			guildId: 'guild-1',
+			repositoryUrl: 'https://github.com/owner/repo-1',
 			commandChannelId: 'cmd-1',
 			notificationChannelId: 'notif-1'
 		});
@@ -75,6 +79,7 @@ describe('RepoConfigsRepo', () => {
 		await repo.create({
 			id: 'config-2',
 			guildId: 'guild-2',
+			repositoryUrl: 'https://github.com/owner/repo-2',
 			commandChannelId: 'cmd-2',
 			notificationChannelId: 'notif-2'
 		});
@@ -89,6 +94,7 @@ describe('RepoConfigsRepo', () => {
 		await repo.create({
 			id: 'config-1',
 			guildId: 'guild-1',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'target-cmd-chan',
 			notificationChannelId: 'notif-1'
 		});
@@ -106,6 +112,7 @@ describe('RepoConfigsRepo', () => {
 		await repo.create({
 			id: 'config-1',
 			guildId: 'guild-1',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'cmd-1',
 			notificationChannelId: 'notif-1'
 		});
@@ -135,6 +142,7 @@ describe('RepoConfigsRepo', () => {
 		await repo.create({
 			id: 'config-1',
 			guildId: 'guild-1',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'cmd-1',
 			notificationChannelId: 'notif-1'
 		});
@@ -145,6 +153,7 @@ describe('RepoConfigsRepo', () => {
 
 		const found = await repo.findById('config-1');
 		expect(found?.guildId).toBe('guild-1');
+		expect(found?.repositoryUrl).toBe('https://github.com/owner/repo');
 		expect(found?.commandChannelId).toBe('cmd-updated');
 		expect(found?.notificationChannelId).toBe('notif-1');
 	});
@@ -154,6 +163,7 @@ describe('RepoConfigsRepo', () => {
 		await repo.create({
 			id: 'config-1',
 			guildId: 'guild-1',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'cmd-1',
 			notificationChannelId: 'notif-1'
 		});
@@ -176,6 +186,7 @@ describe('RepoConfigsRepo', () => {
 		const input = {
 			id: 'config-1',
 			guildId: 'guild-1',
+			repositoryUrl: 'https://github.com/owner/repo',
 			commandChannelId: 'cmd-1',
 			notificationChannelId: 'notif-1'
 		};

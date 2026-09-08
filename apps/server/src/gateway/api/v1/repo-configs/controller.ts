@@ -61,6 +61,7 @@ export const handleCreateRepoConfig: RouteHandler<
 
 	const newConfig = await repoConfigsService.create({
 		guildId: body.guildId,
+		repositoryUrl: body.repositoryUrl,
 		commandChannelId: body.commandChannelId,
 		notificationChannelId: body.notificationChannelId
 	});
@@ -76,6 +77,7 @@ export const handleUpdateRepoConfig: RouteHandler<
 
 	const updatedConfig = await repoConfigsService.update(id, {
 		guildId: body.guildId,
+		repositoryUrl: body.repositoryUrl,
 		commandChannelId: body.commandChannelId,
 		notificationChannelId: body.notificationChannelId
 	});

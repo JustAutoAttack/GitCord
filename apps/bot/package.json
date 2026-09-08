@@ -1,18 +1,21 @@
 {
-	"name": "git-cord-bot",
+	"name": "gitcord-bot",
 	"version": "1.0.0",
 	"private": true,
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"deploy": "tsx scripts/deploy-commands.ts",
-		"build": "tsup src/index.ts --format cjs --dts"
+		"build": "tsup src/index.ts --format cjs --dts",
+		"typecheck": "tsc --project tsconfig.app.json --noEmit"
 	},
 	"dependencies": {
+		"@gitcord/server-api": "0.1.0",
 		"@hono/node-server": "^1.13.0",
 		"@ngrok/ngrok": "^1.7.0",
 		"discord.js": "^14.27.0",
 		"dotenv": "^16.4.5",
-		"hono": "^4.5.11"
+		"hono": "^4.5.11",
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.10",

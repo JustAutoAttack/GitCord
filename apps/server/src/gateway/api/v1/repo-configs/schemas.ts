@@ -23,6 +23,10 @@ export const RepoConfigSchema = z.object({
 		example: '123456789012345678'
 	}),
 
+	repositoryUrl: z.string().url().openapi({
+		example: 'https://github.com/gitcord-org/core-service'
+	}),
+
 	commandChannelId: z.string().openapi({
 		example: '123456789012345679'
 	}),
@@ -45,6 +49,10 @@ export const CreateRepoConfigSchema = z.object({
 		example: '123456789012345678'
 	}),
 
+	repositoryUrl: z.string().min(1).url().openapi({
+		example: 'https://github.com/gitcord-org/core-service'
+	}),
+
 	commandChannelId: z.string().min(1).openapi({
 		example: '123456789012345679'
 	}),
@@ -57,6 +65,10 @@ export const CreateRepoConfigSchema = z.object({
 export const UpdateRepoConfigSchema = z.object({
 	guildId: z.string().min(1).optional().openapi({
 		example: '123456789012345678'
+	}),
+
+	repositoryUrl: z.string().min(1).url().optional().openapi({
+		example: 'https://github.com/gitcord-org/another-repo'
 	}),
 
 	commandChannelId: z.string().min(1).optional().openapi({

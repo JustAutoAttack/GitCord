@@ -28,6 +28,7 @@ export class RepoConfigsService {
 		return repoConfigsRepo.create({
 			id: `cfg_${crypto.randomUUID()}`,
 			guildId: input.guildId,
+			repositoryUrl: input.repositoryUrl,
 			commandChannelId: input.commandChannelId,
 			notificationChannelId: input.notificationChannelId
 		});
