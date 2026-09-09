@@ -12,9 +12,9 @@ export interface DatabaseClient {
 }
 
 export interface DbHealthResult {
-	status: 'up' | 'down';
+	success: boolean;
+	message: string;
 	latencyMs?: number;
-	error?: string;
 }
 
 /**
@@ -80,21 +80,25 @@ export function checkDatabaseHealth(
 			| { alive: number }
 			| undefined;
 
+		const latencyMs = Number((performance.now() - start).toFixed(2));
+
 		if (row?.alive === 1) {
 			return {
-				status: 'up',
-				latencyMs: Number((performance.now() - start).toFixed(2))
+				success: true,
+				message: 'Database connection is active and responsive',
+				latencyMs
 			};
 		}
 
 		return {
-			status: 'down',
-			error: 'Unexpected query output'
+			success: false,
+			message: 'Database check returned unexpected output'
 		};
-	} catch (err) {
+	} catch (error) {
 		return {
-			status: 'down',
-			error: err instanceof Error ? err.message : 'Database check failed'
+			success: false,
+			message:
+				error instanceof Error ? error.message : 'Database check failed'
 		};
 	}
 }

@@ -1,0 +1,58 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "GitCord Logger Configuration",
+	"type": "object",
+	"properties": {
+		"logger": {
+			"type": "object",
+			"properties": {
+				"level": {
+					"type": "string",
+					"enum": [
+						"debug",
+						"info",
+						"warn",
+						"error",
+						"TRACE",
+						"DEBUG",
+						"INFO",
+						"WARN",
+						"ERROR"
+					],
+					"default": "INFO"
+				},
+				"timestampFormat": {
+					"type": "string",
+					"enum": ["ISO", "LOCALE", "UNIX"],
+					"default": "ISO"
+				},
+				"colors": {
+					"type": "object",
+					"properties": {
+						"debug": {
+							"type": ["string", "integer"],
+							"default": "#00bfff"
+						},
+						"info": {
+							"type": ["string", "integer"],
+							"default": "#32cd32"
+						},
+						"warn": {
+							"type": ["string", "integer"],
+							"default": "#ffd700"
+						},
+						"error": {
+							"type": ["string", "integer"],
+							"default": "#ff4500"
+						}
+					},
+					"additionalProperties": false,
+					"default": {}
+				}
+			},
+			"additionalProperties": false,
+			"default": {}
+		}
+	},
+	"additionalProperties": true
+}

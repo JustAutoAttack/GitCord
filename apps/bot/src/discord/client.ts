@@ -43,7 +43,7 @@ client.once('clientReady', async (discordClient) => {
 		}
 
 		const embed = new EmbedBuilder()
-			.setColor(CONFIG.colors.discordBotOnline)
+			.setColor(CONFIG.discord.colors.online)
 			.setTitle('System Update')
 			.setDescription('System ready.');
 
@@ -69,7 +69,7 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 
 		if (channel) {
 			const embed = new EmbedBuilder()
-				.setColor(CONFIG.colors.discordBotOffline)
+				.setColor(CONFIG.discord.colors.offline)
 				.setTitle('System Update')
 				.setDescription(`Shutting down (${signal}).`);
 

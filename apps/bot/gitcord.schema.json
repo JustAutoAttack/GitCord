@@ -1,0 +1,160 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "GitCordConfig",
+	"type": "object",
+	"properties": {
+		"logger": {
+			"type": "object",
+			"properties": {
+				"level": {
+					"type": "string",
+					"enum": [
+						"debug",
+						"info",
+						"warn",
+						"error",
+						"DEBUG",
+						"INFO",
+						"WARN",
+						"ERROR"
+					],
+					"default": "info"
+				},
+				"timestampFormat": {
+					"type": "string",
+					"default": "ISO"
+				},
+				"colors": {
+					"type": "object",
+					"properties": {
+						"debug": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#00BFFF"
+						},
+						"info": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#32CD32"
+						},
+						"warn": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#FFD700"
+						},
+						"error": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#FF4500"
+						}
+					},
+					"additionalProperties": false,
+					"default": {}
+				}
+			},
+			"additionalProperties": false,
+			"default": {}
+		},
+		"discord": {
+			"type": "object",
+			"properties": {
+				"colors": {
+					"type": "object",
+					"properties": {
+						"online": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#238636"
+						},
+						"offline": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#da3633"
+						}
+					},
+					"additionalProperties": false,
+					"default": {}
+				}
+			},
+			"additionalProperties": false,
+			"default": {}
+		},
+		"github": {
+			"type": "object",
+			"properties": {
+				"colors": {
+					"type": "object",
+					"properties": {
+						"push": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#2f81f7"
+						},
+						"pullRequest": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#238636"
+						},
+						"issue": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#8957e5"
+						},
+						"create": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#da3633"
+						},
+						"fork": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#db6d28"
+						},
+						"watch": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#f0883e"
+						},
+						"release": {
+							"type": "string",
+							"pattern": "^#[0-9A-Fa-f]{6}$",
+							"default": "#7ee787"
+						}
+					},
+					"additionalProperties": false,
+					"default": {}
+				}
+			},
+			"additionalProperties": false,
+			"default": {}
+		},
+		"limits": {
+			"type": "object",
+			"properties": {
+				"maxCommitMessageLength": {
+					"type": "integer",
+					"minimum": 1,
+					"default": 140
+				},
+				"maxDescriptionLength": {
+					"type": "integer",
+					"minimum": 1,
+					"default": 250
+				},
+				"defaultCommitLimit": {
+					"type": "integer",
+					"minimum": 1,
+					"default": 5
+				},
+				"maxCommitLimit": {
+					"type": "integer",
+					"minimum": 1,
+					"default": 40
+				}
+			},
+			"additionalProperties": false,
+			"default": {}
+		}
+	},
+	"additionalProperties": false
+}

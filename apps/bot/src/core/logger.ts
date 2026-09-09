@@ -48,34 +48,68 @@ function timestamp(): string {
 	}
 }
 
+function hexToAnsi(hex: number): string {
+	const r = (hex >> 16) & 0xff;
+	const g = (hex >> 8) & 0xff;
+	const b = hex & 0xff;
+	return `\x1b[38;2;${r};${g};${b}m`;
+}
+
+const RESET = '\x1b[00m';
+
 export const logger = {
 	trace(message: string, ...args: unknown[]): void {
 		if (currentLevel <= LogLevel.TRACE) {
-			console.trace(`[TRACE] [${timestamp()}]`, message, ...args);
+			const color = hexToAnsi(CONFIG.logger.colors.debug);
+			console.trace(
+				`${color}[TRACE]${RESET} [${timestamp()}]`,
+				message,
+				...args
+			);
 		}
 	},
 
 	debug(message: string, ...args: unknown[]): void {
 		if (currentLevel <= LogLevel.DEBUG) {
-			console.debug(`[DEBUG] [${timestamp()}]`, message, ...args);
+			const color = hexToAnsi(CONFIG.logger.colors.debug);
+			console.debug(
+				`${color}[DEBUG]${RESET} [${timestamp()}]`,
+				message,
+				...args
+			);
 		}
 	},
 
 	info(message: string, ...args: unknown[]): void {
 		if (currentLevel <= LogLevel.INFO) {
-			console.log(`[INFO] [${timestamp()}]`, message, ...args);
+			const color = hexToAnsi(CONFIG.logger.colors.info);
+			console.log(
+				`${color}[INFO]${RESET} [${timestamp()}]`,
+				message,
+				...args
+			);
 		}
 	},
 
 	warn(message: string, ...args: unknown[]): void {
 		if (currentLevel <= LogLevel.WARN) {
-			console.warn(`[WARN] [${timestamp()}]`, message, ...args);
+			const color = hexToAnsi(CONFIG.logger.colors.warn);
+			console.warn(
+				`${color}[WARN]${RESET} [${timestamp()}]`,
+				message,
+				...args
+			);
 		}
 	},
 
 	error(message: string, ...args: unknown[]): void {
 		if (currentLevel <= LogLevel.ERROR) {
-			console.error(`[ERROR] [${timestamp()}]`, message, ...args);
+			const color = hexToAnsi(CONFIG.logger.colors.error);
+			console.error(
+				`${color}[ERROR]${RESET} [${timestamp()}]`,
+				message,
+				...args
+			);
 		}
 	}
 };

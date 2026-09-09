@@ -1,0 +1,27 @@
+{
+	"name": "@gitcord/logger",
+	"version": "0.1.0",
+	"description": "Structured logging package for GitCord",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc --project tsconfig.app.json",
+		"typecheck": "tsc --project tsconfig.app.json --noEmit",
+		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
+		"test": "vitest",
+		"test:run": "vitest run",
+		"test:coverage": "vitest run --coverage"
+	},
+	"dependencies": {
+		"smol-toml": "^1.8.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"@vitest/coverage-v8": "^5.0.0",
+		"tsx": "^4.19.0",
+		"typescript": "^5.5.0",
+		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^5.0.0"
+	}
+}

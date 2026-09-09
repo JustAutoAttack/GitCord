@@ -1,5 +1,4 @@
 import { createRoute } from '@hono/zod-openapi';
-
 import { HealthResponseSchema } from './schemas';
 
 export const liveRoute = createRoute({
@@ -13,7 +12,7 @@ export const liveRoute = createRoute({
 			content: {
 				'application/json': { schema: HealthResponseSchema }
 			},
-			description: 'Server process is responsive'
+			description: 'Server process response'
 		}
 	}
 });
@@ -29,13 +28,7 @@ export const readyRoute = createRoute({
 			content: {
 				'application/json': { schema: HealthResponseSchema }
 			},
-			description: 'Database connection is healthy'
-		},
-		503: {
-			content: {
-				'application/json': { schema: HealthResponseSchema }
-			},
-			description: 'Database connection is offline'
+			description: 'Database connection status report'
 		}
 	}
 });
@@ -51,13 +44,7 @@ export const fullHealthRoute = createRoute({
 			content: {
 				'application/json': { schema: HealthResponseSchema }
 			},
-			description: 'Service is fully operational'
-		},
-		503: {
-			content: {
-				'application/json': { schema: HealthResponseSchema }
-			},
-			description: 'Service is degraded'
+			description: 'Full diagnostic report'
 		}
 	}
 });

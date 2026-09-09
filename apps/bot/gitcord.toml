@@ -1,20 +1,30 @@
+#:schema ./gitcord-bot.schema.json
+
 [logger]
-level = "INFO"
+level           = "debug"
 timestampFormat = "ISO"
 
-[colors]
-discordBotOnline = "#238636"
-discordBotOffline = "#da3633"
-githubPushEvent = "#2f81f7"
-githubPullRequestEvent = "#238636"
-githubIssuesEvent = "#8957e5"
-githubCreateEvent = "#da3633"
-githubForkEvent = "#db6d28"
-githubWatchEvent = "#f0883e"
-githubReleaseEvent = "#7ee787"
+[logger.colors]
+debug = "#00BFFF"
+info  = "#32CD32"
+warn  = "#FFD700"
+error = "#FF4500"
+
+[discord.colors]
+online  = "#238636"
+offline = "#da3633"
+
+[github.colors]
+push        = "#2f81f7"
+pullRequest = "#238636"
+issue       = "#8957e5"
+create      = "#da3633"
+fork        = "#db6d28"
+watch       = "#f0883e"
+release     = "#7ee787"
 
 [limits]
 maxCommitMessageLength = 140
-maxDescriptionLength = 250
-defaultCommitLimit = 5
-maxCommitLimit = 40
+maxDescriptionLength   = 250
+defaultCommitLimit     = 5
+maxCommitLimit         = 40

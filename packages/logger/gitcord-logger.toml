@@ -1,0 +1,12 @@
+#:schema ./gitcord-logger.schema.json
+
+[logger]
+level           = "INFO"
+timestampFormat = "ISO"
+
+[logger.colors]
+# Colors can be specified as 24-bit hex strings or integer values
+debug = "#00bfff"
+info  = "#32cd32"
+warn  = "#ffd700"
+error = "#ff4500"

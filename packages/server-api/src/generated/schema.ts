@@ -19,26 +19,29 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Server process is responsive */
+                /** @description Server process response */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            /** @example UP */
-                            status: string;
+                            /** @example true */
+                            success: boolean;
+                            /** @example Service is operational */
+                            message: string;
                             /** @example 2026-08-17T17:55:00.000Z */
                             timestamp: string;
                             /** @example 3600 */
                             uptimeSeconds?: number;
                             checks?: {
                                 database: {
-                                    /** @enum {string} */
-                                    status: "up" | "down";
+                                    /** @example true */
+                                    success: boolean;
+                                    /** @example Database connection is active and responsive */
+                                    message: string;
                                     /** @example 0.82 */
                                     latencyMs?: number;
-                                    error?: string;
                                 };
                             };
                         };
@@ -74,51 +77,29 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Database connection is healthy */
+                /** @description Database connection status report */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            /** @example UP */
-                            status: string;
+                            /** @example true */
+                            success: boolean;
+                            /** @example Service is operational */
+                            message: string;
                             /** @example 2026-08-17T17:55:00.000Z */
                             timestamp: string;
                             /** @example 3600 */
                             uptimeSeconds?: number;
                             checks?: {
                                 database: {
-                                    /** @enum {string} */
-                                    status: "up" | "down";
+                                    /** @example true */
+                                    success: boolean;
+                                    /** @example Database connection is active and responsive */
+                                    message: string;
                                     /** @example 0.82 */
                                     latencyMs?: number;
-                                    error?: string;
-                                };
-                            };
-                        };
-                    };
-                };
-                /** @description Database connection is offline */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example UP */
-                            status: string;
-                            /** @example 2026-08-17T17:55:00.000Z */
-                            timestamp: string;
-                            /** @example 3600 */
-                            uptimeSeconds?: number;
-                            checks?: {
-                                database: {
-                                    /** @enum {string} */
-                                    status: "up" | "down";
-                                    /** @example 0.82 */
-                                    latencyMs?: number;
-                                    error?: string;
                                 };
                             };
                         };
@@ -154,51 +135,29 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Service is fully operational */
+                /** @description Full diagnostic report */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            /** @example UP */
-                            status: string;
+                            /** @example true */
+                            success: boolean;
+                            /** @example Service is operational */
+                            message: string;
                             /** @example 2026-08-17T17:55:00.000Z */
                             timestamp: string;
                             /** @example 3600 */
                             uptimeSeconds?: number;
                             checks?: {
                                 database: {
-                                    /** @enum {string} */
-                                    status: "up" | "down";
+                                    /** @example true */
+                                    success: boolean;
+                                    /** @example Database connection is active and responsive */
+                                    message: string;
                                     /** @example 0.82 */
                                     latencyMs?: number;
-                                    error?: string;
-                                };
-                            };
-                        };
-                    };
-                };
-                /** @description Service is degraded */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example UP */
-                            status: string;
-                            /** @example 2026-08-17T17:55:00.000Z */
-                            timestamp: string;
-                            /** @example 3600 */
-                            uptimeSeconds?: number;
-                            checks?: {
-                                database: {
-                                    /** @enum {string} */
-                                    status: "up" | "down";
-                                    /** @example 0.82 */
-                                    latencyMs?: number;
-                                    error?: string;
                                 };
                             };
                         };
