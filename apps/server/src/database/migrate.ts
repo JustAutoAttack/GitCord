@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import Database from 'better-sqlite3';
 
-import { ENV } from '@core';
+import { ENV, databaseLogger } from '@core';
 
 function resolveDatabasePath(): string {
 	const rawPath = ENV.DATABASE_URL.replace(/^file:/, '');
@@ -22,27 +22,36 @@ export function migrateDatabase(): void {
 	const dbDir = path.dirname(dbPath);
 
 	if (!fs.existsSync(dbDir)) {
+		databaseLogger.info(
+			`Creating missing database directory for migrations: ${dbDir}`
+		);
 		fs.mkdirSync(dbDir, { recursive: true });
 	}
 
 	if (!fs.existsSync(migrationsDir)) {
+		databaseLogger.error(
+			`CRITICAL: Database migrations directory does not exist: ${migrationsDir}`
+		);
 		throw new Error(
 			`Database migrations directory does not exist: ${migrationsDir}`
 		);
 	}
 
+	databaseLogger.info(
+		`Opening database connection for migration runner at: ${dbPath}`
+	);
 	const sqlite = new Database(dbPath);
 
 	try {
 		sqlite.pragma('foreign_keys = ON');
 
 		sqlite.exec(`
-			CREATE TABLE IF NOT EXISTS _gitcord_migrations (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				filename TEXT NOT NULL UNIQUE,
-				applied_at TEXT NOT NULL
-			);
-		`);
+            CREATE TABLE IF NOT EXISTS _gitcord_migrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT NOT NULL UNIQUE,
+                applied_at TEXT NOT NULL
+            );
+        `);
 
 		const migrationFiles = fs
 			.readdirSync(migrationsDir)
@@ -60,12 +69,12 @@ export function migrateDatabase(): void {
 		);
 
 		const insertMigration = sqlite.prepare(`
-			INSERT INTO _gitcord_migrations (
-				filename,
-				applied_at
-			)
-			VALUES (?, ?)
-		`);
+            INSERT INTO _gitcord_migrations (
+                filename,
+                applied_at
+            )
+            VALUES (?, ?)
+        `);
 
 		let appliedCount = 0;
 
@@ -77,7 +86,7 @@ export function migrateDatabase(): void {
 			const filePath = path.join(migrationsDir, filename);
 			const sql = fs.readFileSync(filePath, 'utf8');
 
-			console.log(`Applying database migration: ${filename}`);
+			databaseLogger.info(`Applying database migration: ${filename}`);
 
 			sqlite.exec(sql);
 
@@ -87,15 +96,21 @@ export function migrateDatabase(): void {
 		}
 
 		if (appliedCount === 0) {
-			console.log('Database is up to date.');
+			databaseLogger.info('Database is up to date.');
 		} else {
-			console.log(
-				`Applied ${appliedCount} database migration${
+			databaseLogger.info(
+				`Successfully applied ${appliedCount} database migration${
 					appliedCount === 1 ? '' : 's'
 				}.`
 			);
 		}
+	} catch (error) {
+		databaseLogger.error(
+			`CRITICAL: Migration execution failed: ${error instanceof Error ? error.message : String(error)}`
+		);
+		throw error;
 	} finally {
 		sqlite.close();
+		databaseLogger.info('Migration runner closed database connection.');
 	}
 }

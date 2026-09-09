@@ -29,9 +29,10 @@ describe('loadLoggerConfig', () => {
 		mockedFs.existsSync.mockReturnValue(false);
 
 		expect(loadLoggerConfig()).toEqual({
-			level: 'INFO',
+			level: 'DEBUG',
 			timestampFormat: 'ISO',
 			colors: {
+				trace: 0x808080,
 				debug: 0x00bfff,
 				info: 0x32cd32,
 				warn: 0xffd700,
@@ -57,6 +58,7 @@ describe('loadLoggerConfig', () => {
 				'timestampFormat = "UNIX"\n' +
 				'\n' +
 				'[logger.colors]\n' +
+				'trace = "#555555"\n' +
 				'debug = "#112233"\n' +
 				'info = "#445566"\n' +
 				'warn = "#778899"\n' +
@@ -69,6 +71,7 @@ describe('loadLoggerConfig', () => {
 			level: 'DEBUG',
 			timestampFormat: 'UNIX',
 			colors: {
+				trace: 0x555555,
 				debug: 0x112233,
 				info: 0x445566,
 				warn: 0x778899,
@@ -141,7 +144,7 @@ describe('loadLoggerConfig', () => {
 			'[logger]\n' + 'level = "NOT_A_LEVEL"\n'
 		);
 
-		expect(loadLoggerConfig().level).toBe('INFO');
+		expect(loadLoggerConfig().level).toBe('DEBUG');
 	});
 
 	it('normalizes the configured level', () => {
@@ -192,6 +195,7 @@ describe('loadLoggerConfig', () => {
 		const config = loadLoggerConfig();
 
 		expect(config.colors).toEqual({
+			trace: 0x808080,
 			debug: 0x00bfff,
 			info: 0x32cd32,
 			warn: 0xffd700,
@@ -203,12 +207,13 @@ describe('loadLoggerConfig', () => {
 		mockedFs.existsSync.mockReturnValue(true);
 
 		mockedFs.readFileSync.mockReturnValue(
-			'[logger]\n' + 'level = "INFO"\n' + 'colors = "not-an-object"\n'
+			'[logger]\n' + 'level = "DEBUG"\n' + 'colors = "not-an-object"\n'
 		);
 
 		const config = loadLoggerConfig();
 
 		expect(config.colors).toEqual({
+			trace: 0x808080,
 			debug: 0x00bfff,
 			info: 0x32cd32,
 			warn: 0xffd700,
@@ -312,7 +317,7 @@ describe('loadLoggerConfig', () => {
 
 		const config = loadLoggerConfig();
 
-		expect(config.level).toBe('INFO');
+		expect(config.level).toBe('DEBUG');
 		expect(config.timestampFormat).toBe('ISO');
 		expect(consoleSpy).toHaveBeenCalledOnce();
 
@@ -332,7 +337,7 @@ describe('loadLoggerConfig', () => {
 
 		const config = loadLoggerConfig();
 
-		expect(config.level).toBe('INFO');
+		expect(config.level).toBe('DEBUG');
 		expect(config.timestampFormat).toBe('ISO');
 		expect(consoleSpy).toHaveBeenCalledOnce();
 

@@ -21,7 +21,7 @@ export function handleIssueEvent({
 		: (issue.title ?? 'Untitled issue');
 
 	return new ContainerBuilder({
-		accent_color: CONFIG.colors.githubIssuesEvent,
+		accent_color: CONFIG.github.colors.issue,
 		components: [
 			createHeader(
 				`Issue ${action}`,

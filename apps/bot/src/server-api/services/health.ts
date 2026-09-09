@@ -1,5 +1,4 @@
-import { AppError, ErrorCode } from '../../core/errors';
-import { logger } from '../../core/logger';
+import { AppError, ErrorCode, serverAPILogger } from '@core';
 import { apiClient } from '../client';
 
 /**
@@ -95,7 +94,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			);
 			validateDatabaseCheck(data.checks);
 
-			logger.debug(
+			serverAPILogger.debug(
 				'GitCord server full health check passed successfully.'
 			);
 		} catch (error: unknown) {
@@ -113,7 +112,9 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 				'liveness check'
 			);
 
-			logger.debug('GitCord server liveness check passed successfully.');
+			serverAPILogger.debug(
+				'GitCord server liveness check passed successfully.'
+			);
 		} catch (error: unknown) {
 			handleConnectionError(error);
 		}
@@ -130,7 +131,9 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			);
 			validateDatabaseCheck(data.checks);
 
-			logger.debug('GitCord server readiness check passed successfully.');
+			serverAPILogger.debug(
+				'GitCord server readiness check passed successfully.'
+			);
 		} catch (error: unknown) {
 			handleConnectionError(error);
 		}

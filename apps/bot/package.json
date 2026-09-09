@@ -9,6 +9,7 @@
 		"typecheck": "tsc --project tsconfig.app.json --noEmit"
 	},
 	"dependencies": {
+		"@gitcord/logger": "0.1.0",
 		"@gitcord/server-api": "0.1.0",
 		"@hono/node-server": "^1.13.0",
 		"@ngrok/ngrok": "^1.7.0",

@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 
+import { appLogger } from '../loggers';
+
 export class CryptoService {
 	public generateId(): string {
 		return crypto.randomUUID();
@@ -17,8 +19,14 @@ export class CryptoService {
 				salt,
 				64,
 				(err: Error | null, derivedKey: Buffer) => {
-					if (err) reject(err);
-					else resolve(`${salt}:${derivedKey.toString('hex')}`);
+					if (err) {
+						appLogger.error(
+							`CRITICAL: Failed to generate cryptographic string hash via scrypt. Error: ${err.message}`
+						);
+						reject(err);
+					} else {
+						resolve(`${salt}:${derivedKey.toString('hex')}`);
+					}
 				}
 			);
 		});
@@ -30,6 +38,9 @@ export class CryptoService {
 	): Promise<boolean> {
 		const [salt, key] = hash.split(':');
 		if (!salt || !key) {
+			appLogger.warn(
+				`SECURITY WARNING: Attempted to verify a hashed string with a malformed format (missing salt/key delimiter). Hash prefix: ${hash.substring(0, 5)}...`
+			);
 			return false;
 		}
 
@@ -39,12 +50,28 @@ export class CryptoService {
 				salt,
 				64,
 				(err: Error | null, derivedKey: Buffer) => {
-					if (err) reject(err);
-					else {
+					if (err) {
+						appLogger.error(
+							`CRITICAL: Failed to process scrypt execution during string verification. Error: ${err.message}`
+						);
+						reject(err);
+					} else {
 						try {
 							const keyBuffer = Buffer.from(key, 'hex');
-							resolve(this.secureCompare(keyBuffer, derivedKey));
-						} catch {
+							const isValid = this.secureCompare(
+								keyBuffer,
+								derivedKey
+							);
+							if (!isValid) {
+								appLogger.warn(
+									'SECURITY NOTICE: String verification failed due to a cryptographic mismatch.'
+								);
+							}
+							resolve(isValid);
+						} catch (parseErr) {
+							appLogger.error(
+								`SECURITY ERROR: Failed to parse hex key buffer during string verification. Error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`
+							);
 							resolve(false);
 						}
 					}
@@ -65,6 +92,9 @@ export class CryptoService {
 		const bufB = Buffer.isBuffer(b) ? b : Buffer.from(b);
 
 		if (bufA.length !== bufB.length) {
+			appLogger.warn(
+				`SECURITY NOTICE: Buffer length mismatch in secureCompare (${bufA.length} vs ${bufB.length}). Possible tampering or incorrect input length.`
+			);
 			return false;
 		}
 

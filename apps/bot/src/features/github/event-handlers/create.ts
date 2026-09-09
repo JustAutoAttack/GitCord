@@ -16,7 +16,7 @@ export function handleCreateEvent({
 	const branchName = ref ?? 'unknown-branch';
 
 	return new ContainerBuilder({
-		accent_color: CONFIG.colors.githubCreateEvent,
+		accent_color: CONFIG.github.colors.create,
 		components: [
 			createHeader('Branch Created', branchName),
 			...(repository?.full_name

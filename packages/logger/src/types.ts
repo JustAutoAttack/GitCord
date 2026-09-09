@@ -3,6 +3,7 @@ import type { LogLevelName } from './levels';
 export type TimestampFormat = 'ISO' | 'LOCALE' | 'UNIX';
 
 export interface LoggerColorsConfig {
+	trace: number;
 	debug: number;
 	info: number;
 	warn: number;
@@ -16,7 +17,7 @@ export interface LoggerConfig {
 }
 
 export interface LoggerOptions {
-	config?: LoggerConfig;
+	color?: number;
 }
 
 export interface ILogger {

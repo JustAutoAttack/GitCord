@@ -3,7 +3,7 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
-import { ENV } from '@core/env';
+import { ENV, databaseLogger } from '@core';
 import * as schema from './generated/schema';
 
 export interface DatabaseClient {
@@ -27,6 +27,10 @@ export function createDatabase(databaseUrl: string): DatabaseClient {
 	const isMemoryDatabase =
 		databaseUrl === ':memory:' || databaseUrl === 'file::memory:';
 
+	databaseLogger.info(
+		`Initializing database connection (mode: ${isMemoryDatabase ? 'in-memory' : 'file-backed'})...`
+	);
+
 	const sqlite = isMemoryDatabase
 		? new Database(':memory:')
 		: createFileDatabase(databaseUrl);
@@ -36,9 +40,15 @@ export function createDatabase(databaseUrl: string): DatabaseClient {
 	sqlite.pragma('foreign_keys = ON');
 	sqlite.pragma('synchronous = NORMAL');
 
+	databaseLogger.info(
+		'SQLite pragmas applied (WAL, foreign_keys=ON, synchronous=NORMAL).'
+	);
+
 	const db = drizzle(sqlite, {
 		schema
 	});
+
+	databaseLogger.info('Drizzle ORM client successfully initialized.');
 
 	return {
 		sqlite,
@@ -55,9 +65,11 @@ function createFileDatabase(databaseUrl: string): Database.Database {
 	const dbDir = path.dirname(dbPath);
 
 	if (!fs.existsSync(dbDir)) {
+		databaseLogger.info(`Creating missing database directory: ${dbDir}`);
 		fs.mkdirSync(dbDir, { recursive: true });
 	}
 
+	databaseLogger.info(`Opening file-backed SQLite database at: ${dbPath}`);
 	return new Database(dbPath);
 }
 
@@ -90,15 +102,22 @@ export function checkDatabaseHealth(
 			};
 		}
 
+		databaseLogger.error(
+			'CRITICAL: Database health check returned unexpected output (row.alive !== 1).'
+		);
 		return {
 			success: false,
 			message: 'Database check returned unexpected output'
 		};
 	} catch (error) {
+		const errorMsg =
+			error instanceof Error ? error.message : 'Database check failed';
+		databaseLogger.error(
+			`CRITICAL: Database health check failed with exception: ${errorMsg}`
+		);
 		return {
 			success: false,
-			message:
-				error instanceof Error ? error.message : 'Database check failed'
+			message: errorMsg
 		};
 	}
 }

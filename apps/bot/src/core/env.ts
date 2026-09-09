@@ -1,6 +1,7 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { AppError } from './errors';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile =

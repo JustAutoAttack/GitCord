@@ -4,9 +4,13 @@
 	"description": "Structured logging package for GitCord",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		"gitcord-logger.schema.json"
+	],
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
-		"build": "tsc --project tsconfig.app.json",
+		"build": "tsc --project tsconfig.app.json && cp gitcord-logger.schema.json dist/",
 		"typecheck": "tsc --project tsconfig.app.json --noEmit",
 		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
 		"test": "vitest",

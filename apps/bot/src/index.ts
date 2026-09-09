@@ -1,4 +1,4 @@
-import { logger } from '@core';
+import { appLogger } from '@core';
 import {
 	exposeWebhookServer,
 	startWebhookServer,
@@ -11,11 +11,11 @@ let shuttingDown = false;
 
 async function main(): Promise<void> {
 	try {
-		logger.info('Starting GitCord...');
+		appLogger.info('Starting GitCord...');
 
-		logger.info('Checking GitCord server health...');
+		appLogger.info('Checking GitCord server health...');
 		await ServerAPIHealthService.checkFull();
-		logger.info('GitCord server is healthy.');
+		appLogger.info('GitCord server is healthy.');
 
 		await connectDiscord();
 
@@ -23,9 +23,9 @@ async function main(): Promise<void> {
 
 		await exposeWebhookServer();
 
-		logger.info('GitCord startup completed successfully.');
+		appLogger.info('GitCord startup completed successfully.');
 	} catch (error) {
-		logger.error('Startup failed:', error);
+		appLogger.error('Startup failed:', error);
 
 		process.exitCode = 1;
 	}
@@ -38,15 +38,15 @@ async function shutdown(signal: string): Promise<void> {
 
 	shuttingDown = true;
 
-	logger.info(`Received ${signal}. Shutting down GitCord...`);
+	appLogger.info(`Received ${signal}. Shutting down GitCord...`);
 
 	try {
 		await stopWebhookServer();
 		await disconnectDiscord(signal);
 
-		logger.info('GitCord shutdown completed successfully.');
+		appLogger.info('GitCord shutdown completed successfully.');
 	} catch (error) {
-		logger.error('Shutdown failed:', error);
+		appLogger.error('Shutdown failed:', error);
 
 		process.exitCode = 1;
 	}

@@ -21,7 +21,7 @@ export function handleReleaseEvent({
 		: name;
 
 	return new ContainerBuilder({
-		accent_color: CONFIG.colors.githubReleaseEvent,
+		accent_color: CONFIG.github.colors.release,
 		components: [
 			createHeader(`Release ${action}`, releaseDisplay),
 			...(repository?.full_name

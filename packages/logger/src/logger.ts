@@ -12,12 +12,17 @@ interface LogMethod {
 
 export class Logger implements ILogger {
 	private readonly prefix: string;
-	private readonly config: LoggerConfig;
+	public readonly config: LoggerConfig;
 	private readonly minimumLevel: LogLevel;
 
 	constructor(name: string, options: LoggerOptions = {}) {
-		this.prefix = `[${name}]`;
-		this.config = options.config ?? loadLoggerConfig();
+		const rawPrefix = `[${name}]`;
+
+		this.prefix =
+			options.color !== undefined
+				? colorize(rawPrefix, options.color)
+				: rawPrefix;
+		this.config = loadLoggerConfig();
 		this.minimumLevel = parseLogLevel(this.config.level);
 	}
 
@@ -26,7 +31,7 @@ export class Logger implements ILogger {
 			{
 				name: 'TRACE',
 				level: LogLevel.TRACE,
-				color: this.config.colors.debug,
+				color: this.config.colors.trace,
 				write: console.debug
 			},
 			message,
@@ -87,7 +92,9 @@ export class Logger implements ILogger {
 	}
 
 	private write(method: LogMethod, message: string, args: unknown[]): void {
-		if (method.level < this.minimumLevel) {
+		const currentMinLevel = parseLogLevel(this.config.level);
+
+		if (method.level < currentMinLevel) {
 			return;
 		}
 

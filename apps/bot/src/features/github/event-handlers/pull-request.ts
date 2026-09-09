@@ -15,10 +15,10 @@ export function handlePullRequestEvent({
 	action,
 	repository
 }: PullRequestEventContext): ContainerBuilder {
-	let accentColor = CONFIG.colors.githubPullRequestEvent;
+	let accentColor = CONFIG.github.colors.pullRequest;
 
 	if (action === 'closed' && !pullRequest.merged) {
-		accentColor = CONFIG.colors.githubCreateEvent;
+		accentColor = CONFIG.github.colors.create;
 	}
 
 	const title = pullRequest.title ?? 'Untitled pull request';

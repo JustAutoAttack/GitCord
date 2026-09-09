@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import { appLogger } from './loggers';
 
 export enum ErrorCode {
 	BAD_REQUEST = 'BAD_REQUEST',
@@ -8,7 +8,8 @@ export enum ErrorCode {
 	CONFLICT = 'CONFLICT',
 	INTERNAL_ERROR = 'INTERNAL_ERROR',
 	SERVER_API_ERROR = 'SERVER_API_ERROR',
-	DISCORD_API_ERROR = 'DISCORD_API_ERROR'
+	DISCORD_API_ERROR = 'DISCORD_API_ERROR',
+	GITHUB_API_ERROR = 'GITHUB_API_ERROR'
 }
 
 export class AppError extends Error {
@@ -19,6 +20,6 @@ export class AppError extends Error {
 		this.name = 'AppError';
 		this.code = code;
 
-		logger.error(`[${this.code}] ${this.message}`);
+		appLogger.error(`[${this.code}] ${this.message}`);
 	}
 }

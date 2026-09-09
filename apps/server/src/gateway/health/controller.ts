@@ -1,8 +1,11 @@
 import { RouteHandler } from '@hono/zod-openapi';
+
+import { httpLogger } from '@core';
 import { checkDbHealth } from '@database';
 import { fullHealthRoute, liveRoute, readyRoute } from './routes';
 
 export const getLiveness: RouteHandler<typeof liveRoute> = (ctx) => {
+	httpLogger.debug('Liveness probe check requested.');
 	return ctx.json(
 		{
 			success: true,
@@ -14,7 +17,14 @@ export const getLiveness: RouteHandler<typeof liveRoute> = (ctx) => {
 };
 
 export const getReadiness: RouteHandler<typeof readyRoute> = (ctx) => {
+	httpLogger.debug('Readiness probe check requested.');
 	const dbCheck = checkDbHealth();
+
+	if (!dbCheck.success) {
+		httpLogger.warn(
+			`Readiness check failed: Database connection issue detected. Message: ${dbCheck.message}`
+		);
+	}
 
 	return ctx.json(
 		{
@@ -34,7 +44,14 @@ export const getReadiness: RouteHandler<typeof readyRoute> = (ctx) => {
 export const getHealthOverview: RouteHandler<typeof fullHealthRoute> = (
 	ctx
 ) => {
+	httpLogger.debug('Full health overview requested.');
 	const dbCheck = checkDbHealth();
+
+	if (!dbCheck.success) {
+		httpLogger.error(
+			`System health degradation detected: Database failure during full health overview. Message: ${dbCheck.message}`
+		);
+	}
 
 	return ctx.json(
 		{

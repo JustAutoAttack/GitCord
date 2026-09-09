@@ -1,7 +1,5 @@
 export { Logger } from './logger';
-
 export { LogLevel, parseLogLevel, isLogLevelName } from './levels';
-
 export type {
 	ILogger,
 	LoggerConfig,
@@ -9,13 +7,13 @@ export type {
 	LoggerOptions,
 	TimestampFormat
 } from './types';
-
-export { DEFAULT_LOGGER_CONFIG } from './config/defaults';
-
-export { loadLoggerConfig, resetLoggerConfig } from './config/loader';
+export {
+	DEFAULT_LOGGER_CONFIG,
+	loadLoggerConfig,
+	resetLoggerConfig
+} from './config';
 
 import { Logger } from './logger';
-
 import type { ILogger, LoggerOptions } from './types';
 
 /**

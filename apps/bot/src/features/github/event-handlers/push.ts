@@ -80,7 +80,7 @@ export function handlePushEvent({
 			: '> No commits included in payload.';
 
 	return new ContainerBuilder({
-		accent_color: CONFIG.colors.githubPushEvent,
+		accent_color: CONFIG.github.colors.push,
 		components: [
 			createHeader(
 				`Branch Update: \`${branchName}\``,

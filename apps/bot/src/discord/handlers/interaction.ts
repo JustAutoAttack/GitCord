@@ -1,5 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 
+import { discordLogger } from '@core';
 import { commands as githubCommands } from '@features/github';
 
 export async function handleInteraction(
@@ -10,7 +11,7 @@ export async function handleInteraction(
 	);
 
 	if (!matchedCommand) {
-		console.error(
+		discordLogger.error(
 			`No command matching ${interaction.commandName} was found.`
 		);
 
@@ -20,7 +21,7 @@ export async function handleInteraction(
 	try {
 		await matchedCommand.execute(interaction);
 	} catch (error) {
-		console.error(`Error executing ${interaction.commandName}:`, error);
+		discordLogger.error(`Error executing ${interaction.commandName}:`, error);
 
 		const errorMessage = {
 			content: 'There was an error while executing this command!',

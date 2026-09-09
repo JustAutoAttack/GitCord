@@ -5,7 +5,7 @@ import {
 	TextChannel
 } from 'discord.js';
 
-import { CONFIG, ENV, logger } from '@core';
+import { CONFIG, ENV, discordLogger } from '@core';
 import { handleInteraction } from './handlers';
 
 export const client = new Client({
@@ -17,7 +17,7 @@ async function getNotificationChannel(): Promise<TextChannel | null> {
 		const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
 
 		if (!channel || !channel.isTextBased() || !('send' in channel)) {
-			logger.error(
+			discordLogger.error(
 				`Configured Discord channel is unavailable or cannot receive messages: ${ENV.DISCORD_CHANNEL_ID}`
 			);
 
@@ -26,14 +26,14 @@ async function getNotificationChannel(): Promise<TextChannel | null> {
 
 		return channel as TextChannel;
 	} catch (error) {
-		logger.error('Failed to fetch Discord notification channel:', error);
+		discordLogger.error('Failed to fetch Discord notification channel:', error);
 
 		return null;
 	}
 }
 
 client.once('clientReady', async (discordClient) => {
-	logger.info(`Connected to Discord as ${discordClient.user.tag}`);
+	discordLogger.info(`Connected to Discord as ${discordClient.user.tag}`);
 
 	try {
 		const channel = await getNotificationChannel();
@@ -51,18 +51,18 @@ client.once('clientReady', async (discordClient) => {
 			embeds: [embed]
 		});
 	} catch (error) {
-		logger.error('Failed to send Discord online notification:', error);
+		discordLogger.error('Failed to send Discord online notification:', error);
 	}
 });
 
 export async function connectDiscord(): Promise<void> {
-	logger.info('Connecting to Discord...');
+	discordLogger.info('Connecting to Discord...');
 
 	await client.login(ENV.DISCORD_BOT_TOKEN);
 }
 
 export async function disconnectDiscord(signal: string): Promise<void> {
-	logger.info(`Disconnecting from Discord after ${signal}...`);
+	discordLogger.info(`Disconnecting from Discord after ${signal}...`);
 
 	try {
 		const channel = await getNotificationChannel();
@@ -78,7 +78,7 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 			});
 		}
 	} catch (error) {
-		logger.error('Failed to send Discord offline notification:', error);
+		discordLogger.error('Failed to send Discord offline notification:', error);
 	} finally {
 		client.destroy();
 	}
@@ -92,7 +92,7 @@ client.on('interactionCreate', async (interaction) => {
 	try {
 		await handleInteraction(interaction);
 	} catch (error) {
-		logger.error(
+		discordLogger.error(
 			`Unhandled interaction error for ${interaction.commandName}:`,
 			error
 		);

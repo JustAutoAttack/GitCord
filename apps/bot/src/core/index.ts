@@ -1,3 +1,4 @@
 export * from './env';
 export * from './config';
-export * from './logger';
+export * from './loggers';
+export * from './errors';
