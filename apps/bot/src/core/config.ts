@@ -2,6 +2,9 @@ import fs from 'fs';
 
 import { resolveRootPath, parseHex } from './utils';
 
+// TODO Rework the current config, removing logger configs
+// TODO Add colors to pass to loggers
+
 interface LoggerColorsConfig {
 	debug: number;
 	info: number;
