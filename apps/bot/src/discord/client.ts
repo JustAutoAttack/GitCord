@@ -6,15 +6,20 @@ import {
 } from 'discord.js';
 
 import { CONFIG, ENV, discordLogger } from '@core';
-import { ServerAPIGuildSettingService } from '@server-api';
+import {
+	ServerAPIGuildSettingService,
+	ServerAPIRemoteConfigService
+} from '@server-api';
 import { handleInteraction } from './handlers';
 
 export const client = new Client({
 	intents: [GatewayIntentBits.Guilds]
 });
 
-async function getNotificationChannels(): Promise<TextChannel[]> {
-	const channels: TextChannel[] = [];
+async function getNotificationChannels(): Promise<
+	{ channel: TextChannel; guildId: string }[]
+> {
+	const results: { channel: TextChannel; guildId: string }[] = [];
 
 	for (const guild of client.guilds.cache.values()) {
 		try {
@@ -38,7 +43,10 @@ async function getNotificationChannels(): Promise<TextChannel[]> {
 				continue;
 			}
 
-			channels.push(channel as TextChannel);
+			results.push({
+				channel: channel as TextChannel,
+				guildId: guild.id
+			});
 		} catch (error) {
 			discordLogger.warn(
 				`Failed to fetch notification channel for guild ${guild.id}:`,
@@ -47,37 +55,97 @@ async function getNotificationChannels(): Promise<TextChannel[]> {
 		}
 	}
 
-	return channels;
+	return results;
 }
 
 client.once('clientReady', async (discordClient) => {
 	discordLogger.info(`Connected to Discord as ${discordClient.user.tag}`);
 
 	try {
-		const channels = await getNotificationChannels();
+		const targetChannels = await getNotificationChannels();
 
-		if (channels.length === 0) {
+		if (targetChannels.length === 0) {
 			return;
 		}
 
-		const embed = new EmbedBuilder()
-			.setColor(CONFIG.discord.colors.online)
-			.setTitle('System Update')
-			.setDescription('System ready.');
-
 		await Promise.all(
-			channels.map((channel) =>
-				channel.send({ embeds: [embed] }).catch((error) => {
+			targetChannels.map(async ({ channel, guildId }) => {
+				try {
+					let hasRepos = true;
+
+					try {
+						const response =
+							await ServerAPIRemoteConfigService.list();
+						const allConfigs = Array.isArray(response)
+							? response
+							: ((response as any)?.data ?? []);
+						const serverConfigs = allConfigs.filter(
+							(config: any) => config.guildId === guildId
+						);
+						if (serverConfigs.length === 0) {
+							hasRepos = false;
+						}
+					} catch {
+						hasRepos = false;
+					}
+
+					const descriptionLines = [];
+
+					if (!hasRepos) {
+						descriptionLines.push(
+							'**No Repositories**: Run `/git remote add` to link a GitHub repository.'
+						);
+					}
+
+					descriptionLines.push(
+						'> Run `/git help` for a complete guide.'
+					);
+
+					const embed = new EmbedBuilder()
+						.setColor(CONFIG.discord.colors.online)
+						.setTitle('GitCord Online')
+						.setDescription(descriptionLines.join('\n\n'));
+
+					await channel.send({ embeds: [embed] });
+				} catch (error) {
 					discordLogger.error(
 						`Failed to send online notification to channel ${channel.id}:`,
 						error
 					);
-				})
-			)
+				}
+			})
 		);
 	} catch (error) {
 		discordLogger.error(
 			'Failed to send Discord online notifications:',
+			error
+		);
+	}
+});
+
+client.on('guildCreate', async (guild) => {
+	discordLogger.info(`Joined new guild: ${guild.id} (${guild.name})`);
+
+	try {
+		const systemChannel = guild.systemChannel;
+		if (!systemChannel || !systemChannel.isTextBased()) {
+			return;
+		}
+
+		const descriptionLines = [
+			'Thanks for adding GitCord! To set up this server for GitHub notifications, run `/git config server` in your desired channel.',
+			'> Run `/git help` for a complete guide.'
+		];
+
+		const embed = new EmbedBuilder()
+			.setColor(CONFIG.discord.colors.online)
+			.setTitle('GitCord Setup')
+			.setDescription(descriptionLines.join('\n\n'));
+
+		await systemChannel.send({ embeds: [embed] });
+	} catch (error) {
+		discordLogger.error(
+			`Failed to send welcome setup message for guild ${guild.id}:`,
 			error
 		);
 	}
@@ -93,16 +161,16 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 	discordLogger.info(`Disconnecting from Discord after ${signal}...`);
 
 	try {
-		const channels = await getNotificationChannels();
+		const targetChannels = await getNotificationChannels();
 
-		if (channels.length > 0) {
+		if (targetChannels.length > 0) {
 			const embed = new EmbedBuilder()
 				.setColor(CONFIG.discord.colors.offline)
 				.setTitle('System Update')
 				.setDescription(`Shutting down (${signal}).`);
 
 			await Promise.all(
-				channels.map((channel) =>
+				targetChannels.map(({ channel }) =>
 					channel.send({ embeds: [embed] }).catch((error) => {
 						discordLogger.error(
 							`Failed to send offline notification to channel ${channel.id}:`,
