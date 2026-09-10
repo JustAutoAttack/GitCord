@@ -15,7 +15,7 @@
 		"build": "tsc --project tsconfig.app.json",
 		"typecheck": "tsc --project tsconfig.app.json --noEmit",
 		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
-		"generate:client": "tsx scripts/generate-client.ts",
+		"generate:schema": "tsx scripts/generate-schema.ts",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"test:coverage": "vitest run --coverage"

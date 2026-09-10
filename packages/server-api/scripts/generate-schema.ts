@@ -6,7 +6,7 @@ import { ENV } from '../src/env';
 
 const SCHEMA_OUTPUT_PATH: string = 'src/generated/schema.ts';
 
-async function generate() {
+async function main() {
 	console.log(`Fetching OpenAPI spec from ${ENV.SERVER_DOCS_URL}...`);
 
 	try {
@@ -22,4 +22,4 @@ async function generate() {
 	}
 }
 
-generate();
+main();

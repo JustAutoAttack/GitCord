@@ -19,15 +19,19 @@
         "description": "Immediate process responsiveness check.",
         "responses": {
           "200": {
-            "description": "Server process is responsive",
+            "description": "Server process response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
                       "type": "string",
-                      "example": "UP"
+                      "example": "Service is operational"
                     },
                     "timestamp": {
                       "type": "string",
@@ -43,23 +47,22 @@
                         "database": {
                           "type": "object",
                           "properties": {
-                            "status": {
+                            "success": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "message": {
                               "type": "string",
-                              "enum": [
-                                "up",
-                                "down"
-                              ]
+                              "example": "Database connection is active and responsive"
                             },
                             "latencyMs": {
                               "type": "number",
                               "example": 0.82
-                            },
-                            "error": {
-                              "type": "string"
                             }
                           },
                           "required": [
-                            "status"
+                            "success",
+                            "message"
                           ]
                         }
                       },
@@ -69,7 +72,8 @@
                     }
                   },
                   "required": [
-                    "status",
+                    "success",
+                    "message",
                     "timestamp"
                   ]
                 }
@@ -88,15 +92,19 @@
         "description": "Validates SQLite database connection.",
         "responses": {
           "200": {
-            "description": "Database connection is healthy",
+            "description": "Database connection status report",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
                       "type": "string",
-                      "example": "UP"
+                      "example": "Service is operational"
                     },
                     "timestamp": {
                       "type": "string",
@@ -112,23 +120,22 @@
                         "database": {
                           "type": "object",
                           "properties": {
-                            "status": {
+                            "success": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "message": {
                               "type": "string",
-                              "enum": [
-                                "up",
-                                "down"
-                              ]
+                              "example": "Database connection is active and responsive"
                             },
                             "latencyMs": {
                               "type": "number",
                               "example": 0.82
-                            },
-                            "error": {
-                              "type": "string"
                             }
                           },
                           "required": [
-                            "status"
+                            "success",
+                            "message"
                           ]
                         }
                       },
@@ -138,7 +145,8 @@
                     }
                   },
                   "required": [
-                    "status",
+                    "success",
+                    "message",
                     "timestamp"
                   ]
                 }
@@ -146,15 +154,19 @@
             }
           },
           "503": {
-            "description": "Database connection is offline",
+            "description": "Database connection failure report",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
                       "type": "string",
-                      "example": "UP"
+                      "example": "Service is operational"
                     },
                     "timestamp": {
                       "type": "string",
@@ -170,23 +182,22 @@
                         "database": {
                           "type": "object",
                           "properties": {
-                            "status": {
+                            "success": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "message": {
                               "type": "string",
-                              "enum": [
-                                "up",
-                                "down"
-                              ]
+                              "example": "Database connection is active and responsive"
                             },
                             "latencyMs": {
                               "type": "number",
                               "example": 0.82
-                            },
-                            "error": {
-                              "type": "string"
                             }
                           },
                           "required": [
-                            "status"
+                            "success",
+                            "message"
                           ]
                         }
                       },
@@ -196,7 +207,8 @@
                     }
                   },
                   "required": [
-                    "status",
+                    "success",
+                    "message",
                     "timestamp"
                   ]
                 }
@@ -215,15 +227,19 @@
         "description": "Provides process uptime and database status details.",
         "responses": {
           "200": {
-            "description": "Service is fully operational",
+            "description": "Full diagnostic report",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
                       "type": "string",
-                      "example": "UP"
+                      "example": "Service is operational"
                     },
                     "timestamp": {
                       "type": "string",
@@ -239,23 +255,22 @@
                         "database": {
                           "type": "object",
                           "properties": {
-                            "status": {
+                            "success": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "message": {
                               "type": "string",
-                              "enum": [
-                                "up",
-                                "down"
-                              ]
+                              "example": "Database connection is active and responsive"
                             },
                             "latencyMs": {
                               "type": "number",
                               "example": 0.82
-                            },
-                            "error": {
-                              "type": "string"
                             }
                           },
                           "required": [
-                            "status"
+                            "success",
+                            "message"
                           ]
                         }
                       },
@@ -265,7 +280,8 @@
                     }
                   },
                   "required": [
-                    "status",
+                    "success",
+                    "message",
                     "timestamp"
                   ]
                 }
@@ -273,15 +289,19 @@
             }
           },
           "503": {
-            "description": "Service is degraded",
+            "description": "Degraded diagnostic report",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
                       "type": "string",
-                      "example": "UP"
+                      "example": "Service is operational"
                     },
                     "timestamp": {
                       "type": "string",
@@ -297,23 +317,22 @@
                         "database": {
                           "type": "object",
                           "properties": {
-                            "status": {
+                            "success": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "message": {
                               "type": "string",
-                              "enum": [
-                                "up",
-                                "down"
-                              ]
+                              "example": "Database connection is active and responsive"
                             },
                             "latencyMs": {
                               "type": "number",
                               "example": 0.82
-                            },
-                            "error": {
-                              "type": "string"
                             }
                           },
                           "required": [
-                            "status"
+                            "success",
+                            "message"
                           ]
                         }
                       },
@@ -323,7 +342,8 @@
                     }
                   },
                   "required": [
-                    "status",
+                    "success",
+                    "message",
                     "timestamp"
                   ]
                 }
@@ -333,16 +353,28 @@
         }
       }
     },
-    "/api/v1/repo-configs": {
+    "/api/v1/remote-configs": {
       "get": {
         "tags": [
-          "Repo Configurations"
+          "Remote Configurations"
         ],
-        "summary": "List repository configurations",
-        "description": "Returns all repository configurations.",
+        "summary": "List remote configurations",
+        "description": "Returns all remote configurations, optionally filtered by guildId.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Filter remote configurations by Guild ID",
+              "example": "123456789012345678"
+            },
+            "required": false,
+            "name": "guildId",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Repository configurations",
+            "description": "Remote configurations",
             "content": {
               "application/json": {
                 "schema": {
@@ -357,6 +389,11 @@
                       "guildId": {
                         "type": "string",
                         "example": "123456789012345678"
+                      },
+                      "repositoryUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://github.com/gitcord-org/core-service"
                       },
                       "commandChannelId": {
                         "type": "string",
@@ -378,6 +415,7 @@
                     "required": [
                       "id",
                       "guildId",
+                      "repositoryUrl",
                       "commandChannelId",
                       "notificationChannelId",
                       "updatedAt",
@@ -392,10 +430,10 @@
       },
       "post": {
         "tags": [
-          "Repo Configurations"
+          "Remote Configurations"
         ],
-        "summary": "Create repository configuration",
-        "description": "Creates a new repository configuration.",
+        "summary": "Create remote configuration",
+        "description": "Creates a new remote configuration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -407,6 +445,12 @@
                     "type": "string",
                     "minLength": 1,
                     "example": "123456789012345678"
+                  },
+                  "repositoryUrl": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "uri",
+                    "example": "https://github.com/gitcord-org/core-service"
                   },
                   "commandChannelId": {
                     "type": "string",
@@ -421,6 +465,7 @@
                 },
                 "required": [
                   "guildId",
+                  "repositoryUrl",
                   "commandChannelId",
                   "notificationChannelId"
                 ]
@@ -430,7 +475,7 @@
         },
         "responses": {
           "201": {
-            "description": "Repository configuration created",
+            "description": "Remote configuration created",
             "content": {
               "application/json": {
                 "schema": {
@@ -443,6 +488,11 @@
                     "guildId": {
                       "type": "string",
                       "example": "123456789012345678"
+                    },
+                    "repositoryUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://github.com/gitcord-org/core-service"
                     },
                     "commandChannelId": {
                       "type": "string",
@@ -464,6 +514,7 @@
                   "required": [
                     "id",
                     "guildId",
+                    "repositoryUrl",
                     "commandChannelId",
                     "notificationChannelId",
                     "updatedAt",
@@ -479,28 +530,41 @@
         }
       }
     },
-    "/api/v1/repo-configs/{id}": {
+    "/api/v1/remote-configs/lookup": {
       "get": {
         "tags": [
-          "Repo Configurations"
+          "Remote Configurations"
         ],
-        "summary": "Get repository configuration",
-        "description": "Returns a repository configuration by ID.",
+        "summary": "Get remote configuration by guild and repo URL",
+        "description": "Returns the remote configuration matching a specific guild ID and remote URL.",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "description": "Repo Configuration ID",
-              "example": "cfg_123456"
+              "minLength": 1,
+              "description": "Guild ID",
+              "example": "123456789012345678"
             },
             "required": true,
-            "name": "id",
-            "in": "path"
+            "name": "guildId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "format": "uri",
+              "description": "Repository URL",
+              "example": "https://github.com/gitcord-org/core-service"
+            },
+            "required": true,
+            "name": "repositoryUrl",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "Repository configuration",
+            "description": "Remote configuration",
             "content": {
               "application/json": {
                 "schema": {
@@ -513,6 +577,11 @@
                     "guildId": {
                       "type": "string",
                       "example": "123456789012345678"
+                    },
+                    "repositoryUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://github.com/gitcord-org/core-service"
                     },
                     "commandChannelId": {
                       "type": "string",
@@ -534,6 +603,7 @@
                   "required": [
                     "id",
                     "guildId",
+                    "repositoryUrl",
                     "commandChannelId",
                     "notificationChannelId",
                     "updatedAt",
@@ -544,21 +614,97 @@
             }
           },
           "404": {
-            "description": "Repository configuration not found"
+            "description": "Remote configuration not found"
+          }
+        }
+      }
+    },
+    "/api/v1/remote-configs/{id}": {
+      "get": {
+        "tags": [
+          "Remote Configurations"
+        ],
+        "summary": "Get remote configuration",
+        "description": "Returns a remote configuration by ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Remote Configuration ID",
+              "example": "cfg_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remote configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cfg_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "repositoryUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://github.com/gitcord-org/core-service"
+                    },
+                    "commandChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "notificationChannelId": {
+                      "type": "string",
+                      "example": "123456789012345680"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "repositoryUrl",
+                    "commandChannelId",
+                    "notificationChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Remote configuration not found"
           }
         }
       },
       "patch": {
         "tags": [
-          "Repo Configurations"
+          "Remote Configurations"
         ],
-        "summary": "Update repository configuration",
-        "description": "Updates an existing repository configuration.",
+        "summary": "Update remote configuration",
+        "description": "Updates an existing remote configuration.",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "description": "Repo Configuration ID",
+              "description": "Remote Configuration ID",
               "example": "cfg_123456"
             },
             "required": true,
@@ -578,6 +724,12 @@
                     "minLength": 1,
                     "example": "123456789012345678"
                   },
+                  "repositoryUrl": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "uri",
+                    "example": "https://github.com/gitcord-org/another-repo"
+                  },
                   "commandChannelId": {
                     "type": "string",
                     "minLength": 1,
@@ -595,7 +747,7 @@
         },
         "responses": {
           "200": {
-            "description": "Repository configuration updated",
+            "description": "Remote configuration updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -608,6 +760,11 @@
                     "guildId": {
                       "type": "string",
                       "example": "123456789012345678"
+                    },
+                    "repositoryUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://github.com/gitcord-org/core-service"
                     },
                     "commandChannelId": {
                       "type": "string",
@@ -629,6 +786,7 @@
                   "required": [
                     "id",
                     "guildId",
+                    "repositoryUrl",
                     "commandChannelId",
                     "notificationChannelId",
                     "updatedAt",
@@ -642,21 +800,21 @@
             "description": "Invalid request"
           },
           "404": {
-            "description": "Repository configuration not found"
+            "description": "Remote configuration not found"
           }
         }
       },
       "delete": {
         "tags": [
-          "Repo Configurations"
+          "Remote Configurations"
         ],
-        "summary": "Delete repository configuration",
-        "description": "Deletes an existing repository configuration.",
+        "summary": "Delete remote configuration",
+        "description": "Deletes an existing remote configuration.",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "description": "Repo Configuration ID",
+              "description": "Remote Configuration ID",
               "example": "cfg_123456"
             },
             "required": true,
@@ -666,7 +824,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Repository configuration deleted",
+            "description": "Remote configuration deleted",
             "content": {
               "application/json": {
                 "schema": {
@@ -690,18 +848,18 @@
             }
           },
           "404": {
-            "description": "Repository configuration not found"
+            "description": "Remote configuration not found"
           }
         }
       }
     },
-    "/api/v1/repo-configs/command-channel/{commandChannelId}": {
+    "/api/v1/remote-configs/command-channel/{commandChannelId}": {
       "get": {
         "tags": [
-          "Repo Configurations"
+          "Remote Configurations"
         ],
-        "summary": "Get repository configuration by command channel",
-        "description": "Returns the repository configuration associated with a command channel.",
+        "summary": "Get remote configuration by command channel",
+        "description": "Returns the remote configuration associated with a command channel.",
         "parameters": [
           {
             "schema": {
@@ -716,7 +874,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Repository configuration",
+            "description": "Remote configuration",
             "content": {
               "application/json": {
                 "schema": {
@@ -729,6 +887,11 @@
                     "guildId": {
                       "type": "string",
                       "example": "123456789012345678"
+                    },
+                    "repositoryUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://github.com/gitcord-org/core-service"
                     },
                     "commandChannelId": {
                       "type": "string",
@@ -750,6 +913,7 @@
                   "required": [
                     "id",
                     "guildId",
+                    "repositoryUrl",
                     "commandChannelId",
                     "notificationChannelId",
                     "updatedAt",
@@ -760,7 +924,471 @@
             }
           },
           "404": {
-            "description": "Repository configuration not found"
+            "description": "Remote configuration not found"
+          }
+        }
+      }
+    },
+    "/api/v1/guild-settings": {
+      "get": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "List guild settings",
+        "description": "Returns all guild settings configurations.",
+        "responses": {
+          "200": {
+            "description": "Guild settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "example": "set_123456"
+                      },
+                      "guildId": {
+                        "type": "string",
+                        "example": "123456789012345678"
+                      },
+                      "systemChannelId": {
+                        "type": "string",
+                        "example": "123456789012345679"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "example": "2026-08-17T14:30:00.000Z"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "example": "2026-08-01T10:00:00.000Z"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "guildId",
+                      "systemChannelId",
+                      "updatedAt",
+                      "createdAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "Create guild setting",
+        "description": "Creates a new guild setting configuration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "guildId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345678"
+                  },
+                  "systemChannelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345679"
+                  }
+                },
+                "required": [
+                  "guildId",
+                  "systemChannelId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Guild setting created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "set_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "systemChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "systemChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/guild-settings/{id}": {
+      "get": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "Get guild setting by ID",
+        "description": "Returns a guild setting configuration by its ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Guild Setting ID",
+              "example": "set_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guild setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "set_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "systemChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "systemChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guild setting not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "Update guild setting",
+        "description": "Updates an existing guild setting configuration.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Guild Setting ID",
+              "example": "set_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "guildId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345678"
+                  },
+                  "systemChannelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "123456789012345679"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guild setting updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "set_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "systemChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "systemChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "Guild setting not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "Delete guild setting",
+        "description": "Deletes an existing guild setting configuration.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Guild Setting ID",
+              "example": "set_123456"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guild setting deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Operation completed successfully"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guild setting not found"
+          }
+        }
+      }
+    },
+    "/api/v1/guild-settings/guild/{guildId}": {
+      "get": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "Get guild setting by guild ID",
+        "description": "Returns the guild setting configuration associated with a specific guild.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Guild ID",
+              "example": "123456789012345678"
+            },
+            "required": true,
+            "name": "guildId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guild setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "set_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "systemChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "systemChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guild setting not found for guild"
+          }
+        }
+      }
+    },
+    "/api/v1/guild-settings/system-channel/{systemChannelId}": {
+      "get": {
+        "tags": [
+          "Guild Settings"
+        ],
+        "summary": "Get guild setting by system channel ID",
+        "description": "Returns the guild setting configuration associated with a system channel.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "System Channel ID",
+              "example": "123456789012345679"
+            },
+            "required": true,
+            "name": "systemChannelId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guild setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "set_123456"
+                    },
+                    "guildId": {
+                      "type": "string",
+                      "example": "123456789012345678"
+                    },
+                    "systemChannelId": {
+                      "type": "string",
+                      "example": "123456789012345679"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "example": "2026-08-17T14:30:00.000Z"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "example": "2026-08-01T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "guildId",
+                    "systemChannelId",
+                    "updatedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guild setting not found for system channel"
           }
         }
       }
