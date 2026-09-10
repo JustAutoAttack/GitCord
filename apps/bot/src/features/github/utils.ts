@@ -14,9 +14,7 @@ export function getCommitUsername(
 ): string {
 	return (
 		commit.author?.login ??
-		commit.author?.username ??
 		commit.committer?.login ??
-		commit.committer?.username ??
 		commit.author?.name ??
 		commit.committer?.name ??
 		body.sender?.login ??

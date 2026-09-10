@@ -1,7 +1,6 @@
 import { ContainerBuilder } from 'discord.js';
 
-import { CONFIG } from '@core';
-import { createHeader, createFooter, createSeparator } from '@shared';
+import { CONFIG, createHeader, createFooter, createSeparator } from '@core';
 import type { GitHubRepository } from '../types';
 
 export interface CreateEventContext {

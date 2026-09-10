@@ -6,39 +6,57 @@ import {
 } from 'discord.js';
 
 import { CONFIG, ENV, discordLogger } from '@core';
+import { ServerAPIGuildSettingService } from '@server-api';
 import { handleInteraction } from './handlers';
 
 export const client = new Client({
 	intents: [GatewayIntentBits.Guilds]
 });
 
-async function getNotificationChannel(): Promise<TextChannel | null> {
-	try {
-		const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
+async function getNotificationChannels(): Promise<TextChannel[]> {
+	const channels: TextChannel[] = [];
 
-		if (!channel || !channel.isTextBased() || !('send' in channel)) {
-			discordLogger.error(
-				`Configured Discord channel is unavailable or cannot receive messages: ${ENV.DISCORD_CHANNEL_ID}`
+	for (const guild of client.guilds.cache.values()) {
+		try {
+			const guildSettings =
+				await ServerAPIGuildSettingService.getByGuildId(guild.id);
+			const channelId = guildSettings?.systemChannelId;
+
+			if (!channelId) {
+				discordLogger.warn(
+					`No system channel configured for guild: ${guild.id} (${guild.name})`
+				);
+				continue;
+			}
+
+			const channel = await client.channels.fetch(channelId);
+
+			if (!channel || !channel.isTextBased() || !('send' in channel)) {
+				discordLogger.warn(
+					`Configured Discord channel is unavailable or cannot receive messages: ${channelId} (Guild: ${guild.id})`
+				);
+				continue;
+			}
+
+			channels.push(channel as TextChannel);
+		} catch (error) {
+			discordLogger.warn(
+				`Failed to fetch notification channel for guild ${guild.id}:`,
+				error
 			);
-
-			return null;
 		}
-
-		return channel as TextChannel;
-	} catch (error) {
-		discordLogger.error('Failed to fetch Discord notification channel:', error);
-
-		return null;
 	}
+
+	return channels;
 }
 
 client.once('clientReady', async (discordClient) => {
 	discordLogger.info(`Connected to Discord as ${discordClient.user.tag}`);
 
 	try {
-		const channel = await getNotificationChannel();
+		const channels = await getNotificationChannels();
 
-		if (!channel) {
+		if (channels.length === 0) {
 			return;
 		}
 
@@ -47,11 +65,21 @@ client.once('clientReady', async (discordClient) => {
 			.setTitle('System Update')
 			.setDescription('System ready.');
 
-		await channel.send({
-			embeds: [embed]
-		});
+		await Promise.all(
+			channels.map((channel) =>
+				channel.send({ embeds: [embed] }).catch((error) => {
+					discordLogger.error(
+						`Failed to send online notification to channel ${channel.id}:`,
+						error
+					);
+				})
+			)
+		);
 	} catch (error) {
-		discordLogger.error('Failed to send Discord online notification:', error);
+		discordLogger.error(
+			'Failed to send Discord online notifications:',
+			error
+		);
 	}
 });
 
@@ -65,20 +93,30 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 	discordLogger.info(`Disconnecting from Discord after ${signal}...`);
 
 	try {
-		const channel = await getNotificationChannel();
+		const channels = await getNotificationChannels();
 
-		if (channel) {
+		if (channels.length > 0) {
 			const embed = new EmbedBuilder()
 				.setColor(CONFIG.discord.colors.offline)
 				.setTitle('System Update')
 				.setDescription(`Shutting down (${signal}).`);
 
-			await channel.send({
-				embeds: [embed]
-			});
+			await Promise.all(
+				channels.map((channel) =>
+					channel.send({ embeds: [embed] }).catch((error) => {
+						discordLogger.error(
+							`Failed to send offline notification to channel ${channel.id}:`,
+							error
+						);
+					})
+				)
+			);
 		}
 	} catch (error) {
-		discordLogger.error('Failed to send Discord offline notification:', error);
+		discordLogger.error(
+			'Failed to send Discord offline notifications:',
+			error
+		);
 	} finally {
 		client.destroy();
 	}

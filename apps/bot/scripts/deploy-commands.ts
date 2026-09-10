@@ -1,9 +1,11 @@
 import { REST, Routes } from 'discord.js';
 
 import { ENV } from '@core';
-import { commands as github_commands } from '@features/github';
+import * as commands from '@discord/commands';
 
-const commandData = github_commands.map((command) => command.data.toJSON());
+const commandData = Object.values(commands).map((command: any) =>
+	command.data.toJSON()
+);
 
 const rest = new REST({
 	version: '10'
@@ -18,7 +20,7 @@ const rest = new REST({
 		await rest.put(
 			Routes.applicationGuildCommands(
 				ENV.DISCORD_CLIENT_ID,
-				ENV.DISCORD_GUILD_ID
+				ENV.DISCORD_DEPLOY_GUILD_ID
 			),
 			{
 				body: commandData

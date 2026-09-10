@@ -1,3 +1,9 @@
+import type {
+	HealthResponse,
+	HealthLiveResponse,
+	HealthReadyResponse
+} from '@gitcord/server-api';
+
 import { AppError, ErrorCode, serverAPILogger } from '@core';
 import { apiClient } from '../client';
 
@@ -11,21 +17,21 @@ export interface IServerAPIHealthService {
 	 *
 	 * @throws {AppError} If the server is unreachable, returns an error status, or if database checks fail.
 	 */
-	checkFull(): Promise<void>;
+	getFull(): Promise<HealthResponse>;
 
 	/**
 	 * Verifies basic process responsiveness.
 	 *
 	 * @throws {AppError} If the server is offline or the liveness check fails.
 	 */
-	checkLive(): Promise<void>;
+	getLive(): Promise<HealthLiveResponse>;
 
 	/**
 	 * Verifies database connectivity and readiness.
 	 *
 	 * @throws {AppError} If the server reports a readiness failure or database connectivity issues.
 	 */
-	checkReady(): Promise<void>;
+	getReady(): Promise<HealthReadyResponse>;
 }
 
 function handleConnectionError(error: unknown): never {
@@ -72,7 +78,7 @@ function validateSuccessStatus(
 }
 
 function validateDatabaseCheck(checks?: {
-	database?: { success: boolean; message: string };
+	database: { success: boolean; message: string };
 }): void {
 	if (checks?.database && !checks.database.success) {
 		throw new AppError(
@@ -83,7 +89,7 @@ function validateDatabaseCheck(checks?: {
 }
 
 export const ServerAPIHealthService: IServerAPIHealthService = {
-	async checkFull(): Promise<void> {
+	async getFull(): Promise<HealthResponse> {
 		try {
 			const { data, error } = await apiClient.GET('/health');
 			validateResponseData(data, error, 'health');
@@ -97,12 +103,13 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			serverAPILogger.debug(
 				'GitCord server full health check passed successfully.'
 			);
+			return data;
 		} catch (error: unknown) {
 			handleConnectionError(error);
 		}
 	},
 
-	async checkLive(): Promise<void> {
+	async getLive(): Promise<HealthLiveResponse> {
 		try {
 			const { data, error } = await apiClient.GET('/health/live');
 			validateResponseData(data, error, 'liveness');
@@ -115,12 +122,13 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			serverAPILogger.debug(
 				'GitCord server liveness check passed successfully.'
 			);
+			return data;
 		} catch (error: unknown) {
 			handleConnectionError(error);
 		}
 	},
 
-	async checkReady(): Promise<void> {
+	async getReady(): Promise<HealthReadyResponse> {
 		try {
 			const { data, error } = await apiClient.GET('/health/ready');
 			validateResponseData(data, error, 'readiness');
@@ -134,6 +142,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			serverAPILogger.debug(
 				'GitCord server readiness check passed successfully.'
 			);
+			return data;
 		} catch (error: unknown) {
 			handleConnectionError(error);
 		}

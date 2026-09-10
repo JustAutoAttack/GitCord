@@ -1,7 +1,6 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import { AppError } from './errors';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile =
@@ -27,12 +26,13 @@ const envSchema = z.object({
 		.transform((val) => parseInt(val, 10))
 		.pipe(z.number().positive('PORT must be a positive number')),
 	DISCORD_BOT_TOKEN: z.string().min(1, 'DISCORD_BOT_TOKEN is required'),
-	DISCORD_CHANNEL_ID: z.string().min(1, 'DISCORD_CHANNEL_ID is required'),
 	DISCORD_CLIENT_SECRET: z
 		.string()
 		.min(1, 'DISCORD_CLIENT_SECRET is required'),
 	DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required'),
-	DISCORD_GUILD_ID: z.string().min(1, 'DISCORD_GUILD_ID is required'),
+	DISCORD_DEPLOY_GUILD_ID: z
+		.string()
+		.min(1, 'DISCORD_DEPLOY_GUILD_ID is required'),
 	NGROK_AUTHTOKEN: z.string().min(1, 'NGROK_AUTHTOKEN is required'),
 	SERVER_API_URL: z.string().url('SERVER_API_URL must be a valid URL')
 });

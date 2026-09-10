@@ -1,12 +1,6 @@
 import { ContainerBuilder } from 'discord.js';
 
-import { CONFIG } from '@core';
-import {
-	createHeader,
-	createFooter,
-	createSeparator,
-	createText
-} from '@shared';
+import { CONFIG, createHeader, createFooter, createSeparator, createText } from '@core';
 import type {
 	GitHubCommit,
 	GitHubRepository,

@@ -1,14 +1,15 @@
 import { MessageFlags } from 'discord.js';
 import { Hono } from 'hono';
 
-import { ENV, logger } from '@core';
+import { appLogger } from '@core';
+import { ServerAPIRepoConfigService } from '@server-api';
 import { client } from '@discord';
-import { ALLOWED_REPOSITORY, handleGitHubEvent } from '@features/github';
+import { handleGitHubEvent } from '@features/github';
 import type { GitHubWebhookPayload } from '@features/github';
 
 export function registerRoutes(app: Hono): void {
 	app.get('/', (c) => {
-		logger.info(`GET ${c.req.path}`);
+		appLogger.info(`GET ${c.req.path}`);
 
 		return c.text('GitHub Discord Bot Engine is running!');
 	});
@@ -16,65 +17,108 @@ export function registerRoutes(app: Hono): void {
 	app.post('/webhook/github', async (c) => {
 		const event = c.req.header('x-github-event');
 
-		logger.info(`Received GitHub webhook: ${event ?? 'unknown'}`);
+		appLogger.info(`Received GitHub webhook: ${event ?? 'unknown'}`);
 
 		const body = (await c.req.json().catch((error) => {
-			logger.error('Failed to parse GitHub webhook JSON:', error);
+			appLogger.error('Failed to parse GitHub webhook JSON:', error);
 
 			return null;
 		})) as GitHubWebhookPayload | null;
 
 		if (!body) {
-			logger.error('GitHub webhook contained no valid body.');
+			appLogger.error('GitHub webhook contained no valid body.');
 
 			return c.text('Invalid JSON payload', 400);
 		}
 
 		try {
-			const repository = body.repository?.full_name;
+			const repositoryUrl = body.repository?.html_url;
+			const repositoryFullName = body.repository?.full_name;
 
-			logger.info(`GitHub repository: ${repository ?? 'unknown'}`);
+			appLogger.info(
+				`GitHub repository: ${repositoryFullName ?? 'unknown'}`
+			);
 
-			if (repository && repository !== ALLOWED_REPOSITORY) {
-				logger.warn(
-					`Rejected repository: ${repository}. Expected: ${ALLOWED_REPOSITORY}`
+			if (!repositoryUrl) {
+				appLogger.warn(
+					'Rejected webhook: Payload missing repository URL.'
 				);
-
-				return c.text('Repository not allowed', 403);
+				return c.text('Repository URL missing', 400);
 			}
 
-			logger.info(`Handling GitHub event: ${event ?? 'unknown'}`);
+			appLogger.info(
+				`Fetching repository configurations to match URL: ${repositoryUrl}`
+			);
+
+			const response = await ServerAPIRepoConfigService.list();
+			const allConfigs = Array.isArray(response)
+				? response
+				: ((response as any)?.data ?? []);
+
+			const matchingConfigs = allConfigs.filter(
+				(config: any) => config.repositoryUrl === repositoryUrl
+			);
+
+			if (matchingConfigs.length === 0) {
+				appLogger.warn(
+					`No configuration found for repository: ${repositoryUrl}`
+				);
+				return c.text('Repository not configured', 404);
+			}
+
+			appLogger.info(`Handling GitHub event: ${event ?? 'unknown'}`);
 
 			const container = handleGitHubEvent(event, body);
 
 			if (!container) {
-				logger.debug(
+				appLogger.debug(
 					`Ignoring unsupported GitHub event: ${event ?? 'unknown'}`
 				);
 
 				return c.text('Event ignored', 200);
 			}
 
-			logger.info(
+			appLogger.info(
 				'GitHub event successfully converted to Discord message.'
 			);
 
-			const channel = await client.channels.fetch(ENV.DISCORD_CHANNEL_ID);
+			for (const config of matchingConfigs) {
+				const targetChannelId = config.notificationChannelId;
 
-			if (!channel || !channel.isTextBased() || !('send' in channel)) {
-				throw new Error('Configured Discord channel is unavailable.');
+				try {
+					const channel =
+						await client.channels.fetch(targetChannelId);
+
+					if (
+						!channel ||
+						!channel.isTextBased() ||
+						!('send' in channel)
+					) {
+						appLogger.error(
+							`Configured Discord channel ${targetChannelId} is unavailable.`
+						);
+						continue;
+					}
+
+					appLogger.info(
+						`Sending GitHub notification to Discord channel ${targetChannelId}...`
+					);
+
+					await channel.send({
+						flags: MessageFlags.IsComponentsV2,
+						components: [container]
+					});
+
+					appLogger.info(
+						`GitHub notification sent successfully to channel ${targetChannelId}.`
+					);
+				} catch (channelError) {
+					appLogger.error(
+						`Failed to send notification to channel ${targetChannelId}:`,
+						channelError
+					);
+				}
 			}
-
-			logger.info(
-				`Sending GitHub notification to Discord channel ${ENV.DISCORD_CHANNEL_ID}...`
-			);
-
-			await channel.send({
-				flags: MessageFlags.IsComponentsV2,
-				components: [container]
-			});
-
-			logger.info('GitHub notification sent successfully.');
 
 			return c.text('Webhook processed', 200);
 		} catch (error) {
@@ -94,7 +138,7 @@ export function registerRoutes(app: Hono): void {
 	});
 
 	app.all('*', (c) => {
-		logger.warn(`404 ${c.req.method} ${c.req.path}`);
+		appLogger.warn(`404 ${c.req.method} ${c.req.path}`);
 
 		return c.text('Not Found', 404);
 	});

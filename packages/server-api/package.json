@@ -4,6 +4,12 @@
 	"description": "Typed OpenAPI client library for the GitCord server",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"build": "tsc --project tsconfig.app.json",

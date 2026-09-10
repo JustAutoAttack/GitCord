@@ -4,15 +4,20 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { databaseLogger } from '@core';
 import { migrateDatabase } from '@database/migrate';
 
 let mockDatabaseUrl = '';
 
-vi.mock('@core', () => ({
-	get ENV() {
-		return { DATABASE_URL: mockDatabaseUrl };
-	}
-}));
+vi.mock('@core', async () => {
+	const actual = await vi.importActual<typeof import('@core')>('@core');
+	return {
+		...actual,
+		get ENV() {
+			return { DATABASE_URL: mockDatabaseUrl };
+		}
+	};
+});
 
 describe('migrateDatabase', () => {
 	let tempDir: string;
@@ -31,7 +36,6 @@ describe('migrateDatabase', () => {
 		fs.rmSync(tempDir, { recursive: true, force: true });
 	});
 
-	// --- Missing Migrations Directory ---
 	it('throws an error if the migrations directory does not exist', () => {
 		mockDatabaseUrl = path.join(tempDir, 'data', 'test.db');
 
@@ -40,7 +44,6 @@ describe('migrateDatabase', () => {
 		);
 	});
 
-	// --- Fresh Run & Single Migration ---
 	it('creates database directory, applies a single migration, and logs correctly', () => {
 		const dbPath = path.join(tempDir, 'data', 'test.db');
 		const migrationsDir = path.join(tempDir, 'database', 'migrations');
@@ -52,15 +55,18 @@ describe('migrateDatabase', () => {
 		);
 
 		mockDatabaseUrl = dbPath;
-		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const logSpy = vi
+			.spyOn(databaseLogger, 'info')
+			.mockImplementation(() => {});
 
 		migrateDatabase();
 
-		expect(logSpy).toHaveBeenCalledWith('Applied 1 database migration.');
+		expect(logSpy).toHaveBeenCalledWith(
+			'Successfully applied 1 database migration.'
+		);
 		expect(fs.existsSync(dbPath)).toBe(true);
 	});
 
-	// --- Up-to-Date Status ---
 	it('reports that the database is up to date when no new migrations exist', () => {
 		const dbPath = path.join(tempDir, 'data', 'test.db');
 		const migrationsDir = path.join(tempDir, 'database', 'migrations');
@@ -72,18 +78,18 @@ describe('migrateDatabase', () => {
 		);
 
 		mockDatabaseUrl = dbPath;
-		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+		vi.spyOn(databaseLogger, 'info').mockImplementation(() => {});
 
-		// First run applies the migration
 		migrateDatabase();
 
-		// Second run should find nothing new
+		const logSpy = vi
+			.spyOn(databaseLogger, 'info')
+			.mockImplementation(() => {});
 		migrateDatabase();
 
 		expect(logSpy).toHaveBeenCalledWith('Database is up to date.');
 	});
 
-	// --- Multiple Migrations (Plural) ---
 	it('applies multiple migrations and uses plural log output', () => {
 		const dbPath = path.join(tempDir, 'data', 'test.db');
 		const migrationsDir = path.join(tempDir, 'database', 'migrations');
@@ -99,10 +105,35 @@ describe('migrateDatabase', () => {
 		);
 
 		mockDatabaseUrl = dbPath;
-		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const logSpy = vi
+			.spyOn(databaseLogger, 'info')
+			.mockImplementation(() => {});
 
 		migrateDatabase();
 
-		expect(logSpy).toHaveBeenCalledWith('Applied 2 database migrations.');
+		expect(logSpy).toHaveBeenCalledWith(
+			'Successfully applied 2 database migrations.'
+		);
+	});
+
+	it('catches and logs errors when migration execution fails', () => {
+		const dbPath = path.join(tempDir, 'data', 'test.db');
+		const migrationsDir = path.join(tempDir, 'database', 'migrations');
+
+		fs.mkdirSync(migrationsDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(migrationsDir, '001_invalid.sql'),
+			'INVALID SQL SYNTAX;'
+		);
+
+		mockDatabaseUrl = dbPath;
+		const errorLogSpy = vi
+			.spyOn(databaseLogger, 'error')
+			.mockImplementation(() => {});
+
+		expect(() => migrateDatabase()).toThrow();
+		expect(errorLogSpy).toHaveBeenCalledWith(
+			expect.stringContaining('CRITICAL: Migration execution failed:')
+		);
 	});
 });

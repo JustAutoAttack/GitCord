@@ -1,2 +1,3 @@
 export * from './health';
-export * from './repo-config';
+export * from './remote-config';
+export * from './guild-settings';

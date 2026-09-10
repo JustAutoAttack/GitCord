@@ -1,7 +1,6 @@
 import path from 'path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import { AppError, ErrorCode } from './errors';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile =
@@ -13,10 +12,10 @@ const result = dotenv.config({
 });
 
 if (result.error) {
-	throw new AppError(
-		ErrorCode.INTERNAL_ERROR,
+	console.error(
 		`Failed to load environment file from ${envFile}: ${result.error.message}`
 	);
+	process.exit(1);
 }
 
 const envSchema = z.object({
@@ -35,10 +34,10 @@ export type EnvDTO = z.infer<typeof envSchema>;
 const _env = envSchema.safeParse(process.env);
 
 if (!_env.success) {
-	throw new AppError(
-		ErrorCode.INTERNAL_ERROR,
+	console.error(
 		`Invalid environment variables:\n${JSON.stringify(_env.error.format(), null, 2)}`
 	);
+	process.exit(1);
 }
 
 export const ENV: EnvDTO = _env.data;

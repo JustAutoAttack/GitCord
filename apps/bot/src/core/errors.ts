@@ -23,3 +23,15 @@ export class AppError extends Error {
 		appLogger.error(`[${this.code}] ${this.message}`);
 	}
 }
+
+export class AppWarning extends Error {
+	public readonly code: ErrorCode;
+
+	constructor(code: ErrorCode, message?: string) {
+		super(message ?? code);
+		this.name = 'AppWarning';
+		this.code = code;
+
+		appLogger.warn(`[${this.code}] ${this.message}`);
+	}
+}

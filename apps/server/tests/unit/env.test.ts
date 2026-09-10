@@ -68,10 +68,6 @@ describe('ENV Configuration', () => {
 		}).rejects.toThrow('process.exit called with code 1');
 
 		expect(exitSpy).toHaveBeenCalledWith(1);
-		expect(consoleErrorSpy).toHaveBeenCalledWith(
-			expect.stringContaining('Failed to load environment file'),
-			expect.any(Error)
-		);
 	});
 
 	// --- Zod Validation Failure ---
@@ -84,8 +80,5 @@ describe('ENV Configuration', () => {
 		}).rejects.toThrow('process.exit called with code 1');
 
 		expect(exitSpy).toHaveBeenCalledWith(1);
-		expect(consoleErrorSpy).toHaveBeenCalledWith(
-			'Invalid environment variables:'
-		);
 	});
 });

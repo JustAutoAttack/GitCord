@@ -1,13 +1,14 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 import { discordLogger } from '@core';
-import { commands as githubCommands } from '@features/github';
+import * as commands from '../commands';
 
 export async function handleInteraction(
 	interaction: ChatInputCommandInteraction
 ): Promise<void> {
-	const matchedCommand = githubCommands.find(
-		(command) => command.data.name === interaction.commandName
+	const commandList = Object.values(commands);
+	const matchedCommand = commandList.find(
+		(command: any) => command.data.name === interaction.commandName
 	);
 
 	if (!matchedCommand) {
@@ -21,7 +22,10 @@ export async function handleInteraction(
 	try {
 		await matchedCommand.execute(interaction);
 	} catch (error) {
-		discordLogger.error(`Error executing ${interaction.commandName}:`, error);
+		discordLogger.error(
+			`Error executing ${interaction.commandName}:`,
+			error
+		);
 
 		const errorMessage = {
 			content: 'There was an error while executing this command!',

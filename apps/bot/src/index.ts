@@ -4,7 +4,7 @@ import {
 	startWebhookServer,
 	stopWebhookServer
 } from '@app';
-import { connectDiscord, disconnectDiscord } from '@discord';
+import { connectDiscord, disconnectDiscord } from './discord';
 import { ServerAPIHealthService } from './server-api';
 
 let shuttingDown = false;
@@ -14,7 +14,7 @@ async function main(): Promise<void> {
 		appLogger.info('Starting GitCord...');
 
 		appLogger.info('Checking GitCord server health...');
-		await ServerAPIHealthService.checkFull();
+		await ServerAPIHealthService.getFull();
 		appLogger.info('GitCord server is healthy.');
 
 		await connectDiscord();

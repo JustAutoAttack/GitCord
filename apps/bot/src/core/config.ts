@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { resolveRootPath, parseHex } from '@shared';
+import { resolveRootPath, parseHex } from './utils';
 
 interface LoggerColorsConfig {
 	debug: number;

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, getTableName } from 'drizzle-orm';
 import { SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 import { databaseLogger } from '@core';
@@ -12,12 +12,10 @@ export class BaseRepo<TTable extends SQLiteTable & { id: any }> {
 	constructor(table: TTable, database: typeof db = db) {
 		this.table = table;
 		this.db = database;
-		// Extract SQLite table name if available via Drizzle symbol/property, fallback to generic
-		this.tableName =
-			(table as any)[Symbol.for('drizzle:Name')] ?? 'unknown_table';
+		this.tableName = getTableName(table);
 	}
 
-	async findAll(): Promise<TTable['$inferSelect'][]> {
+	findAll(): TTable['$inferSelect'][] {
 		databaseLogger.debug(`Executing findAll on table: ${this.tableName}`);
 		const results = this.db
 			.select()
@@ -29,9 +27,9 @@ export class BaseRepo<TTable extends SQLiteTable & { id: any }> {
 		return results;
 	}
 
-	async findById(
+	findById(
 		id: TTable['$inferSelect']['id']
-	): Promise<TTable['$inferSelect'] | undefined> {
+	): TTable['$inferSelect'] | undefined {
 		databaseLogger.debug(
 			`Executing findById on table: ${this.tableName} with id: ${id}`
 		);
@@ -49,18 +47,30 @@ export class BaseRepo<TTable extends SQLiteTable & { id: any }> {
 		return result;
 	}
 
-	async create(
-		data: TTable['$inferInsert']
-	): Promise<TTable['$inferSelect']> {
+	create(
+		data: Omit<TTable['$inferInsert'], 'id' | 'createdAt' | 'updatedAt'> & {
+			createdAt?: string;
+			updatedAt?: string;
+		}
+	): TTable['$inferSelect'] {
 		databaseLogger.debug(`Executing create on table: ${this.tableName}`);
+		const now = new Date().toISOString();
+		const id = crypto.randomUUID();
+		const payload = {
+			id,
+			createdAt: now,
+			updatedAt: now,
+			...data
+		};
+
 		try {
 			const result = this.db
 				.insert(this.table)
-				.values(data as any)
+				.values(payload as any)
 				.returning()
 				.get() as TTable['$inferSelect'];
 			databaseLogger.debug(
-				`Successfully created record in ${this.tableName}`
+				`Successfully created record in ${this.tableName} with id: ${id}`
 			);
 			return result;
 		} catch (error) {
@@ -71,17 +81,26 @@ export class BaseRepo<TTable extends SQLiteTable & { id: any }> {
 		}
 	}
 
-	async update(
+	update(
 		id: TTable['$inferSelect']['id'],
-		data: Partial<TTable['$inferInsert']>
-	): Promise<TTable['$inferSelect'] | undefined> {
+		data: Partial<
+			Omit<TTable['$inferInsert'], 'createdAt' | 'updatedAt'>
+		> & {
+			updatedAt?: string;
+		}
+	): TTable['$inferSelect'] | undefined {
 		databaseLogger.debug(
 			`Executing update on table: ${this.tableName} for id: ${id}`
 		);
+		const payload = {
+			...data,
+			updatedAt: new Date().toISOString()
+		};
+
 		try {
 			const result = this.db
 				.update(this.table)
-				.set(data as any)
+				.set(payload as any)
 				.where(eq(this.table.id, id))
 				.returning()
 				.get() as TTable['$inferSelect'] | undefined;
@@ -104,13 +123,13 @@ export class BaseRepo<TTable extends SQLiteTable & { id: any }> {
 		}
 	}
 
-	async delete(
+	delete(
 		id: TTable['$inferSelect']['id']
-	): Promise<TTable['$inferSelect'] | undefined> {
+	): TTable['$inferSelect'] | undefined {
 		databaseLogger.debug(
 			`Executing delete on table: ${this.tableName} for id: ${id}`
 		);
-		const item = await this.findById(id);
+		const item = this.findById(id);
 
 		if (!item) {
 			databaseLogger.warn(

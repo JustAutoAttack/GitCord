@@ -28,13 +28,14 @@ describe('Health Module API Gateway', () => {
 
 	// --- Liveness Probe (/health/live) ---
 	describe('GET /health/live', () => {
-		it('returns 200 and UP status for liveness check', async () => {
+		it('returns 200 and success status for liveness check', async () => {
 			const res = await app.request('/health/live');
 			const body = (await res.json()) as any;
 
 			expect(res.status).toBe(200);
 			expect(body).toMatchObject({
-				status: 'UP',
+				success: true,
+				message: 'Server process is responsive',
 				timestamp: expect.any(String)
 			});
 		});
@@ -42,9 +43,10 @@ describe('Health Module API Gateway', () => {
 
 	// --- Readiness Probe (/health/ready) ---
 	describe('GET /health/ready', () => {
-		it('returns 200 and UP status when database is healthy', async () => {
+		it('returns 200 and success status when database is healthy', async () => {
 			vi.mocked(checkDbHealth).mockReturnValueOnce({
-				status: 'up',
+				success: true,
+				message: 'Database connection is active and responsive',
 				latencyMs: 0.5
 			});
 
@@ -53,18 +55,19 @@ describe('Health Module API Gateway', () => {
 
 			expect(res.status).toBe(200);
 			expect(body).toMatchObject({
-				status: 'UP',
+				success: true,
+				message: 'Database connection is ready',
 				checks: {
-					database: { status: 'up' }
+					database: { success: true }
 				},
 				timestamp: expect.any(String)
 			});
 		});
 
-		it('returns 503 and DOWN status when database check fails', async () => {
+		it('returns 503 and failure status when database check fails', async () => {
 			vi.mocked(checkDbHealth).mockReturnValueOnce({
-				status: 'down',
-				error: 'Connection refused'
+				success: false,
+				message: 'Connection refused'
 			});
 
 			const res = await app.request('/health/ready');
@@ -72,9 +75,10 @@ describe('Health Module API Gateway', () => {
 
 			expect(res.status).toBe(503);
 			expect(body).toMatchObject({
-				status: 'DOWN',
+				success: false,
+				message: 'Database connection failed',
 				checks: {
-					database: { status: 'down', error: 'Connection refused' }
+					database: { success: false, message: 'Connection refused' }
 				}
 			});
 		});
@@ -82,9 +86,10 @@ describe('Health Module API Gateway', () => {
 
 	// --- Full Diagnostic Health Check (/health) ---
 	describe('GET /health', () => {
-		it('returns 200 and HEALTHY status with uptime when fully operational', async () => {
+		it('returns 200 and operational status with uptime when fully operational', async () => {
 			vi.mocked(checkDbHealth).mockReturnValueOnce({
-				status: 'up',
+				success: true,
+				message: 'Database connection is active and responsive',
 				latencyMs: 0.2
 			});
 
@@ -93,19 +98,20 @@ describe('Health Module API Gateway', () => {
 
 			expect(res.status).toBe(200);
 			expect(body).toMatchObject({
-				status: 'HEALTHY',
+				success: true,
+				message: 'System is fully operational',
 				uptimeSeconds: expect.any(Number),
 				timestamp: expect.any(String),
 				checks: {
-					database: { status: 'up' }
+					database: { success: true }
 				}
 			});
 		});
 
-		it('returns 503 and DEGRADED status when database is down', async () => {
+		it('returns 503 and degraded status when database is down', async () => {
 			vi.mocked(checkDbHealth).mockReturnValueOnce({
-				status: 'down',
-				error: 'Timeout'
+				success: false,
+				message: 'Timeout'
 			});
 
 			const res = await app.request('/health');
@@ -113,10 +119,11 @@ describe('Health Module API Gateway', () => {
 
 			expect(res.status).toBe(503);
 			expect(body).toMatchObject({
-				status: 'DEGRADED',
+				success: false,
+				message: 'System is degraded due to database failure',
 				uptimeSeconds: expect.any(Number),
 				checks: {
-					database: { status: 'down', error: 'Timeout' }
+					database: { success: false, message: 'Timeout' }
 				}
 			});
 		});

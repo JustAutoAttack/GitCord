@@ -1,3 +1,4 @@
+// src/gateway/health/routes.ts
 import { createRoute } from '@hono/zod-openapi';
 import { HealthResponseSchema } from './schemas';
 
@@ -29,6 +30,12 @@ export const readyRoute = createRoute({
 				'application/json': { schema: HealthResponseSchema }
 			},
 			description: 'Database connection status report'
+		},
+		503: {
+			content: {
+				'application/json': { schema: HealthResponseSchema }
+			},
+			description: 'Database connection failure report'
 		}
 	}
 });
@@ -45,6 +52,12 @@ export const fullHealthRoute = createRoute({
 				'application/json': { schema: HealthResponseSchema }
 			},
 			description: 'Full diagnostic report'
+		},
+		503: {
+			content: {
+				'application/json': { schema: HealthResponseSchema }
+			},
+			description: 'Degraded diagnostic report'
 		}
 	}
 });

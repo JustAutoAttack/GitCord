@@ -1,2 +1,3 @@
 export * from './base';
-export * from './repo-configs';
+export * from './remote-configs';
+export * from './guild-settings';
