@@ -2,7 +2,7 @@ import { MessageFlags } from 'discord.js';
 import { Hono } from 'hono';
 
 import { appLogger } from '@core';
-import { ServerAPIRepoConfigService } from '@server-api';
+import { ServerAPIRemoteConfigService } from '@server-api';
 import { client } from '@discord';
 import { handleGitHubEvent } from '@features/github';
 import type { GitHubWebhookPayload } from '@features/github';
@@ -50,7 +50,7 @@ export function registerRoutes(app: Hono): void {
 				`Fetching repository configurations to match URL: ${repositoryUrl}`
 			);
 
-			const response = await ServerAPIRepoConfigService.list();
+			const response = await ServerAPIRemoteConfigService.list();
 			const allConfigs = Array.isArray(response)
 				? response
 				: ((response as any)?.data ?? []);
