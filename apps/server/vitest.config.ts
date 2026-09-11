@@ -34,10 +34,13 @@ export default defineConfig({
 				'src/gateway/index.ts',
 				'src/gateway/health/index.ts',
 				'src/gateway/utils/index.ts',
-				'src/gateway/api/v1/remote-configs/index.ts',
-				'src/gateway/api/v1/remote-configs/types.ts',
+				'src/gateway/api/v1/auth/index.ts',
+				'src/gateway/api/v1/users/index.ts',
+				'src/gateway/api/v1/user-sessions/index.ts',
+				'src/gateway/api/v1/bot-commands/index.ts',
 				'src/gateway/api/v1/guild-settings/index.ts',
-				'src/gateway/api/v1/guild-settings/types.ts'
+				'src/gateway/api/v1/guild-user-permissions/index.ts',
+				'src/gateway/api/v1/remote-configs/index.ts'
 			],
 			reporter: ['text', 'html']
 		}

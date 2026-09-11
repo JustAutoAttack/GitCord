@@ -389,4 +389,16 @@ describe('Remote Configs API Gateway', () => {
 		expect(res.status).toBe(400);
 		expect(remoteConfigsService.update).not.toHaveBeenCalled();
 	});
+
+	it('returns 500 when an unexpected non-AppError occurs', async () => {
+		vi.mocked(remoteConfigsService.list).mockRejectedValueOnce(
+			new Error('Database connection lost')
+		);
+
+		const res = await app.request('/');
+		const body = (await res.json()) as any;
+
+		expect(res.status).toBe(500);
+		expect(body.message).toBe('Database connection lost');
+	});
 });

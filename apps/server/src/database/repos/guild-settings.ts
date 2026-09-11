@@ -7,16 +7,6 @@ import { BaseRepo } from './base';
 
 export type GuildSettingEntity = InferSelectModel<typeof guildSettings>;
 
-export interface CreateGuildSettingData {
-	guildId: string;
-	systemChannelId: string;
-}
-
-export interface UpdateGuildSettingData {
-	guildId?: string;
-	systemChannelId?: string;
-}
-
 export class GuildSettingsRepo extends BaseRepo<typeof guildSettings> {
 	constructor(database: typeof db = db) {
 		super(guildSettings, database);

@@ -1,17 +1,19 @@
-export interface GuildSetting {
-	id: string;
-	guildId: string;
-	systemChannelId: string;
-	updatedAt: string;
-	createdAt: string;
-}
+export namespace GuildSetting {
+	export interface Model {
+		id: string;
+		guildId: string;
+		systemChannelId: string;
+		updatedAt: string;
+		createdAt: string;
+	}
 
-export interface CreateGuildSettingInput {
-	guildId: string;
-	systemChannelId: string;
-}
+	export interface CreateInput {
+		guildId: string;
+		systemChannelId: string;
+	}
 
-export interface UpdateGuildSettingInput {
-	guildId?: string;
-	systemChannelId?: string;
+	export interface UpdateInput {
+		guildId?: string;
+		systemChannelId?: string;
+	}
 }

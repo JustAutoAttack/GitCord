@@ -163,7 +163,7 @@ describe('GuildSettingsService', () => {
 		).rejects.toThrow(
 			new AppError(
 				ErrorCode.NOT_FOUND,
-				'Guild setting [ID: missing] not found for update'
+				'guild setting [ID: missing] not found for update'
 			)
 		);
 	});
@@ -186,7 +186,7 @@ describe('GuildSettingsService', () => {
 		await expect(service.delete('missing')).rejects.toThrow(
 			new AppError(
 				ErrorCode.NOT_FOUND,
-				'Guild setting [ID: missing] not found for deletion'
+				'guild setting [ID: missing] not found for deletion'
 			)
 		);
 	});

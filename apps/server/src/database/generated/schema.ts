@@ -30,6 +30,7 @@ export const botCommands = sqliteTable("bot_commands", {
 	id: text().primaryKey().notNull(),
 	commandName: text("command_name").notNull(),
 	description: text().notNull(),
+	updatedAt: text("updated_at").notNull(),
 	createdAt: text("created_at").notNull(),
 },
 (table) => [

@@ -5,9 +5,16 @@ import { migrateDatabase } from '@database';
 import { AppError, ErrorCode } from '@core';
 
 // Mock dependencies to isolate app and server startup
-vi.mock('@database', () => ({
-	migrateDatabase: vi.fn()
-}));
+vi.mock('@database', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@database')>();
+	return {
+		...actual,
+		migrateDatabase: vi.fn(),
+		botCommandsRepo: {},
+		usersRepo: {},
+		userSessionsRepo: {}
+	};
+});
 
 vi.mock('@gateway', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@gateway')>();

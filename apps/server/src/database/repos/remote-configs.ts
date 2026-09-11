@@ -7,21 +7,6 @@ import { BaseRepo } from './base';
 
 export type RemoteConfigEntity = InferSelectModel<typeof remoteConfigs>;
 
-export interface CreateRemoteConfigData {
-	id: string;
-	guildId: string;
-	repositoryUrl: string;
-	commandChannelId: string;
-	notificationChannelId: string;
-}
-
-export interface UpdateRemoteConfigData {
-	guildId?: string;
-	repositoryUrl?: string;
-	commandChannelId?: string;
-	notificationChannelId?: string;
-}
-
 export class RemoteConfigsRepo extends BaseRepo<typeof remoteConfigs> {
 	constructor(database: typeof db = db) {
 		super(remoteConfigs, database);

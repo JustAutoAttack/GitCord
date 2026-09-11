@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS bot_commands (
     id TEXT PRIMARY KEY NOT NULL,
     command_name TEXT NOT NULL,
     description TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
 

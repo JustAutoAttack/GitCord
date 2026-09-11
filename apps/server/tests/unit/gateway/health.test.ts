@@ -3,9 +3,17 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { healthRouter } from '@gateway/health';
 import { checkDbHealth } from '@database';
 
-vi.mock('@database', () => ({
-	checkDbHealth: vi.fn()
-}));
+vi.mock('@database', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@database')>();
+	return {
+		...actual,
+		checkDbHealth: vi.fn(),
+		usersRepo: {},
+		userSessionsRepo: {},
+		botCommandsRepo: {},
+		guildSettingsRepo: {}
+	};
+});
 
 const app = new OpenAPIHono();
 app.route('/health', healthRouter);
