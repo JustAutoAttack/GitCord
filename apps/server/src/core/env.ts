@@ -19,14 +19,12 @@ if (result.error) {
 }
 
 const envSchema = z.object({
-	PORT: z
-		.string()
-		.default('3000')
-		.transform((val) => parseInt(val, 10))
-		.pipe(z.number().positive('PORT must be a positive number')),
+	BASE_URL: z.string().url('BASE_URL must be a valid URL'),
 	JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
 	JWT_REFRESH_SECRET: z.string().min(1, 'JWT_REFRESH_SECRET is required'),
-	DATABASE_URL: z.string().min(1, 'DATABASE_URL is required')
+	DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+	BOT_WEBHOOK_URL: z.string().url('BOT_WEBHOOK_URL must be a valid URL'),
+	BOT_WEBHOOK_SECRET: z.string().min(1, 'BOT_WEBHOOK_SECRET is required')
 });
 
 export type EnvDTO = z.infer<typeof envSchema>;
@@ -40,4 +38,4 @@ if (!_env.success) {
 	process.exit(1);
 }
 
-export const ENV: EnvDTO = _env.data;
+export const ENV = _env.data;

@@ -2,7 +2,12 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 
-import { appLogger, httpLoggerMiddleware, errorHandlerMiddleware } from '@core';
+import {
+	appLogger,
+	httpLoggerMiddleware,
+	errorHandlerMiddleware,
+	requestContextMiddleware
+} from '@core';
 import { healthRouter, apiRouter } from '@gateway';
 import { openAPIConfig } from './openapi';
 
@@ -14,7 +19,7 @@ export function createApp(): OpenAPIHono {
 	// Middleware
 	app.use('*', httpLoggerMiddleware());
 	app.use('*', cors());
-	// TODO Use auth context middleware
+	app.use('*', requestContextMiddleware);
 	app.onError(errorHandlerMiddleware());
 
 	// Routes

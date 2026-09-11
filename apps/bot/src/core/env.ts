@@ -20,11 +20,7 @@ if (result.error) {
 }
 
 const envSchema = z.object({
-	PORT: z
-		.string()
-		.default('3000')
-		.transform((val) => parseInt(val, 10))
-		.pipe(z.number().positive('PORT must be a positive number')),
+	BASE_URL: z.string().url('BASE_URL must be a valid URL'),
 	DISCORD_BOT_TOKEN: z.string().min(1, 'DISCORD_BOT_TOKEN is required'),
 	DISCORD_CLIENT_SECRET: z
 		.string()
@@ -34,7 +30,10 @@ const envSchema = z.object({
 		.string()
 		.min(1, 'DISCORD_DEPLOY_GUILD_ID is required'),
 	NGROK_AUTHTOKEN: z.string().min(1, 'NGROK_AUTHTOKEN is required'),
-	SERVER_API_URL: z.string().url('SERVER_API_URL must be a valid URL')
+	SERVER_API_URL: z.string().url('SERVER_API_URL must be a valid URL'),
+	SERVER_WEBHOOK_SECRET: z
+		.string()
+		.min(1, 'SERVER_WEBHOOK_SECRET is required')
 });
 
 export type EnvDTO = z.infer<typeof envSchema>;

@@ -1,13 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 
 import { AppError, ErrorCode } from '@core';
-
-export interface RequestContextData {
-	readonly serverRequestId: string;
-	readonly clientRequestId?: string;
-	readonly userId?: string;
-	readonly roles: readonly string[];
-}
+import type { RequestContextData } from '../types';
 
 class AsyncLocalStorageService {
 	private readonly storage = new AsyncLocalStorage<RequestContextData>();
@@ -20,9 +14,16 @@ class AsyncLocalStorageService {
 		return this.storage.getStore();
 	}
 
+	public updateStore(updater: (store: RequestContextData) => void): void {
+		const store = this.getStore();
+		if (store) {
+			updater(store);
+		}
+	}
+
 	public getServerRequestId(): string {
 		const store = this.getStore();
-		if (!store || !store.serverRequestId) {
+		if (!store?.serverRequestId) {
 			throw new AppError(
 				ErrorCode.INTERNAL_ERROR,
 				'Request context missing server request ID.'
@@ -31,22 +32,14 @@ class AsyncLocalStorageService {
 		return store.serverRequestId;
 	}
 
-	public getClientRequestId(): string | null {
-		const store = this.getStore();
-		return store?.clientRequestId ?? null;
-	}
-
 	public getUserId(): string | null {
 		const store = this.getStore();
-		return store?.userId ?? null;
+		return store?.auth?.userId ?? null;
 	}
 
 	public getRoles(): readonly string[] {
 		const store = this.getStore();
-		if (!store || !store.roles) {
-			return [];
-		}
-		return store.roles;
+		return store?.auth?.roles ?? [];
 	}
 }
 

@@ -1,91 +1,33 @@
-import { serve, type ServerType } from '@hono/node-server';
-import ngrok, { type Listener } from '@ngrok/ngrok';
-import { Hono } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { swaggerUI } from '@hono/swagger-ui';
+import { cors } from 'hono/cors';
 
-import { ENV, appLogger } from '@core';
-import { registerRoutes } from './routes';
+import { appLogger, errorHandlerMiddleware, httpLoggerMiddleware } from '@core';
+import { healthRouter, webhooksRouter } from '@gateway';
+import { openAPIConfig } from './openapi';
 
-export const app = new Hono();
-
-registerRoutes(app);
-
-let server: ServerType | null = null;
-let tunnel: Listener | null = null;
-
-export function startWebhookServer(): void {
-	if (server) {
-		appLogger.warn('Webhook server is already running.');
-		return;
-	}
-
-	appLogger.info(`Starting GitHub webhook listener on port ${ENV.PORT}...`);
-
-	server = serve({
-		fetch: app.fetch,
-		port: ENV.PORT
-	});
+export function createApp(): OpenAPIHono {
+	const app = new OpenAPIHono();
 
 	appLogger.info(
-		`GitHub webhook listener is running on http://localhost:${ENV.PORT}`
+		'Initializing application core and middleware layers for bot...'
 	);
-}
 
-export async function exposeWebhookServer(): Promise<void> {
-	if (tunnel) {
-		appLogger.warn('Public webhook tunnel is already running.');
-		return;
-	}
+	app.use('*', httpLoggerMiddleware());
+	app.use('*', cors());
+	app.onError(errorHandlerMiddleware());
 
-	appLogger.info('Creating public webhook tunnel...');
+	// Routes
+	app.route('/health', healthRouter);
+	app.route('/webhooks', webhooksRouter);
 
-	try {
-		tunnel = await ngrok.forward({
-			addr: `http://localhost:${ENV.PORT}`,
-			authtoken: ENV.NGROK_AUTHTOKEN
-		});
+	// OpenAPI
+	app.doc('/doc', openAPIConfig);
 
-		const publicUrl = tunnel.url();
+	// Swagger UI
+	app.get('/swagger', swaggerUI({ url: '/doc' }));
 
-		if (!publicUrl) {
-			await tunnel.close().catch(() => undefined);
-			tunnel = null;
+	appLogger.info('Bot application setup completed successfully.');
 
-			throw new Error('ngrok did not return a public URL.');
-		}
-
-		appLogger.info(`Public webhook tunnel active: ${publicUrl}`);
-		appLogger.info(`GitHub webhook endpoint: ${publicUrl}/webhook/github`);
-	} catch (error) {
-		tunnel = null;
-
-		appLogger.error('Failed to create public webhook tunnel:', error);
-
-		throw error;
-	}
-}
-
-export async function stopWebhookServer(): Promise<void> {
-	if (tunnel) {
-		const activeTunnel = tunnel;
-		tunnel = null;
-
-		try {
-			await activeTunnel.close();
-			appLogger.info('Public webhook tunnel closed.');
-		} catch (error) {
-			appLogger.error('Failed to close public webhook tunnel:', error);
-		}
-	}
-
-	if (server) {
-		const activeServer = server;
-		server = null;
-
-		try {
-			activeServer.close();
-			appLogger.info('Webhook server stopped.');
-		} catch (error) {
-			appLogger.error('Failed to stop webhook server:', error);
-		}
-	}
+	return app;
 }

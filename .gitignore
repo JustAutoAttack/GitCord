@@ -9,6 +9,7 @@ build/
 .next/
 out/
 .vite/
+*tree.md
 
 # Testing & Coverage
 coverage/

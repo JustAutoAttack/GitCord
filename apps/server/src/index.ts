@@ -1,32 +1,26 @@
-import { serve } from '@hono/node-server';
-
+import { appLogger, lifecycleService } from './core';
 import { createApp } from './app';
 import { migrateDatabase } from './database';
-import { ENV, appLogger } from './core';
 
-try {
-	appLogger.info('Starting GitCord server initialization sequence...');
+async function main(): Promise<void> {
+	try {
+		await lifecycleService.start(createApp, migrateDatabase);
 
-	migrateDatabase();
+		process.on('SIGTERM', () => {
+			void lifecycleService.handleShutdown('SIGTERM');
+		});
 
-	const app = createApp();
+		process.on('SIGINT', () => {
+			void lifecycleService.handleShutdown('SIGINT');
+		});
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : String(error);
+		appLogger.error(
+			`CRITICAL: Failed to start GitCord server. Error: ${errorMsg}`
+		);
 
-	const port = Number(ENV.PORT);
-	serve({
-		fetch: app.fetch,
-		port
-	});
-
-	const baseUrl = `http://localhost:${port}`;
-
-	appLogger.info(`GitCord server is up and running on ${baseUrl}`);
-	appLogger.info(`Swagger UI available at ${baseUrl}/swagger`);
-	appLogger.info(`OpenAPI Spec available at ${baseUrl}/doc`);
-} catch (error) {
-	const errorMsg = error instanceof Error ? error.message : String(error);
-	appLogger.error(
-		`CRITICAL: Failed to start GitCord server on http://localhost:${ENV.PORT}. Error: ${errorMsg}`
-	);
-
-	process.exit(1);
+		process.exit(1);
+	}
 }
+
+void main();

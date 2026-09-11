@@ -4,7 +4,6 @@ import { createApp } from '@app';
 import { migrateDatabase } from '@database';
 import { AppError, ErrorCode } from '@core';
 
-// Mock dependencies to isolate app and server startup
 vi.mock('@database', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@database')>();
 	return {
@@ -52,7 +51,6 @@ describe('Application Factory and Server Entrypoint', () => {
 		vi.restoreAllMocks();
 	});
 
-	// --- App Instance & Health ---
 	it('creates a valid OpenAPIHono application instance with all routes configured', async () => {
 		const app = createApp();
 		expect(app).toBeDefined();
@@ -61,7 +59,6 @@ describe('Application Factory and Server Entrypoint', () => {
 		expect(res.status).toBe(200);
 	});
 
-	// --- Custom AppError Handling ---
 	it('handles custom AppErrors globally via error handling middleware', async () => {
 		const app = createApp();
 		app.get('/test-app-error', () => {
@@ -75,7 +72,6 @@ describe('Application Factory and Server Entrypoint', () => {
 		expect(json.error).toBe('Resource not found');
 	});
 
-	// --- Generic Error Handling ---
 	it('handles unexpected generic errors with 500 internal server error response', async () => {
 		const app = createApp();
 		app.get('/test-generic-error', () => {
@@ -89,25 +85,24 @@ describe('Application Factory and Server Entrypoint', () => {
 		expect(json.error).toBe('Unexpected database failure');
 	});
 
-	// --- Successful Server Startup ---
 	it('successfully boots the database and server in the index entrypoint', async () => {
 		const serveModule = await import('@hono/node-server');
+		const url = new URL(ENV.BASE_URL);
+		const expectedPort = url.port
+			? parseInt(url.port, 10)
+			: url.protocol === 'https:'
+				? 443
+				: 80;
 
 		await import('../../src/index.js');
 
 		expect(migrateDatabase).toHaveBeenCalledTimes(1);
 		expect(serveModule.serve).toHaveBeenCalledWith({
 			fetch: expect.any(Function),
-			port: Number(ENV.PORT)
+			port: expectedPort
 		});
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining(
-				`GitCord server is up and running on http://localhost:${ENV.PORT}`
-			)
-		);
 	});
 
-	// --- Startup Failure & Process Exit ---
 	it('catches startup exceptions, logs error, and exits process with code 1', async () => {
 		vi.mocked(migrateDatabase).mockImplementationOnce(() => {
 			throw new Error('Migration critical failure');

@@ -1,5 +1,5 @@
-// src/gateway/health/routes.ts
 import { createRoute } from '@hono/zod-openapi';
+
 import { HealthResponseSchema } from './schemas';
 
 export const liveRoute = createRoute({
