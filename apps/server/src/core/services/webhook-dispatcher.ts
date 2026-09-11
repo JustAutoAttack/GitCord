@@ -27,15 +27,23 @@ export class WebhookDispatcherService {
 			});
 
 			if (!response.ok) {
-				appLogger.error(
+				appLogger.warn(
 					`Failed to dispatch webhook to ${endpointUrl}: ${response.statusText}`
 				);
 			}
-		} catch (error) {
-			appLogger.error(
-				`Network error dispatching webhook to ${endpointUrl}:`,
-				error
-			);
+		} catch (error: any) {
+			if (
+				error?.cause?.code === 'ECONNREFUSED' ||
+				error?.code === 'ECONNREFUSED'
+			) {
+				appLogger.warn(
+					`Network error dispatching webhook to ${endpointUrl}: Target endpoint is offline.`
+				);
+			} else {
+				appLogger.warn(
+					`Network error dispatching webhook to ${endpointUrl}: ${error instanceof Error ? error.message : String(error)}`
+				);
+			}
 		}
 	}
 }

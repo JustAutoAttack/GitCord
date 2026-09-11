@@ -8,6 +8,7 @@ import {
 
 import { CONFIG, discordLogger } from '@core';
 import {
+    isServerOnline,
 	ServerAPIGuildSettingService,
 	ServerAPIRemoteConfigService
 } from '@server-api';
@@ -98,6 +99,13 @@ export function getCachedNotificationChannels(): {
 
 async function handleClientReady(discordClient: Client<true>): Promise<void> {
 	discordLogger.info(`Connected to Discord as ${discordClient.user.tag}`);
+
+	if (!(await isServerOnline())) {
+		discordLogger.warn(
+			'GitCord server is offline. Skipping initial channel notification sync.'
+		);
+		return;
+	}
 
 	try {
 		const targetChannels = await getNotificationChannels(discordClient);

@@ -2374,7 +2374,60 @@ export interface paths {
         trace?: never;
     };
 }
-export type webhooks = Record<string, never>;
+export interface webhooks {
+    serverLifecycle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Server Lifecycle Webhook
+         * @description Outbound webhook dispatched by the server to notify the bot of startup and shutdown state changes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example SERVER_LIFECYCLE */
+                        type: string;
+                        /** @example 1723917300000 */
+                        timestamp: number;
+                        data: {
+                            /** @example ONLINE */
+                            status: string;
+                            /** @example Server startup complete */
+                            reason?: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Webhook processed successfully by the bot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
 export interface components {
     schemas: never;
     responses: never;

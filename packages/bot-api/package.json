@@ -1,0 +1,39 @@
+{
+	"name": "@gitcord/bot-api",
+	"version": "0.1.0",
+	"description": "Typed OpenAPI client library for the GitCord bot",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc --project tsconfig.app.json",
+		"typecheck": "tsc --project tsconfig.app.json --noEmit",
+		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
+		"generate:schema": "tsx scripts/generate-schema.ts",
+		"generate:tree": "tsx scripts/generate-tree.ts",
+		"test": "vitest",
+		"test:run": "vitest run",
+		"test:coverage": "vitest run --coverage"
+	},
+	"dependencies": {
+		"openapi-fetch": "^0.13.0",
+		"dotenv": "^16.4.0",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"@vitest/coverage-v8": "^5.0.0",
+		"openapi-typescript": "^7.0.0",
+		"tsc-alias": "^1.9.1",
+		"tsx": "^4.19.0",
+		"typescript": "^5.5.0",
+		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^5.0.0"
+	}
+}
