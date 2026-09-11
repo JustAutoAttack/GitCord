@@ -292,13 +292,14 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
-                        type: "SERVER_LIFECYCLE";
                         /** @example 1723917300000 */
                         timestamp: number;
                         data: {
-                            /** @example SHUTTING_DOWN */
-                            status: string;
+                            /**
+                             * @example SHUTTING_DOWN
+                             * @enum {string}
+                             */
+                            status: "ONLINE" | "OFFLINE" | "STARTING" | "SHUTTING_DOWN";
                             /** @example SIGTERM signal received */
                             reason?: string;
                         };

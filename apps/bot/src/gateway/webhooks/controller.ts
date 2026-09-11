@@ -3,6 +3,7 @@ import type { RouteHandler } from '@hono/zod-openapi';
 import { appLogger } from '@core';
 import { webhookService } from '@services';
 import type { serverWebhookRoute, githubWebhookRoute } from './routes';
+import type { ServerLifecyclePayload } from './schemas';
 
 export const handleServerWebhook: RouteHandler<
 	typeof serverWebhookRoute
@@ -17,8 +18,8 @@ export const handleServerWebhook: RouteHandler<
 		return ctx.json({ success: false, error: 'Invalid signature' }, 401);
 	}
 
-	const payload = JSON.parse(rawBody);
-	webhookService.handleServerLifecycle(payload);
+	const payload = JSON.parse(rawBody) as ServerLifecyclePayload;
+	await webhookService.handleServerLifecycle(payload);
 
 	return ctx.json({ success: true }, 200);
 };

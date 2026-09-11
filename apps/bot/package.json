@@ -10,8 +10,8 @@
 		"typecheck": "tsc --project tsconfig.app.json --noEmit"
 	},
 	"dependencies": {
-		"@gitcord/logger": "0.1.0",
-		"@gitcord/server-api": "0.1.0",
+		"@gitcord/logger": "file:../../packages/logger",
+		"@gitcord/server-api": "file:../../packages/server-api",
 		"@hono/node-server": "^1.13.0",
 		"@hono/swagger-ui": "^0.5.3",
 		"@hono/zod-openapi": "^0.18.3",
