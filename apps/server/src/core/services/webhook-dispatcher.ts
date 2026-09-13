@@ -1,30 +1,12 @@
 import { cryptoService } from './crypto';
 import { appLogger } from '../loggers';
-
-export interface BaseWebhookPayload<TData = Record<string, unknown>> {
-	readonly type: string;
-	readonly timestamp: number;
-	readonly data: TData;
-}
-
-export type TableAction = 'CREATE' | 'UPDATE' | 'DELETE';
-
-export interface TableUpdateData<TRecord = Record<string, unknown>> {
-	readonly tableName: string;
-	readonly action: TableAction;
-	readonly recordId: string | number;
-	readonly record?: TRecord;
-}
-
-export interface TableUpdateWebhookPayload extends BaseWebhookPayload<TableUpdateData> {
-	readonly type: 'TABLE_UPDATE';
-}
+import type { WebhookPayload } from '../types';
 
 export class WebhookDispatcherService {
-	public async broadcast<T extends BaseWebhookPayload>(
+	public async broadcast(
 		endpointUrl: string,
 		secret: string,
-		payload: T
+		payload: WebhookPayload
 	): Promise<void> {
 		const rawBody = JSON.stringify(payload);
 		const signature = cryptoService.createHmacSha256(secret, rawBody);

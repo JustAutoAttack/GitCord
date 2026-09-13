@@ -1,4 +1,5 @@
-import { AppError, ErrorCode, appLogger } from '@core';
+import { AppError, ErrorCode, ENV, appLogger, webhookDispatcher } from '@core';
+import type { TableName, TableUpdatePayload } from '@core';
 
 export interface BaseRepo<TSelect, TInsert, TId = string> {
 	findAll(): Promise<TSelect[]> | TSelect[];
@@ -21,10 +22,53 @@ export class BaseService<
 > {
 	protected repo: TRepo;
 	protected entityName: string;
+	protected tableName?: TableName;
 
-	constructor(repo: TRepo, entityName: string) {
+	constructor(repo: TRepo, entityName: string, tableName?: TableName) {
 		this.repo = repo;
 		this.entityName = entityName;
+		this.tableName = tableName;
+	}
+
+	protected async dispatchTableUpdate(
+		action: 'CREATE' | 'UPDATE' | 'DELETE',
+		recordId: string | number,
+		record?: any
+	): Promise<void> {
+		if (
+			!this.tableName ||
+			!ENV.BOT_WEBHOOK_URL ||
+			!ENV.BOT_WEBHOOK_SECRET
+		) {
+			return;
+		}
+
+		const tableUpdateUrl = new URL(
+			'/table-update',
+			ENV.BOT_WEBHOOK_URL
+		).toString();
+
+		const payload: TableUpdatePayload = {
+			timestamp: Date.now(),
+			data: {
+				tableName: this.tableName,
+				action,
+				recordId,
+				record: record ?? null
+			}
+		};
+
+		try {
+			await webhookDispatcher.broadcast(
+				tableUpdateUrl,
+				ENV.BOT_WEBHOOK_SECRET,
+				payload
+			);
+		} catch (err) {
+			appLogger.warn(
+				`Failed to dispatch table-update webhook for ${this.tableName}: ${err instanceof Error ? err.message : String(err)}`
+			);
+		}
 	}
 
 	async list(): Promise<TSelect[]> {
@@ -47,7 +91,10 @@ export class BaseService<
 
 	async create(input: TInsert): Promise<TSelect> {
 		appLogger.info(`Creating new ${this.entityName}...`);
-		return await this.repo.create(input);
+		const created = await this.repo.create(input);
+		const recordId = (created as any)?.id ?? 'unknown';
+		await this.dispatchTableUpdate('CREATE', recordId, created);
+		return created;
 	}
 
 	async update(id: string, input: TUpdate): Promise<TSelect> {
@@ -62,6 +109,7 @@ export class BaseService<
 		}
 
 		appLogger.info(`Successfully updated ${this.entityName} [ID: ${id}]`);
+		await this.dispatchTableUpdate('UPDATE', id, updated);
 		return updated;
 	}
 
@@ -77,6 +125,7 @@ export class BaseService<
 		}
 
 		appLogger.info(`Successfully deleted ${this.entityName} [ID: ${id}]`);
+		await this.dispatchTableUpdate('DELETE', id);
 		return true;
 	}
 }

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OpenAPIHono } from '@hono/zod-openapi';
 
 import { AppError, ErrorCode } from '@core';
-import { remoteConfigsRouter } from '@gateway/api/v1/remote-configs';
+import { remoteConfigsRouter } from '@gateway/api/v1/guild-repositories';
 import { remoteConfigsService } from '@services';
 
 vi.mock('@services', () => ({

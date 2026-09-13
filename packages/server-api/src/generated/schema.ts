@@ -1216,6 +1216,1094 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/github-app-installations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List GitHub app installations
+         * @description Returns all GitHub app installations.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub app installations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example inst_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            installationId: number;
+                            /** @example gitcord-org */
+                            accountLogin: string;
+                            /** @example Organization */
+                            accountType: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create GitHub app installation
+         * @description Creates a new GitHub app installation.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 12345678 */
+                        installationId: number;
+                        /** @example gitcord-org */
+                        accountLogin: string;
+                        /** @example Organization */
+                        accountType: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description GitHub app installation created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example inst_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            installationId: number;
+                            /** @example gitcord-org */
+                            accountLogin: string;
+                            /** @example Organization */
+                            accountType: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/github-app-installations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get GitHub app installation
+         * @description Returns a GitHub app installation by ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub app installation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example inst_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            installationId: number;
+                            /** @example gitcord-org */
+                            accountLogin: string;
+                            /** @example Organization */
+                            accountType: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description GitHub app installation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete GitHub app installation
+         * @description Deletes an existing GitHub app installation.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub app installation deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Operation completed successfully */
+                            message: string;
+                        };
+                    };
+                };
+                /** @description GitHub app installation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Update GitHub app installation
+         * @description Updates an existing GitHub app installation.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 12345678 */
+                        installationId?: number;
+                        /** @example gitcord-org */
+                        accountLogin?: string;
+                        /** @example Organization */
+                        accountType?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description GitHub app installation updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example inst_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            installationId: number;
+                            /** @example gitcord-org */
+                            accountLogin: string;
+                            /** @example Organization */
+                            accountType: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description GitHub app installation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/github-app-installations/installation/{installationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get GitHub app installation by installation ID
+         * @description Returns a GitHub app installation by its numeric installation ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    installationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub app installation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example inst_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            installationId: number;
+                            /** @example gitcord-org */
+                            accountLogin: string;
+                            /** @example Organization */
+                            accountType: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description GitHub app installation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/github-repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List GitHub repositories
+         * @description Returns all GitHub repositories, optionally filtered by GitHub App Installation ID.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    githubAppInstallationId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub repositories */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example repo_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            githubAppInstallationId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
+                            /** @example gitcord-org/core-service */
+                            repositoryFullName: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create GitHub repository
+         * @description Creates a new GitHub repository entry.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 12345678 */
+                        githubAppInstallationId: string;
+                        /**
+                         * Format: uri
+                         * @example https://github.com/gitcord-org/core-service
+                         */
+                        repositoryUrl: string;
+                        /** @example gitcord-org/core-service */
+                        repositoryFullName: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description GitHub repository created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example repo_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            githubAppInstallationId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
+                            /** @example gitcord-org/core-service */
+                            repositoryFullName: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/github-repositories/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get GitHub repository by URL
+         * @description Returns the GitHub repository matching a specific repository URL.
+         */
+        get: {
+            parameters: {
+                query: {
+                    repositoryUrl: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub repository */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example repo_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            githubAppInstallationId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
+                            /** @example gitcord-org/core-service */
+                            repositoryFullName: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description GitHub repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/github-repositories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get GitHub repository
+         * @description Returns a GitHub repository by ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub repository */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example repo_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            githubAppInstallationId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
+                            /** @example gitcord-org/core-service */
+                            repositoryFullName: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description GitHub repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete GitHub repository
+         * @description Deletes an existing GitHub repository entry.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description GitHub repository deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Operation completed successfully */
+                            message: string;
+                        };
+                    };
+                };
+                /** @description GitHub repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Update GitHub repository
+         * @description Updates an existing GitHub repository entry.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 12345678 */
+                        githubAppInstallationId?: string;
+                        /**
+                         * Format: uri
+                         * @example https://github.com/gitcord-org/core-service
+                         */
+                        repositoryUrl?: string;
+                        /** @example gitcord-org/core-service */
+                        repositoryFullName?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description GitHub repository updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example repo_123456 */
+                            id: string;
+                            /** @example 12345678 */
+                            githubAppInstallationId: string;
+                            /**
+                             * Format: uri
+                             * @example https://github.com/gitcord-org/core-service
+                             */
+                            repositoryUrl: string;
+                            /** @example gitcord-org/core-service */
+                            repositoryFullName: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description GitHub repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/guild-repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List guild repositories
+         * @description Returns all guild repositories, optionally filtered by guildId or GitHub repository ID.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    guildId?: string;
+                    githubRepositoryId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Guild repositories */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example cfg_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            guildId: string;
+                            /** @example repo_123456 */
+                            githubRepositoryId: string;
+                            /** @example 123456789012345679 */
+                            commandChannelId: string;
+                            /** @example 123456789012345680 */
+                            notificationChannelId: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create guild repository
+         * @description Creates a new guild repository subscription.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 123456789012345678 */
+                        guildId: string;
+                        /** @example repo_123456 */
+                        githubRepositoryId: string;
+                        /** @example 123456789012345679 */
+                        commandChannelId: string;
+                        /** @example 123456789012345680 */
+                        notificationChannelId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Guild repository created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example cfg_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            guildId: string;
+                            /** @example repo_123456 */
+                            githubRepositoryId: string;
+                            /** @example 123456789012345679 */
+                            commandChannelId: string;
+                            /** @example 123456789012345680 */
+                            notificationChannelId: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/guild-repositories/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get guild repository by guild and GitHub repository
+         * @description Returns the guild repository matching a specific guild ID and GitHub repository ID.
+         */
+        get: {
+            parameters: {
+                query: {
+                    guildId: string;
+                    githubRepositoryId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Guild repository */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example cfg_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            guildId: string;
+                            /** @example repo_123456 */
+                            githubRepositoryId: string;
+                            /** @example 123456789012345679 */
+                            commandChannelId: string;
+                            /** @example 123456789012345680 */
+                            notificationChannelId: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Guild repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/guild-repositories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get guild repository
+         * @description Returns a guild repository by ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Guild repository */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example cfg_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            guildId: string;
+                            /** @example repo_123456 */
+                            githubRepositoryId: string;
+                            /** @example 123456789012345679 */
+                            commandChannelId: string;
+                            /** @example 123456789012345680 */
+                            notificationChannelId: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Guild repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete guild repository
+         * @description Deletes an existing guild repository subscription.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Guild repository deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Operation completed successfully */
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Guild repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Update guild repository
+         * @description Updates an existing guild repository subscription.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 123456789012345678 */
+                        guildId?: string;
+                        /** @example repo_123456 */
+                        githubRepositoryId?: string;
+                        /** @example 123456789012345679 */
+                        commandChannelId?: string;
+                        /** @example 123456789012345680 */
+                        notificationChannelId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Guild repository updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example cfg_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            guildId: string;
+                            /** @example repo_123456 */
+                            githubRepositoryId: string;
+                            /** @example 123456789012345679 */
+                            commandChannelId: string;
+                            /** @example 123456789012345680 */
+                            notificationChannelId: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Guild repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/guild-repositories/command-channel/{commandChannelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get guild repository by command channel
+         * @description Returns the guild repository associated with a command channel.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    commandChannelId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Guild repository */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example cfg_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            guildId: string;
+                            /** @example repo_123456 */
+                            githubRepositoryId: string;
+                            /** @example 123456789012345679 */
+                            commandChannelId: string;
+                            /** @example 123456789012345680 */
+                            notificationChannelId: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Guild repository not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/guild-settings": {
         parameters: {
             query?: never;
@@ -1941,61 +3029,18 @@ export interface paths {
         };
         trace?: never;
     };
-    "/api/v1/remote-configs": {
+    "/webhook/github": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * List remote configurations
-         * @description Returns all remote configurations, optionally filtered by guildId.
-         */
-        get: {
-            parameters: {
-                query?: {
-                    guildId?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Remote configurations */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example cfg_123456 */
-                            id: string;
-                            /** @example 123456789012345678 */
-                            guildId: string;
-                            /**
-                             * Format: uri
-                             * @example https://github.com/gitcord-org/core-service
-                             */
-                            repositoryUrl: string;
-                            /** @example 123456789012345679 */
-                            commandChannelId: string;
-                            /** @example 123456789012345680 */
-                            notificationChannelId: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
-                        }[];
-                    };
-                };
-            };
-        };
+        get?: never;
         put?: never;
         /**
-         * Create remote configuration
-         * @description Creates a new remote configuration.
+         * GitHub Webhook
+         * @description Ingests repository event payloads directly from GitHub.
          */
         post: {
             parameters: {
@@ -2004,209 +3049,15 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
+            requestBody?: {
                 content: {
                     "application/json": {
-                        /** @example 123456789012345678 */
-                        guildId: string;
-                        /**
-                         * Format: uri
-                         * @example https://github.com/gitcord-org/core-service
-                         */
-                        repositoryUrl: string;
-                        /** @example 123456789012345679 */
-                        commandChannelId: string;
-                        /** @example 123456789012345680 */
-                        notificationChannelId: string;
+                        [key: string]: unknown;
                     };
                 };
             };
             responses: {
-                /** @description Remote configuration created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example cfg_123456 */
-                            id: string;
-                            /** @example 123456789012345678 */
-                            guildId: string;
-                            /**
-                             * Format: uri
-                             * @example https://github.com/gitcord-org/core-service
-                             */
-                            repositoryUrl: string;
-                            /** @example 123456789012345679 */
-                            commandChannelId: string;
-                            /** @example 123456789012345680 */
-                            notificationChannelId: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/remote-configs/lookup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get remote configuration by guild and repo URL
-         * @description Returns the remote configuration matching a specific guild ID and remote URL.
-         */
-        get: {
-            parameters: {
-                query: {
-                    guildId: string;
-                    repositoryUrl: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Remote configuration */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example cfg_123456 */
-                            id: string;
-                            /** @example 123456789012345678 */
-                            guildId: string;
-                            /**
-                             * Format: uri
-                             * @example https://github.com/gitcord-org/core-service
-                             */
-                            repositoryUrl: string;
-                            /** @example 123456789012345679 */
-                            commandChannelId: string;
-                            /** @example 123456789012345680 */
-                            notificationChannelId: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Remote configuration not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/remote-configs/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get remote configuration
-         * @description Returns a remote configuration by ID.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Remote configuration */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example cfg_123456 */
-                            id: string;
-                            /** @example 123456789012345678 */
-                            guildId: string;
-                            /**
-                             * Format: uri
-                             * @example https://github.com/gitcord-org/core-service
-                             */
-                            repositoryUrl: string;
-                            /** @example 123456789012345679 */
-                            commandChannelId: string;
-                            /** @example 123456789012345680 */
-                            notificationChannelId: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Remote configuration not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        /**
-         * Delete remote configuration
-         * @description Deletes an existing remote configuration.
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Remote configuration deleted */
+                /** @description GitHub webhook processed successfully */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2215,158 +3066,41 @@ export interface paths {
                         "application/json": {
                             /** @example true */
                             success: boolean;
-                            /** @example Operation completed successfully */
-                            message: string;
+                            /** @example Invalid signature */
+                            error?: string;
                         };
                     };
                 };
-                /** @description Remote configuration not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        /**
-         * Update remote configuration
-         * @description Updates an existing remote configuration.
-         */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example 123456789012345678 */
-                        guildId?: string;
-                        /**
-                         * Format: uri
-                         * @example https://github.com/gitcord-org/another-repo
-                         */
-                        repositoryUrl?: string;
-                        /** @example 123456789012345679 */
-                        commandChannelId?: string;
-                        /** @example 123456789012345680 */
-                        notificationChannelId?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Remote configuration updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example cfg_123456 */
-                            id: string;
-                            /** @example 123456789012345678 */
-                            guildId: string;
-                            /**
-                             * Format: uri
-                             * @example https://github.com/gitcord-org/core-service
-                             */
-                            repositoryUrl: string;
-                            /** @example 123456789012345679 */
-                            commandChannelId: string;
-                            /** @example 123456789012345680 */
-                            notificationChannelId: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Invalid request */
+                /** @description Invalid GitHub webhook payload */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
-                };
-                /** @description Remote configuration not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Invalid signature */
+                            error?: string;
+                        };
                     };
-                    content?: never;
                 };
-            };
-        };
-        trace?: never;
-    };
-    "/api/v1/remote-configs/command-channel/{commandChannelId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get remote configuration by command channel
-         * @description Returns the remote configuration associated with a command channel.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    commandChannelId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Remote configuration */
-                200: {
+                /** @description Internal server error processing webhook */
+                500: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            /** @example cfg_123456 */
-                            id: string;
-                            /** @example 123456789012345678 */
-                            guildId: string;
-                            /**
-                             * Format: uri
-                             * @example https://github.com/gitcord-org/core-service
-                             */
-                            repositoryUrl: string;
-                            /** @example 123456789012345679 */
-                            commandChannelId: string;
-                            /** @example 123456789012345680 */
-                            notificationChannelId: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
+                            /** @example true */
+                            success: boolean;
+                            /** @example Invalid signature */
+                            error?: string;
                         };
                     };
                 };
-                /** @description Remote configuration not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
             };
         };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2398,8 +3132,6 @@ export interface webhooks {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @example SERVER_LIFECYCLE */
-                        type: string;
                         /** @example 1723917300000 */
                         timestamp: number;
                         data: {
@@ -2450,8 +3182,6 @@ export interface webhooks {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @example TABLE_UPDATE */
-                        type: string;
                         /** @example 1723917300000 */
                         timestamp: number;
                         data: {
@@ -2476,6 +3206,60 @@ export interface webhooks {
             };
             responses: {
                 /** @description Cache invalidated successfully by the bot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    githubEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * GitHub Event Webhook
+         * @description Outbound webhook dispatched by the server to forward unhandled GitHub event payloads to the bot for rendering and notifications.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example 1723917300000 */
+                        timestamp: number;
+                        data: {
+                            /** @example push */
+                            eventName: string;
+                            /**
+                             * @example {
+                             *       "ref": "refs/heads/main"
+                             *     }
+                             */
+                            payload: Record<string, never>;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description GitHub event processed successfully by the bot */
                 200: {
                     headers: {
                         [name: string]: unknown;

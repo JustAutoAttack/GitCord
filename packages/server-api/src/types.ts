@@ -14,8 +14,6 @@ export type HealthLiveResponse =
 export type HealthReadyResponse =
 	paths['/api/health/ready']['get']['responses'][200]['content']['application/json'];
 
-// Auth
-
 // Users
 export type UserResponse =
 	paths['/api/v1/users']['get']['responses'][200]['content']['application/json'];
@@ -96,21 +94,73 @@ export type UpdateGuildSettingRequest =
 export type DeleteGuildSettingResponse =
 	paths['/api/v1/guild-settings/{id}']['delete']['responses'][200]['content']['application/json'];
 
-// Remote Config
-export type RemoteConfigResponse =
-	paths['/api/v1/remote-configs']['get']['responses'][200]['content']['application/json'];
+// GitHub App Installations
+export type GithubAppInstallationResponse =
+	paths['/api/v1/github-app-installations']['get']['responses'][200]['content']['application/json'];
 
-export type RemoteConfigItemResponse =
-	paths['/api/v1/remote-configs/{id}']['get']['responses'][200]['content']['application/json'];
+export type GithubAppInstallationItemResponse =
+	paths['/api/v1/github-app-installations/{id}']['get']['responses'][200]['content']['application/json'];
 
-export type CreateRemoteConfigRequest =
-	paths['/api/v1/remote-configs']['post']['requestBody']['content']['application/json'];
+export type GithubAppInstallationByInstallationIdResponse =
+	paths['/api/v1/github-app-installations/installation/{installationId}']['get']['responses'][200]['content']['application/json'];
 
-export type UpdateRemoteConfigRequest =
-	paths['/api/v1/remote-configs/{id}']['patch']['requestBody']['content']['application/json'];
+export type CreateGithubAppInstallationRequest =
+	paths['/api/v1/github-app-installations']['post']['requestBody']['content']['application/json'];
 
-export type DeleteRemoteConfigResponse =
-	paths['/api/v1/remote-configs/{id}']['delete']['responses'][200]['content']['application/json'];
+export type UpdateGithubAppInstallationRequest =
+	paths['/api/v1/github-app-installations/{id}']['patch']['requestBody']['content']['application/json'];
+
+export type DeleteGithubAppInstallationResponse =
+	paths['/api/v1/github-app-installations/{id}']['delete']['responses'][200]['content']['application/json'];
+
+// GitHub Repositories
+export type GithubRepositoryResponse =
+	paths['/api/v1/github-repositories']['get']['responses'][200]['content']['application/json'];
+
+export type GithubRepositoryItemResponse =
+	paths['/api/v1/github-repositories/{id}']['get']['responses'][200]['content']['application/json'];
+
+export type GithubRepositoryByLookupResponse =
+	paths['/api/v1/github-repositories/lookup']['get']['responses'][200]['content']['application/json'];
+
+export type CreateGithubRepositoryRequest =
+	paths['/api/v1/github-repositories']['post']['requestBody']['content']['application/json'];
+
+export type UpdateGithubRepositoryRequest =
+	paths['/api/v1/github-repositories/{id}']['patch']['requestBody']['content']['application/json'];
+
+export type DeleteGithubRepositoryResponse =
+	paths['/api/v1/github-repositories/{id}']['delete']['responses'][200]['content']['application/json'];
+
+// Guild Repositories
+export type GuildRepositoryResponse =
+	paths['/api/v1/guild-repositories']['get']['responses'][200]['content']['application/json'];
+
+export type GuildRepositoryItemResponse =
+	paths['/api/v1/guild-repositories/{id}']['get']['responses'][200]['content']['application/json'];
+
+export type GuildRepositoryByLookupResponse =
+	paths['/api/v1/guild-repositories/lookup']['get']['responses'][200]['content']['application/json'];
+
+export type GuildRepositoryByCommandChannelResponse =
+	paths['/api/v1/guild-repositories/command-channel/{commandChannelId}']['get']['responses'][200]['content']['application/json'];
+
+export type CreateGuildRepositoryRequest =
+	paths['/api/v1/guild-repositories']['post']['requestBody']['content']['application/json'];
+
+export type UpdateGuildRepositoryRequest =
+	paths['/api/v1/guild-repositories/{id}']['patch']['requestBody']['content']['application/json'];
+
+export type DeleteGuildRepositoryResponse =
+	paths['/api/v1/guild-repositories/{id}']['delete']['responses'][200]['content']['application/json'];
+
+// GitHub Incoming Webhook
+export type GitHubWebhookRequest = NonNullable<
+    paths['/webhook/github']['post']['requestBody']
+>['content']['application/json'];
+
+export type GitHubWebhookResponse =
+    paths['/webhook/github']['post']['responses'][200]['content']['application/json'];
 
 // ===
 // Webhooks
@@ -125,3 +175,7 @@ export type TableUpdateWebhookPayload =
 	webhooks['tableUpdate']['post']['requestBody']['content']['application/json'];
 
 export type TableAction = TableUpdateWebhookPayload['data']['action'];
+
+// GitHub Event Outbound Webhook
+export type GitHubEventWebhookPayload =
+	webhooks['githubEvent']['post']['requestBody']['content']['application/json'];

@@ -10,7 +10,7 @@ import { CONFIG } from '@core';
 import {
 	isServerOnline,
 	ServerAPIGuildSettingService,
-	ServerAPIRemoteConfigService
+	ServerAPIGuildRepositoriesService
 } from '@features/server';
 import { logger } from '../logger';
 import { handleInteraction } from './interaction';
@@ -115,10 +115,10 @@ async function handleClientReady(discordClient: Client<true>): Promise<void> {
 			return;
 		}
 
-		let allConfigs: any[] = [];
+		let allGuildRepos: any[] = [];
 		try {
-			const response = await ServerAPIRemoteConfigService.list();
-			allConfigs = Array.isArray(response)
+			const response = await ServerAPIGuildRepositoriesService.list();
+			allGuildRepos = Array.isArray(response)
 				? response
 				: ((response as any)?.data ?? []);
 		} catch {
@@ -128,10 +128,10 @@ async function handleClientReady(discordClient: Client<true>): Promise<void> {
 		await Promise.all(
 			targetChannels.map(async ({ channel, guildId }) => {
 				try {
-					const serverConfigs = allConfigs.filter(
-						(config: any) => config.guildId === guildId
+					const serverRepos = allGuildRepos.filter(
+						(repo: any) => repo.guildId === guildId
 					);
-					const hasRepos = serverConfigs.length > 0;
+					const hasRepos = serverRepos.length > 0;
 
 					const descriptionLines = [];
 

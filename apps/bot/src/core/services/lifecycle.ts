@@ -1,12 +1,10 @@
 import { serve, type ServerType } from '@hono/node-server';
-import ngrok, { type Listener } from '@ngrok/ngrok';
 
 import { ENV, appLogger } from '@core';
 
 export class LifecycleService {
 	private isShuttingDown = false;
 	private server: ServerType | null = null;
-	private tunnel: Listener | null = null;
 
 	async start(
 		appFactory: () => any,
@@ -30,26 +28,6 @@ export class LifecycleService {
 		appLogger.info(`Swagger UI available at ${displayUrl}/swagger`);
 		appLogger.info(`OpenAPI Spec available at ${displayUrl}/doc`);
 
-		if (ENV.NGROK_AUTHTOKEN) {
-			appLogger.info('Creating public webhook tunnel...');
-			this.tunnel = await ngrok.forward({
-				addr: port,
-				authtoken: ENV.NGROK_AUTHTOKEN,
-				proto: 'http'
-			});
-			const publicUrl = this.tunnel.url();
-
-			appLogger.info(`Public tunnel active: ${publicUrl}`);
-			appLogger.info(`Health check endpoint: ${publicUrl}/health`);
-			appLogger.info(`Swagger UI: ${publicUrl}/swagger`);
-			appLogger.info(
-				`Server lifecycle endpoint: ${publicUrl}/webhooks/server/lifecycle`
-			);
-			appLogger.info(
-				`GitHub event receiver endpoint: ${publicUrl}/webhooks/github`
-			);
-		}
-
 		await connectDiscordFn();
 
 		appLogger.info('GitCord startup completed successfully.');
@@ -67,11 +45,6 @@ export class LifecycleService {
 		appLogger.warn(`Received ${signal}. Shutting down GitCord...`);
 
 		try {
-			if (this.tunnel) {
-				await this.tunnel.close();
-				appLogger.info('Public webhook tunnel closed.');
-			}
-
 			if (
 				this.server &&
 				typeof (this.server as any).close === 'function'

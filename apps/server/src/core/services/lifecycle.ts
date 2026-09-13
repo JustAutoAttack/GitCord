@@ -1,12 +1,15 @@
 import { serve, type ServerType } from '@hono/node-server';
+import { forward } from '@ngrok/ngrok';
 
 import { ENV } from '../env';
 import { appLogger } from '../loggers';
+import type { ServerLifecyclePayload } from '../types';
 import { webhookDispatcher } from './webhook-dispatcher';
 
 export class LifecycleService {
 	private isShuttingDown = false;
 	private server: ServerType | null = null;
+	private ngrokListener: any = null;
 
 	async start(appFactory: () => any, migrationFn: () => void): Promise<void> {
 		appLogger.info('Starting GitCord server initialization sequence...');
@@ -15,12 +18,7 @@ export class LifecycleService {
 
 		const app = appFactory();
 
-		const url = new URL(ENV.BASE_URL);
-		const port = url.port
-			? parseInt(url.port, 10)
-			: url.protocol === 'https:'
-				? 443
-				: 80;
+		const port = ENV.PORT;
 
 		this.server = serve({
 			fetch: app.fetch,
@@ -31,19 +29,41 @@ export class LifecycleService {
 		appLogger.info(`Swagger UI available at ${ENV.BASE_URL}/swagger`);
 		appLogger.info(`OpenAPI Spec available at ${ENV.BASE_URL}/doc`);
 
+		if (ENV.NGROK_AUTHTOKEN) {
+			try {
+				this.ngrokListener = await forward({
+					addr: port,
+					authtoken: ENV.NGROK_AUTHTOKEN,
+					domain: ENV.NGROK_URL
+						? new URL(ENV.NGROK_URL).hostname
+						: undefined
+				});
+				const ngrokUrl = this.ngrokListener.url();
+				appLogger.info(
+					`[ngrok] Tunnel established successfully at: ${ngrokUrl}`
+				);
+			} catch (error) {
+				appLogger.error('[ngrok] Failed to establish tunnel:', error);
+			}
+		}
+
 		if (ENV.BOT_WEBHOOK_URL && ENV.BOT_WEBHOOK_SECRET) {
+			const lifecycleUrl = new URL(
+				'/lifecycle',
+				ENV.BOT_WEBHOOK_URL
+			).toString();
+			const payload: ServerLifecyclePayload = {
+				timestamp: Date.now(),
+				data: {
+					status: 'ONLINE',
+					reason: 'Server startup complete'
+				}
+			};
 			try {
 				await webhookDispatcher.broadcast(
-					ENV.BOT_WEBHOOK_URL,
+					lifecycleUrl,
 					ENV.BOT_WEBHOOK_SECRET,
-					{
-						type: 'SERVER_LIFECYCLE',
-						timestamp: Date.now(),
-						data: {
-							status: 'ONLINE',
-							reason: 'Server startup complete'
-						}
-					}
+					payload
 				);
 			} catch (error: any) {
 				if (
@@ -75,18 +95,22 @@ export class LifecycleService {
 
 		try {
 			if (ENV.BOT_WEBHOOK_URL && ENV.BOT_WEBHOOK_SECRET) {
+				const lifecycleUrl = new URL(
+					'/lifecycle',
+					ENV.BOT_WEBHOOK_URL
+				).toString();
+				const payload: ServerLifecyclePayload = {
+					timestamp: Date.now(),
+					data: {
+						status: 'OFFLINE',
+						reason: `Process received ${signal}`
+					}
+				};
 				try {
 					await webhookDispatcher.broadcast(
-						ENV.BOT_WEBHOOK_URL,
+						lifecycleUrl,
 						ENV.BOT_WEBHOOK_SECRET,
-						{
-							type: 'SERVER_LIFECYCLE',
-							timestamp: Date.now(),
-							data: {
-								status: 'OFFLINE',
-								reason: `Process received ${signal}`
-							}
-						}
+						payload
 					);
 				} catch (error: any) {
 					if (
@@ -101,6 +125,18 @@ export class LifecycleService {
 							`Failed to dispatch offline webhook: ${error instanceof Error ? error.message : String(error)}`
 						);
 					}
+				}
+			}
+
+			if (
+				this.ngrokListener &&
+				typeof this.ngrokListener.close === 'function'
+			) {
+				try {
+					await this.ngrokListener.close();
+					appLogger.info('[ngrok] Tunnel closed successfully.');
+				} catch (ngrokError) {
+					appLogger.error('Error closing ngrok tunnel:', ngrokError);
 				}
 			}
 

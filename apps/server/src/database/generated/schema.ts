@@ -1,4 +1,4 @@
-import { sqliteTable, AnySQLiteColumn, uniqueIndex, text, foreignKey } from "drizzle-orm/sqlite-core"
+import { sqliteTable, AnySQLiteColumn, uniqueIndex, text, foreignKey, integer } from "drizzle-orm/sqlite-core"
   import { sql } from "drizzle-orm"
 
 export const users = sqliteTable("users", {
@@ -26,6 +26,30 @@ export const userSessions = sqliteTable("user_sessions", {
 	uniqueIndex("idx_user_sessions_user_id").on(table.userId),
 ]);
 
+export const githubAppInstallations = sqliteTable("github_app_installations", {
+	id: text().primaryKey().notNull(),
+	installationId: integer("installation_id").notNull(),
+	accountLogin: text("account_login").notNull(),
+	accountType: text("account_type").notNull(),
+	updatedAt: text("updated_at").notNull(),
+	createdAt: text("created_at").notNull(),
+},
+(table) => [
+	uniqueIndex("idx_github_installations_ext_id").on(table.installationId),
+]);
+
+export const githubRepositories = sqliteTable("github_repositories", {
+	id: text().primaryKey().notNull(),
+	githubAppInstallationId: text("github_app_installation_id").notNull().references(() => githubAppInstallations.id, { onDelete: "cascade" } ),
+	repositoryUrl: text("repository_url").notNull(),
+	repositoryFullName: text("repository_full_name").notNull(),
+	updatedAt: text("updated_at").notNull(),
+	createdAt: text("created_at").notNull(),
+},
+(table) => [
+	uniqueIndex("idx_github_repositories_repos_url").on(table.repositoryUrl),
+]);
+
 export const botCommands = sqliteTable("bot_commands", {
 	id: text().primaryKey().notNull(),
 	commandName: text("command_name").notNull(),
@@ -49,18 +73,18 @@ export const guildUserPermissions = sqliteTable("guild_user_permissions", {
 	uniqueIndex("idx_guild_user_perms_unique").on(table.guildId, table.discordUserId, table.commandId),
 ]);
 
-export const remoteConfigs = sqliteTable("remote_configs", {
+export const guildRepositories = sqliteTable("guild_repositories", {
 	id: text().primaryKey().notNull(),
 	guildId: text("guild_id").notNull(),
-	repositoryUrl: text("repository_url").notNull(),
+	githubRepositoryId: text("github_repository_id").notNull().references(() => githubRepositories.id, { onDelete: "cascade" } ),
 	commandChannelId: text("command_channel_id").notNull(),
 	notificationChannelId: text("notification_channel_id").notNull(),
 	updatedAt: text("updated_at").notNull(),
 	createdAt: text("created_at").notNull(),
 },
 (table) => [
-	uniqueIndex("idx_remote_configs_command_channel_id").on(table.commandChannelId),
-	uniqueIndex("idx_remote_configs_guild_repo").on(table.guildId, table.repositoryUrl),
+	uniqueIndex("idx_guild_repositories_command_channel_id").on(table.commandChannelId),
+	uniqueIndex("idx_guild_repositories_guild_repo").on(table.guildId, table.githubRepositoryId),
 ]);
 
 export const guildSettings = sqliteTable("guild_settings", {

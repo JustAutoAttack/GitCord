@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TEXT NOT NULL
 );
 
--- Enforces a unique record per Discord user identity
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_discord_id ON users(discord_id);
 
 -- ===== 
@@ -29,8 +28,36 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Enforces a single active session per user record
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+
+-- ===== 
+-- GitHub App Installations
+-- =====
+CREATE TABLE IF NOT EXISTS github_app_installations (
+    id TEXT PRIMARY KEY NOT NULL,
+    installation_id INTEGER NOT NULL,
+    account_login TEXT NOT NULL,
+    account_type TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_github_installations_ext_id ON github_app_installations(installation_id);
+
+-- ===== 
+-- GitHub Repositories
+-- =====
+CREATE TABLE IF NOT EXISTS github_repositories (
+    id TEXT PRIMARY KEY NOT NULL,
+    github_app_installation_id TEXT NOT NULL,
+    repository_url TEXT NOT NULL,
+    repository_full_name TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (github_app_installation_id) REFERENCES github_app_installations(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_github_repositories_repos_url ON github_repositories(repository_url);
 
 -- ===== 
 -- Bot Commands (Read-only reference registry for command permissions)
@@ -43,7 +70,6 @@ CREATE TABLE IF NOT EXISTS bot_commands (
     created_at TEXT NOT NULL
 );
 
--- Enforces unique command names within the reference registry
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bot_commands_name ON bot_commands(command_name);
 
 -- ===== 
@@ -59,27 +85,25 @@ CREATE TABLE IF NOT EXISTS guild_user_permissions (
     FOREIGN KEY (command_id) REFERENCES bot_commands(id) ON DELETE CASCADE
 );
 
--- Enforces a unique permission grant per user, per guild, per command
 CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_user_perms_unique ON guild_user_permissions(guild_id, discord_user_id, command_id);
 
 -- ===== 
--- Remote Configs
+-- Guild Repositories
 -- =====
-CREATE TABLE IF NOT EXISTS remote_configs (
+CREATE TABLE IF NOT EXISTS guild_repositories (
     id TEXT PRIMARY KEY NOT NULL,
     guild_id TEXT NOT NULL,
-    repository_url TEXT NOT NULL,
+    github_repository_id TEXT NOT NULL,
     command_channel_id TEXT NOT NULL,
     notification_channel_id TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (github_repository_id) REFERENCES github_repositories(id) ON DELETE CASCADE
 );
 
--- Enforces one subscription per repository per server
-CREATE UNIQUE INDEX IF NOT EXISTS idx_remote_configs_guild_repo ON remote_configs(guild_id, repository_url);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_repositories_guild_repo ON guild_repositories(guild_id, github_repository_id);
 
--- Enforces one repository subscription per command channel
-CREATE UNIQUE INDEX IF NOT EXISTS idx_remote_configs_command_channel_id ON remote_configs(command_channel_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_repositories_command_channel_id ON guild_repositories(command_channel_id);
 
 -- ===== 
 -- Guild Settings 
@@ -92,10 +116,8 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     created_at TEXT NOT NULL
 );
 
--- Enforces one configuration row per guild
 CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_settings_guild_id ON guild_settings(guild_id);
 
--- Enforces that a system channel cannot be bound to multiple guilds simultaneously
 CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_settings_system_channel_id ON guild_settings(system_channel_id);
 
 PRAGMA foreign_keys = ON;

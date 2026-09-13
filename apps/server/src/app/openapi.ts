@@ -18,10 +18,6 @@ export const openAPIConfig = {
 							schema: {
 								type: 'object',
 								properties: {
-									type: {
-										type: 'string',
-										example: 'SERVER_LIFECYCLE'
-									},
 									timestamp: {
 										type: 'number',
 										example: 1723917300000
@@ -42,7 +38,7 @@ export const openAPIConfig = {
 										required: ['status']
 									}
 								},
-								required: ['type', 'timestamp', 'data']
+								required: ['timestamp', 'data']
 							}
 						}
 					}
@@ -66,10 +62,6 @@ export const openAPIConfig = {
 							schema: {
 								type: 'object',
 								properties: {
-									type: {
-										type: 'string',
-										example: 'TABLE_UPDATE'
-									},
 									timestamp: {
 										type: 'number',
 										example: 1723917300000
@@ -79,6 +71,16 @@ export const openAPIConfig = {
 										properties: {
 											tableName: {
 												type: 'string',
+												enum: [
+													'users',
+													'user_sessions',
+													'github_app_installations',
+													'github_repositories',
+													'bot_commands',
+													'guild_user_permissions',
+													'guild_repositories',
+													'guild_settings'
+												],
 												example: 'guild_settings'
 											},
 											action: {
@@ -107,7 +109,7 @@ export const openAPIConfig = {
 										]
 									}
 								},
-								required: ['type', 'timestamp', 'data']
+								required: ['timestamp', 'data']
 							}
 						}
 					}
@@ -115,6 +117,52 @@ export const openAPIConfig = {
 				responses: {
 					'200': {
 						description: 'Cache invalidated successfully by the bot'
+					}
+				}
+			}
+		},
+		githubEvent: {
+			post: {
+				summary: 'GitHub Event Webhook',
+				description:
+					'Outbound webhook dispatched by the server to forward unhandled GitHub event payloads to the bot for rendering and notifications.',
+				requestBody: {
+					required: true,
+					content: {
+						'application/json': {
+							schema: {
+								type: 'object',
+								properties: {
+									timestamp: {
+										type: 'number',
+										example: 1723917300000
+									},
+									data: {
+										type: 'object',
+										properties: {
+											eventName: {
+												type: 'string',
+												example: 'push'
+											},
+											payload: {
+												type: 'object',
+												example: {
+													ref: 'refs/heads/main'
+												}
+											}
+										},
+										required: ['eventName', 'payload']
+									}
+								},
+								required: ['timestamp', 'data']
+							}
+						}
+					}
+				},
+				responses: {
+					'200': {
+						description:
+							'GitHub event processed successfully by the bot'
 					}
 				}
 			}

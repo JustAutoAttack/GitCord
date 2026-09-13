@@ -10,7 +10,7 @@ export class BotCommandsService extends BaseService<
 	typeof botCommandsRepo
 > {
 	constructor() {
-		super(botCommandsRepo, 'bot command');
+		super(botCommandsRepo, 'bot command', 'bot_commands');
 	}
 
 	async getByCommandName(

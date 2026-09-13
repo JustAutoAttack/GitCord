@@ -1,7 +1,8 @@
 import { z } from '@hono/zod-openapi';
 import type {
 	ServerLifecycleWebhookPayload,
-	TableUpdateWebhookPayload
+	TableUpdateWebhookPayload,
+	GitHubEventWebhookPayload
 } from '@gitcord/server-api';
 
 export const serverLifecyclePayloadSchema = z.object({
@@ -30,3 +31,14 @@ export const tableUpdatePayloadSchema = z.object({
 		record: z.record(z.any()).nullable().optional()
 	})
 }) as unknown as z.ZodType<TableUpdateWebhookPayload>;
+
+export const githubEventPayloadSchema = z.object({
+	type: z.string().openapi({ example: 'GITHUB_EVENT' }),
+	timestamp: z.number().openapi({ example: 1723917300000 }),
+	data: z.object({
+		eventName: z.string().openapi({ example: 'push' }),
+		payload: z
+			.record(z.any())
+			.openapi({ description: 'Raw GitHub event payload' })
+	})
+}) as unknown as z.ZodType<GitHubEventWebhookPayload>;

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { remoteConfigsRepo } from '@database';
-import { RemoteConfigsService } from '@services/remote-configs';
+import { RemoteConfigsService } from '@services/guild-repositories';
 
 vi.mock('@database', () => ({
 	remoteConfigsRepo: {

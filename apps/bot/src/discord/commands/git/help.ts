@@ -4,7 +4,7 @@ import {
 	MessageFlags
 } from 'discord.js';
 
-import { discordLogger } from '@core';
+import { logger } from '../../logger';
 import { COMMAND_DOCS } from '../constants';
 
 export const helpSubcommand = new SlashCommandSubcommandBuilder()
@@ -28,7 +28,7 @@ export async function executeHelp(
 		.getString('command')
 		?.toLowerCase()
 		.trim();
-	discordLogger.debug(`Executing /git help with query: "${query || 'all'}"`);
+	logger.debug(`Executing /git help with query: "${query || 'all'}"`);
 
 	if (query) {
 		const match = (COMMAND_DOCS as Record<string, any>)[query];
