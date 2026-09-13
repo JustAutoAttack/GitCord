@@ -1,6 +1,12 @@
 import { ContainerBuilder } from 'discord.js';
 
-import { CONFIG, createHeader, createFooter, createSeparator, createText } from '@core';
+import {
+	CONFIG,
+	createHeader,
+	createFooter,
+	createSeparator,
+	createText
+} from '@core';
 import type {
 	GitHubCommit,
 	GitHubRepository,
@@ -19,6 +25,10 @@ export interface PushEventContext {
 	rawPayload: GitHubWebhookPayload;
 }
 
+const DEFAULT_COMMIT_LIMIT = 5;
+const MAX_COMMIT_LIMIT = 10;
+const MAX_COMMIT_MESSAGE_LENGTH = 72;
+
 export function handlePushEvent({
 	ref,
 	commits,
@@ -27,10 +37,7 @@ export function handlePushEvent({
 }: PushEventContext): ContainerBuilder {
 	const branchName = getBranchName(ref) || 'unknown';
 
-	const commitLimit = Math.min(
-		CONFIG.limits.defaultCommitLimit,
-		CONFIG.limits.maxCommitLimit
-	);
+	const commitLimit = Math.min(DEFAULT_COMMIT_LIMIT, MAX_COMMIT_LIMIT);
 
 	const displayedCommits = commits.slice(0, commitLimit);
 
@@ -38,7 +45,7 @@ export function handlePushEvent({
 		const sha = commit.id?.substring(0, 7) ?? 'unknown';
 		const message =
 			commit.message?.split('\n')[0]?.trim() || 'No commit message';
-		const maxLength = CONFIG.limits.maxCommitMessageLength;
+		const maxLength = MAX_COMMIT_MESSAGE_LENGTH;
 
 		const truncatedMessage =
 			message.length > maxLength
