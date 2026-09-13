@@ -1,20 +1,13 @@
 import { z } from '@hono/zod-openapi';
 
-export const UserSessionParamSchema = z.object({
-	id: z.string().openapi({
-		example: 'sess_123456',
-		description: 'User Session ID'
-	})
-});
-
-export const UserSessionUserIdParamSchema = z.object({
+export const UserIdParamSchema = z.object({
 	userId: z.string().openapi({
 		example: 'usr_123456',
 		description: 'User ID'
 	})
 });
 
-export const UserSessionSchema = z.object({
+export const ReadSchema = z.object({
 	id: z.string().openapi({
 		example: 'sess_123456'
 	}),
@@ -38,7 +31,7 @@ export const UserSessionSchema = z.object({
 	})
 });
 
-export const CreateUserSessionSchema = z.object({
+export const CreateSchema = z.object({
 	userId: z.string().min(1).openapi({
 		example: 'usr_123456'
 	}),
@@ -53,7 +46,7 @@ export const CreateUserSessionSchema = z.object({
 	})
 });
 
-export const UpdateUserSessionSchema = z.object({
+export const UpdateSchema = z.object({
 	userId: z.string().min(1).optional().openapi({
 		example: 'usr_123456'
 	}),
@@ -65,14 +58,5 @@ export const UpdateUserSessionSchema = z.object({
 	}),
 	expiresAt: z.string().min(1).optional().openapi({
 		example: '2026-09-17T14:30:00.000Z'
-	})
-});
-
-export const UserSessionActionResponseSchema = z.object({
-	success: z.boolean().openapi({
-		example: true
-	}),
-	message: z.string().openapi({
-		example: 'Operation completed successfully'
 	})
 });

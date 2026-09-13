@@ -1,0 +1,21 @@
+#:schema ./gitcord-bot.schema.json
+
+[loggers]
+app       = "#00f7ff"
+serverApi = "#ff9100"
+discord   = "#0077ff"
+github    = "#cc00ff"
+http      = "#ff0000"
+
+[discord.colors]
+online  = "#238636"
+offline = "#da3633"
+
+[github.colors]
+push        = "#2f81f7"
+pullRequest = "#238636"
+issue       = "#8957e5"
+create      = "#da3633"
+fork        = "#db6d28"
+watch       = "#f0883e"
+release     = "#7ee787"

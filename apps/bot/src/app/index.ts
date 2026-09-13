@@ -3,31 +3,30 @@ import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 
 import { appLogger, errorHandlerMiddleware, httpLoggerMiddleware } from '@core';
-import { healthRouter, webhooksRouter } from '@gateway';
+import { gatewayRouter } from '@gateway';
 import { openAPIConfig } from './openapi';
 
 export function createApp(): OpenAPIHono {
+	appLogger.info('Creating application instance...');
+
 	const app = new OpenAPIHono();
 
-	appLogger.info(
-		'Initializing application core and middleware layers for bot...'
-	);
-
+	// Register global middleware pipeline
+	appLogger.info('Configuring middleware...');
 	app.use('*', httpLoggerMiddleware());
 	app.use('*', cors());
 	app.onError(errorHandlerMiddleware());
 
-	// Routes
-	app.route('/health', healthRouter);
-	app.route('/webhooks', webhooksRouter);
+	// Register application route groups
+	appLogger.info('Mounting route handlers...');
+	app.route('/', gatewayRouter);
 
-	// OpenAPI
+	// Register OpenAPI specification and interactive documentation UI
+	appLogger.info('Configuring API documentation...');
 	app.doc('/doc', openAPIConfig);
-
-	// Swagger UI
 	app.get('/swagger', swaggerUI({ url: '/doc' }));
 
-	appLogger.info('Bot application setup completed successfully.');
+	appLogger.info('Application setup completed successfully.');
 
 	return app;
 }

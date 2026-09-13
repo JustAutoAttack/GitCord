@@ -4,35 +4,25 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"lib": ["ES2022"],
-
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-
-		"rootDir": ".",
-		"outDir": "./dist",
-
 		"paths": {
-			"@app": ["./src/app/index.ts"],
-			"@app/*": ["./src/app/*"],
-			"@core": ["./src/core/index.ts"],
+			"@core": ["./src/core"],
 			"@core/*": ["./src/core/*"],
-			"@domain": ["./src/domain/index.ts"],
+			"@domain": ["./src/domain"],
 			"@domain/*": ["./src/domain/*"],
-			"@services": ["./src/services/index.ts"],
+			"@services": ["./src/services"],
 			"@services/*": ["./src/services/*"],
-			"@gateway": ["./src/gateway/index.ts"],
+			"@gateway": ["./src/gateway"],
 			"@gateway/*": ["./src/gateway/*"],
-			"@server-api": ["./src/server-api/index.ts"],
+			"@server-api": ["./src/server-api"],
 			"@server-api/*": ["./src/server-api/*"],
-			"@discord": ["./src/discord/index.ts"],
+			"@discord": ["./src/discord"],
 			"@discord/*": ["./src/discord/*"],
-			"@features": ["./src/features/index.ts"],
+			"@features": ["./src/features"],
 			"@features/*": ["./src/features/*"]
 		}
-	},
-
-	"include": ["src/**/*", "scripts/**/*"],
-	"exclude": ["node_modules", "dist"]
+	}
 }

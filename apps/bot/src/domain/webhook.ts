@@ -6,10 +6,22 @@ export namespace WebhookPayload {
 		| 'SHUTTING_DOWN';
 
 	export interface ServerLifecycle {
+		type: string;
 		timestamp: number;
 		data: {
-			status: ServerStatus;
+			status: ServerStatus | string;
 			reason?: string;
+		};
+	}
+
+	export interface TableUpdate {
+		type: string;
+		timestamp: number;
+		data: {
+			tableName: string;
+			action: 'CREATE' | 'UPDATE' | 'DELETE';
+			recordId: string;
+			record?: Record<string, any> | null;
 		};
 	}
 

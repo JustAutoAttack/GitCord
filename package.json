@@ -5,5 +5,21 @@
 	"workspaces": [
 		"apps/*",
 		"packages/*"
-	]
+	],
+	"scripts": {
+		"madge:graph:server": "mkdir -p madge && madge --extensions ts --ts-config apps/server/tsconfig.app.json --basedir apps/server --image madge/graph-server.svg apps/server/src",
+		"madge:graph:bot": "mkdir -p madge && madge --extensions ts --ts-config apps/bot/tsconfig.json --basedir apps/bot --image madge/graph-bot.svg apps/bot/src",
+		"nx:graph": "nx graph",
+		"nx:build": "nx run-many -t build",
+		"nx:test": "nx run-many -t test --parallel=6",
+		"nx:lint": "nx run-many -t lint",
+		"nx:affected:build": "nx affected -t build",
+		"nx:affected:test": "nx affected -t test"
+	},
+	"devDependencies": {
+		"@nx/vitest": "23.2.1",
+		"madge": "^8.0.0",
+		"nx": "^23.2.1",
+		"vite": "^8.3.0"
+	}
 }

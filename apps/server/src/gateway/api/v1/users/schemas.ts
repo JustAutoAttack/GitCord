@@ -1,20 +1,13 @@
 import { z } from '@hono/zod-openapi';
 
-export const UserParamSchema = z.object({
-	id: z.string().openapi({
-		example: 'usr_123456',
-		description: 'User ID'
-	})
-});
-
-export const DiscordParamSchema = z.object({
+export const DiscordIDParamSchema = z.object({
 	discordId: z.string().openapi({
 		example: '123456789012345678',
 		description: 'Discord User ID'
 	})
 });
 
-export const UserSchema = z.object({
+export const ReadSchema = z.object({
 	id: z.string().openapi({
 		example: 'usr_123456'
 	}),
@@ -35,7 +28,7 @@ export const UserSchema = z.object({
 	})
 });
 
-export const CreateUserSchema = z.object({
+export const CreateSchema = z.object({
 	discordId: z.string().min(1).openapi({
 		example: '123456789012345678'
 	}),
@@ -47,20 +40,11 @@ export const CreateUserSchema = z.object({
 	})
 });
 
-export const UpdateUserSchema = z.object({
+export const UpdateSchema = z.object({
 	displayName: z.string().min(1).optional().openapi({
 		example: 'JohnDoeUpdated'
 	}),
 	avatarUrl: z.string().url().optional().nullable().openapi({
 		example: 'https://cdn.discordapp.com/avatars/123/abc.png'
-	})
-});
-
-export const UserActionResponseSchema = z.object({
-	success: z.boolean().openapi({
-		example: true
-	}),
-	message: z.string().openapi({
-		example: 'Operation completed successfully'
 	})
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { healthRouter } from '@gateway/health';
+import { healthRouter } from '@gateway/api/health';
 import { checkDbHealth } from '@database';
 
 vi.mock('@database', async (importOriginal) => {

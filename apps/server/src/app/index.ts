@@ -8,31 +8,31 @@ import {
 	errorHandlerMiddleware,
 	requestContextMiddleware
 } from '@core';
-import { healthRouter, apiRouter } from '@gateway';
+import { gatewayRouter } from '@gateway';
 import { openAPIConfig } from './openapi';
 
 export function createApp(): OpenAPIHono {
+	appLogger.info('Creating application instance...');
+
 	const app = new OpenAPIHono();
 
-	appLogger.info('Initializing application core and middleware layers...');
-
-	// Middleware
+	// Register global middleware pipeline
+	appLogger.info('Configuring middleware...');
 	app.use('*', httpLoggerMiddleware());
 	app.use('*', cors());
 	app.use('*', requestContextMiddleware);
 	app.onError(errorHandlerMiddleware());
 
-	// Routes
-	app.route('/health', healthRouter);
-	app.route('/api', apiRouter);
+	// Register application route groups
+	appLogger.info('Mounting route handlers...');
+	app.route('/', gatewayRouter);
 
-	// OpenAPI
+	// Register OpenAPI specification and interactive documentation UI
+	appLogger.info('Configuring API documentation...');
 	app.doc('/doc', openAPIConfig);
-
-	// Swagger UI
 	app.get('/swagger', swaggerUI({ url: '/doc' }));
 
-	appLogger.info('Application setup completed successfully. Ready to bind.');
+	appLogger.info('Application setup completed successfully.');
 
 	return app;
 }

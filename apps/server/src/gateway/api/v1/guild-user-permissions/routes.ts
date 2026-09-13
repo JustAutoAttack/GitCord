@@ -1,17 +1,16 @@
-import { createRoute, z } from '@hono/zod-openapi';
+import { createRoute as createHonoRoute, z } from '@hono/zod-openapi';
 
 import { response } from '@gateway/utils';
+import { IDParamSchema, ResponseSchema } from '../base-schemas';
 import {
-	CreateGuildUserPermissionSchema,
+	CreateSchema,
 	GetByGuildAndUserQuerySchema,
-	GuildUserPermissionActionResponseSchema,
-	GuildUserPermissionParamSchema,
-	GuildUserPermissionSchema,
-	ListGuildUserPermissionsQuerySchema,
-	UpdateGuildUserPermissionSchema
+	ListQuerySchema,
+	ReadSchema,
+	UpdateSchema
 } from './schemas';
 
-export const listGuildUserPermissionsRoute = createRoute({
+export const listRoute = createHonoRoute({
 	method: 'get',
 	path: '/',
 	tags: ['Guild User Permissions'],
@@ -19,17 +18,14 @@ export const listGuildUserPermissionsRoute = createRoute({
 	description:
 		'Returns all guild user permissions, optionally filtered by guildId.',
 	request: {
-		query: ListGuildUserPermissionsQuerySchema
+		query: ListQuerySchema
 	},
 	responses: {
-		200: response(
-			'Guild user permissions',
-			z.array(GuildUserPermissionSchema)
-		)
+		200: response('Guild user permissions', z.array(ReadSchema))
 	}
 });
 
-export const getGuildUserPermissionByGuildAndUserRoute = createRoute({
+export const getByGuildAndUserRoute = createHonoRoute({
 	method: 'get',
 	path: '/lookup',
 	tags: ['Guild User Permissions'],
@@ -40,30 +36,27 @@ export const getGuildUserPermissionByGuildAndUserRoute = createRoute({
 		query: GetByGuildAndUserQuerySchema
 	},
 	responses: {
-		200: response(
-			'Guild user permissions',
-			z.array(GuildUserPermissionSchema)
-		),
+		200: response('Guild user permissions', z.array(ReadSchema)),
 		400: response('Invalid request')
 	}
 });
 
-export const getGuildUserPermissionByIdRoute = createRoute({
+export const getByIDRoute = createHonoRoute({
 	method: 'get',
 	path: '/{id}',
 	tags: ['Guild User Permissions'],
 	summary: 'Get guild user permission by ID',
 	description: 'Returns a guild user permission by ID.',
 	request: {
-		params: GuildUserPermissionParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response('Guild user permission', GuildUserPermissionSchema),
+		200: response('Guild user permission', ReadSchema),
 		404: response('Permission not found')
 	}
 });
 
-export const createGuildUserPermissionRoute = createRoute({
+export const createRoute = createHonoRoute({
 	method: 'post',
 	path: '/',
 	tags: ['Guild User Permissions'],
@@ -74,63 +67,54 @@ export const createGuildUserPermissionRoute = createRoute({
 			required: true,
 			content: {
 				'application/json': {
-					schema: CreateGuildUserPermissionSchema
+					schema: CreateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		201: response(
-			'Guild user permission created',
-			GuildUserPermissionSchema
-		),
+		201: response('Guild user permission created', ReadSchema),
 		400: response('Invalid request'),
 		404: response('Bot command not found'),
 		409: response('Permission already exists')
 	}
 });
 
-export const updateGuildUserPermissionRoute = createRoute({
+export const updateRoute = createHonoRoute({
 	method: 'patch',
 	path: '/{id}',
 	tags: ['Guild User Permissions'],
 	summary: 'Update guild user permission',
 	description: 'Updates an existing guild user permission.',
 	request: {
-		params: GuildUserPermissionParamSchema,
+		params: IDParamSchema,
 		body: {
 			required: true,
 			content: {
 				'application/json': {
-					schema: UpdateGuildUserPermissionSchema
+					schema: UpdateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		200: response(
-			'Guild user permission updated',
-			GuildUserPermissionSchema
-		),
+		200: response('Guild user permission updated', ReadSchema),
 		400: response('Invalid request'),
 		404: response('Permission or command not found')
 	}
 });
 
-export const deleteGuildUserPermissionRoute = createRoute({
+export const deleteRoute = createHonoRoute({
 	method: 'delete',
 	path: '/{id}',
 	tags: ['Guild User Permissions'],
 	summary: 'Delete guild user permission',
 	description: 'Deletes an existing guild user permission.',
 	request: {
-		params: GuildUserPermissionParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response(
-			'Guild user permission deleted',
-			GuildUserPermissionActionResponseSchema
-		),
+		200: response('Guild user permission deleted', ResponseSchema),
 		404: response('Permission not found')
 	}
 });

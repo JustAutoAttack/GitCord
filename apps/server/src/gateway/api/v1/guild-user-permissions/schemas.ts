@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
 
-export const ListGuildUserPermissionsQuerySchema = z.object({
+export const ListQuerySchema = z.object({
 	guildId: z.string().optional().openapi({
 		example: '123456789012345678',
 		description: 'Filter permissions by Guild ID'
@@ -18,14 +18,7 @@ export const GetByGuildAndUserQuerySchema = z.object({
 	})
 });
 
-export const GuildUserPermissionParamSchema = z.object({
-	id: z.string().openapi({
-		example: 'perm_123456',
-		description: 'Guild User Permission ID'
-	})
-});
-
-export const GuildUserPermissionSchema = z.object({
+export const ReadSchema = z.object({
 	id: z.string().openapi({
 		example: 'perm_123456'
 	}),
@@ -46,7 +39,7 @@ export const GuildUserPermissionSchema = z.object({
 	})
 });
 
-export const CreateGuildUserPermissionSchema = z.object({
+export const CreateSchema = z.object({
 	guildId: z.string().min(1).openapi({
 		example: '123456789012345678'
 	}),
@@ -58,7 +51,7 @@ export const CreateGuildUserPermissionSchema = z.object({
 	})
 });
 
-export const UpdateGuildUserPermissionSchema = z.object({
+export const UpdateSchema = z.object({
 	guildId: z.string().min(1).optional().openapi({
 		example: '123456789012345678'
 	}),
@@ -67,14 +60,5 @@ export const UpdateGuildUserPermissionSchema = z.object({
 	}),
 	commandId: z.string().min(1).optional().openapi({
 		example: 'cmd_123456'
-	})
-});
-
-export const GuildUserPermissionActionResponseSchema = z.object({
-	success: z.boolean().openapi({
-		example: true
-	}),
-	message: z.string().openapi({
-		example: 'Operation completed successfully'
 	})
 });

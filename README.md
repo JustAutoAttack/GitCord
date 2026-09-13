@@ -1,5 +1,9 @@
 # GitCord
 
+# TODO
+
+- Server & Bot communicate via ngrok
+
 ## Table of Contents
 
 # V1 - Technical Specification

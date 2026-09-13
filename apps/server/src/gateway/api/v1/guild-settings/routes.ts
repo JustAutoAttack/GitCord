@@ -1,43 +1,42 @@
-import { createRoute, z } from '@hono/zod-openapi';
+import { createRoute as createHonoRoute, z } from '@hono/zod-openapi';
 
 import { response } from '@gateway/utils';
+import { IDParamSchema, ResponseSchema } from '../base-schemas';
 import {
-	CreateGuildSettingSchema,
+	CreateSchema,
 	GuildIdParamSchema,
-	GuildSettingActionResponseSchema,
-	GuildSettingParamSchema,
-	GuildSettingSchema,
+	ReadSchema,
 	SystemChannelParamSchema,
-	UpdateGuildSettingSchema
+	UpdateSchema
 } from './schemas';
 
-export const listGuildSettingsRoute = createRoute({
+export const listRoute = createHonoRoute({
 	method: 'get',
 	path: '/',
 	tags: ['Guild Settings'],
 	summary: 'List guild settings',
 	description: 'Returns all guild settings configurations.',
 	responses: {
-		200: response('Guild settings', z.array(GuildSettingSchema))
+		200: response('Guild settings', z.array(ReadSchema))
 	}
 });
 
-export const getGuildSettingByIdRoute = createRoute({
+export const getByIDRoute = createHonoRoute({
 	method: 'get',
 	path: '/{id}',
 	tags: ['Guild Settings'],
 	summary: 'Get guild setting by ID',
 	description: 'Returns a guild setting configuration by its ID.',
 	request: {
-		params: GuildSettingParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response('Guild setting', GuildSettingSchema),
+		200: response('Guild setting', ReadSchema),
 		404: response('Guild setting not found')
 	}
 });
 
-export const getGuildSettingByGuildRoute = createRoute({
+export const getByGuildRoute = createHonoRoute({
 	method: 'get',
 	path: '/guild/{guildId}',
 	tags: ['Guild Settings'],
@@ -48,12 +47,12 @@ export const getGuildSettingByGuildRoute = createRoute({
 		params: GuildIdParamSchema
 	},
 	responses: {
-		200: response('Guild setting', GuildSettingSchema),
+		200: response('Guild setting', ReadSchema),
 		404: response('Guild setting not found for guild')
 	}
 });
 
-export const getGuildSettingBySystemChannelRoute = createRoute({
+export const getBySystemChannelRoute = createHonoRoute({
 	method: 'get',
 	path: '/system-channel/{systemChannelId}',
 	tags: ['Guild Settings'],
@@ -64,12 +63,12 @@ export const getGuildSettingBySystemChannelRoute = createRoute({
 		params: SystemChannelParamSchema
 	},
 	responses: {
-		200: response('Guild setting', GuildSettingSchema),
+		200: response('Guild setting', ReadSchema),
 		404: response('Guild setting not found for system channel')
 	}
 });
 
-export const createGuildSettingRoute = createRoute({
+export const createRoute = createHonoRoute({
 	method: 'post',
 	path: '/',
 	tags: ['Guild Settings'],
@@ -80,56 +79,53 @@ export const createGuildSettingRoute = createRoute({
 			required: true,
 			content: {
 				'application/json': {
-					schema: CreateGuildSettingSchema
+					schema: CreateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		201: response('Guild setting created', GuildSettingSchema),
+		201: response('Guild setting created', ReadSchema),
 		400: response('Invalid request'),
 		409: response('Conflict')
 	}
 });
 
-export const updateGuildSettingRoute = createRoute({
+export const updateRoute = createHonoRoute({
 	method: 'patch',
 	path: '/{id}',
 	tags: ['Guild Settings'],
 	summary: 'Update guild setting',
 	description: 'Updates an existing guild setting configuration.',
 	request: {
-		params: GuildSettingParamSchema,
+		params: IDParamSchema,
 		body: {
 			required: true,
 			content: {
 				'application/json': {
-					schema: UpdateGuildSettingSchema
+					schema: UpdateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		200: response('Guild setting updated', GuildSettingSchema),
+		200: response('Guild setting updated', ReadSchema),
 		400: response('Invalid request'),
 		404: response('Guild setting not found')
 	}
 });
 
-export const deleteGuildSettingRoute = createRoute({
+export const deleteRoute = createHonoRoute({
 	method: 'delete',
 	path: '/{id}',
 	tags: ['Guild Settings'],
 	summary: 'Delete guild setting',
 	description: 'Deletes an existing guild setting configuration.',
 	request: {
-		params: GuildSettingParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response(
-			'Guild setting deleted',
-			GuildSettingActionResponseSchema
-		),
+		200: response('Guild setting deleted', ResponseSchema),
 		404: response('Guild setting not found')
 	}
 });

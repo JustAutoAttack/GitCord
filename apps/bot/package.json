@@ -7,7 +7,11 @@
 		"deploy:commands": "tsx scripts/deploy-commands.ts",
 		"generate:tree": "tsx scripts/generate-tree.ts",
 		"build": "tsup src/index.ts --format cjs --dts",
-		"typecheck": "tsc --project tsconfig.app.json --noEmit"
+		"typecheck": "tsc --project tsconfig.app.json --noEmit",
+		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
+		"test": "vitest",
+		"test:run": "vitest run",
+		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@gitcord/logger": "file:../../packages/logger",
@@ -23,8 +27,11 @@
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.10",
+		"@vitest/coverage-v8": "^5.0.0",
 		"tsup": "^8.1.0",
 		"tsx": "^4.16.2",
-		"typescript": "^5.5.2"
+		"typescript": "^5.5.2",
+		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^5.0.0"
 	}
 }

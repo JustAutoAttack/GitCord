@@ -1,18 +1,17 @@
-import { createRoute, z } from '@hono/zod-openapi';
+import { createRoute as createHonoRoute, z } from '@hono/zod-openapi';
 
 import { response } from '@gateway/utils';
+import { IDParamSchema, ResponseSchema } from '../base-schemas';
 import {
 	CommandChannelParamSchema,
-	CreateRemoteConfigSchema,
+	CreateSchema,
 	GetByGuildAndRemoteQuerySchema,
-	ListRemoteConfigsQuerySchema,
-	RemoteConfigActionResponseSchema,
-	RemoteConfigParamSchema,
-	RemoteConfigSchema,
-	UpdateRemoteConfigSchema
+	ListQuerySchema,
+	ReadSchema,
+	UpdateSchema
 } from './schemas';
 
-export const listRemoteConfigsRoute = createRoute({
+export const listRoute = createHonoRoute({
 	method: 'get',
 	path: '/',
 	tags: ['Remote Configurations'],
@@ -20,14 +19,14 @@ export const listRemoteConfigsRoute = createRoute({
 	description:
 		'Returns all remote configurations, optionally filtered by guildId.',
 	request: {
-		query: ListRemoteConfigsQuerySchema
+		query: ListQuerySchema
 	},
 	responses: {
-		200: response('Remote configurations', z.array(RemoteConfigSchema))
+		200: response('Remote configurations', z.array(ReadSchema))
 	}
 });
 
-export const getRemoteConfigByGuildAndRemoteRoute = createRoute({
+export const getByGuildAndRemoteRoute = createHonoRoute({
 	method: 'get',
 	path: '/lookup',
 	tags: ['Remote Configurations'],
@@ -38,27 +37,27 @@ export const getRemoteConfigByGuildAndRemoteRoute = createRoute({
 		query: GetByGuildAndRemoteQuerySchema
 	},
 	responses: {
-		200: response('Remote configuration', RemoteConfigSchema),
+		200: response('Remote configuration', ReadSchema),
 		404: response('Remote configuration not found')
 	}
 });
 
-export const getRemoteConfigByIdRoute = createRoute({
+export const getByIDRoute = createHonoRoute({
 	method: 'get',
 	path: '/{id}',
 	tags: ['Remote Configurations'],
 	summary: 'Get remote configuration',
 	description: 'Returns a remote configuration by ID.',
 	request: {
-		params: RemoteConfigParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response('Remote configuration', RemoteConfigSchema),
+		200: response('Remote configuration', ReadSchema),
 		404: response('Remote configuration not found')
 	}
 });
 
-export const getRemoteConfigByCommandChannelRoute = createRoute({
+export const getByCommandChannelRoute = createHonoRoute({
 	method: 'get',
 	path: '/command-channel/{commandChannelId}',
 	tags: ['Remote Configurations'],
@@ -69,12 +68,12 @@ export const getRemoteConfigByCommandChannelRoute = createRoute({
 		params: CommandChannelParamSchema
 	},
 	responses: {
-		200: response('Remote configuration', RemoteConfigSchema),
+		200: response('Remote configuration', ReadSchema),
 		404: response('Remote configuration not found')
 	}
 });
 
-export const createRemoteConfigRoute = createRoute({
+export const createRoute = createHonoRoute({
 	method: 'post',
 	path: '/',
 	tags: ['Remote Configurations'],
@@ -85,55 +84,52 @@ export const createRemoteConfigRoute = createRoute({
 			required: true,
 			content: {
 				'application/json': {
-					schema: CreateRemoteConfigSchema
+					schema: CreateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		201: response('Remote configuration created', RemoteConfigSchema),
+		201: response('Remote configuration created', ReadSchema),
 		400: response('Invalid request')
 	}
 });
 
-export const updateRemoteConfigRoute = createRoute({
+export const updateRoute = createHonoRoute({
 	method: 'patch',
 	path: '/{id}',
 	tags: ['Remote Configurations'],
 	summary: 'Update remote configuration',
 	description: 'Updates an existing remote configuration.',
 	request: {
-		params: RemoteConfigParamSchema,
+		params: IDParamSchema,
 		body: {
 			required: true,
 			content: {
 				'application/json': {
-					schema: UpdateRemoteConfigSchema
+					schema: UpdateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		200: response('Remote configuration updated', RemoteConfigSchema),
+		200: response('Remote configuration updated', ReadSchema),
 		400: response('Invalid request'),
 		404: response('Remote configuration not found')
 	}
 });
 
-export const deleteRemoteConfigRoute = createRoute({
+export const deleteRoute = createHonoRoute({
 	method: 'delete',
 	path: '/{id}',
 	tags: ['Remote Configurations'],
 	summary: 'Delete remote configuration',
 	description: 'Deletes an existing remote configuration.',
 	request: {
-		params: RemoteConfigParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response(
-			'Remote configuration deleted',
-			RemoteConfigActionResponseSchema
-		),
+		200: response('Remote configuration deleted', ResponseSchema),
 		404: response('Remote configuration not found')
 	}
 });

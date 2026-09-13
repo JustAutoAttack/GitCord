@@ -47,3 +47,11 @@ Thumbs.db
 
 # Tauri specific build files (if Tauri ends up in dashboard)
 src-tauri/target/
+
+# NX
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+
+# Madge
+/madge/

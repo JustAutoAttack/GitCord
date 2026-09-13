@@ -98,21 +98,27 @@ export class WebhookService {
 		}
 	}
 
-	async processGitHubWebhook(c: Context): Promise<Response> {
+	async handleTableUpdate(
+		payload: WebhookPayload.TableUpdate
+	): Promise<void> {
+		appLogger.info(
+			`Table update received for ${payload.data.tableName} [${payload.data.action}]: recordId ${payload.data.recordId}`
+		);
+	}
+
+	async processGitHubWebhook(c: Context): Promise<boolean> {
 		const event = c.req.header('x-github-event');
 
 		appLogger.info(`Received GitHub webhook: ${event ?? 'unknown'}`);
 
 		const body = (await c.req.json().catch((error) => {
 			appLogger.error('Failed to parse GitHub webhook JSON:', error);
-
 			return null;
 		})) as GitHubWebhookPayload | null;
 
 		if (!body) {
 			appLogger.error('GitHub webhook contained no valid body.');
-
-			return c.text('Invalid JSON payload', 400);
+			return false;
 		}
 
 		try {
@@ -127,7 +133,7 @@ export class WebhookService {
 				appLogger.warn(
 					'Rejected webhook: Payload missing repository URL.'
 				);
-				return c.text('Repository URL missing', 400);
+				return false;
 			}
 
 			appLogger.info(
@@ -147,7 +153,7 @@ export class WebhookService {
 				appLogger.warn(
 					`No configuration found for repository: ${repositoryUrl}`
 				);
-				return c.text('Repository not configured', 404);
+				return false;
 			}
 
 			appLogger.info(`Handling GitHub event: ${event ?? 'unknown'}`);
@@ -158,8 +164,7 @@ export class WebhookService {
 				appLogger.debug(
 					`Ignoring unsupported GitHub event: ${event ?? 'unknown'}`
 				);
-
-				return c.text('Event ignored', 200);
+				return true;
 			}
 
 			appLogger.info(
@@ -204,7 +209,7 @@ export class WebhookService {
 				}
 			}
 
-			return c.text('Webhook processed', 200);
+			return true;
 		} catch (error) {
 			console.error('GitHub webhook processing failed:', error);
 
@@ -212,12 +217,7 @@ export class WebhookService {
 				console.error(error.stack);
 			}
 
-			return c.text(
-				error instanceof Error
-					? error.message
-					: 'Internal server error',
-				500
-			);
+			return false;
 		}
 	}
 }

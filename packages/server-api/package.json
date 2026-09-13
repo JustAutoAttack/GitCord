@@ -16,6 +16,7 @@
 		"typecheck": "tsc --project tsconfig.app.json --noEmit",
 		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
 		"generate:schema": "tsx scripts/generate-schema.ts",
+		"generate:tree": "tsx scripts/generate-tree.ts",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"test:coverage": "vitest run --coverage"

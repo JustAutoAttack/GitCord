@@ -1,5 +1,5 @@
-import { appLogger, lifecycleService } from '@core';
-import { createApp } from '@app';
+import { appLogger, lifecycleService } from './core';
+import { createApp } from './app';
 import { connectDiscord, disconnectDiscord } from './discord';
 
 async function main(): Promise<void> {

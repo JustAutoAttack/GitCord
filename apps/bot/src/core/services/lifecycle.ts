@@ -36,15 +36,19 @@ export class LifecycleService {
 			appLogger.info('Creating public webhook tunnel...');
 			this.tunnel = await ngrok.forward({
 				addr: port,
-				authtoken: ENV.NGROK_AUTHTOKEN
+				authtoken: ENV.NGROK_AUTHTOKEN,
+				proto: 'http'
 			});
 			const publicUrl = this.tunnel.url();
-			appLogger.info(`Public webhook tunnel active: ${publicUrl}`);
+
+			appLogger.info(`Public tunnel active: ${publicUrl}`);
+			appLogger.info(`Health check endpoint: ${publicUrl}/health`);
+			appLogger.info(`Swagger UI: ${publicUrl}/swagger`);
 			appLogger.info(
-				`Server event receiver endpoint: ${publicUrl}/webhook/server`
+				`Server lifecycle endpoint: ${publicUrl}/webhooks/server/lifecycle`
 			);
 			appLogger.info(
-				`GitHub event receiver endpoint: ${publicUrl}/webhook/github`
+				`GitHub event receiver endpoint: ${publicUrl}/webhooks/github`
 			);
 		}
 

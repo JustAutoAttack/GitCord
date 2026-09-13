@@ -1,12 +1,5 @@
 import { z } from '@hono/zod-openapi';
 
-export const GuildSettingParamSchema = z.object({
-	id: z.string().openapi({
-		example: 'set_123456',
-		description: 'Guild Setting ID'
-	})
-});
-
 export const GuildIdParamSchema = z.object({
 	guildId: z.string().openapi({
 		example: '123456789012345678',
@@ -21,7 +14,7 @@ export const SystemChannelParamSchema = z.object({
 	})
 });
 
-export const GuildSettingSchema = z.object({
+export const ReadSchema = z.object({
 	id: z.string().openapi({
 		example: 'set_123456'
 	}),
@@ -39,7 +32,7 @@ export const GuildSettingSchema = z.object({
 	})
 });
 
-export const CreateGuildSettingSchema = z.object({
+export const CreateSchema = z.object({
 	guildId: z.string().min(1).openapi({
 		example: '123456789012345678'
 	}),
@@ -48,20 +41,11 @@ export const CreateGuildSettingSchema = z.object({
 	})
 });
 
-export const UpdateGuildSettingSchema = z.object({
+export const UpdateSchema = z.object({
 	guildId: z.string().min(1).optional().openapi({
 		example: '123456789012345678'
 	}),
 	systemChannelId: z.string().min(1).optional().openapi({
 		example: '123456789012345679'
-	})
-});
-
-export const GuildSettingActionResponseSchema = z.object({
-	success: z.boolean().openapi({
-		example: true
-	}),
-	message: z.string().openapi({
-		example: 'Operation completed successfully'
 	})
 });

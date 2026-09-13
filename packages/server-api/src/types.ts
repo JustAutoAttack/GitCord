@@ -1,14 +1,18 @@
-import type { paths } from './generated/schema';
+import type { paths, webhooks } from './generated/schema';
+
+// ===
+// Paths
+// ===
 
 // Health
 export type HealthResponse =
-	paths['/health']['get']['responses'][200]['content']['application/json'];
+	paths['/api/health']['get']['responses'][200]['content']['application/json'];
 
 export type HealthLiveResponse =
-	paths['/health/live']['get']['responses'][200]['content']['application/json'];
+	paths['/api/health/live']['get']['responses'][200]['content']['application/json'];
 
 export type HealthReadyResponse =
-	paths['/health/ready']['get']['responses'][200]['content']['application/json'];
+	paths['/api/health/ready']['get']['responses'][200]['content']['application/json'];
 
 // Auth
 
@@ -107,3 +111,17 @@ export type UpdateRemoteConfigRequest =
 
 export type DeleteRemoteConfigResponse =
 	paths['/api/v1/remote-configs/{id}']['delete']['responses'][200]['content']['application/json'];
+
+// ===
+// Webhooks
+// ===
+
+// Server Life Cycle
+export type ServerLifecycleWebhookPayload =
+	webhooks['serverLifecycle']['post']['requestBody']['content']['application/json'];
+
+// Table Update
+export type TableUpdateWebhookPayload =
+	webhooks['tableUpdate']['post']['requestBody']['content']['application/json'];
+
+export type TableAction = TableUpdateWebhookPayload['data']['action'];

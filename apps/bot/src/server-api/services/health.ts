@@ -1,4 +1,3 @@
-// src/server-api/services/health.ts
 import type {
 	HealthResponse,
 	HealthLiveResponse,
@@ -51,7 +50,7 @@ function validateDatabaseCheck(checks?: {
 export const ServerAPIHealthService: IServerAPIHealthService = {
 	async getFull(): Promise<HealthResponse> {
 		const data = await executeApiCall<HealthResponse>(
-			() => apiClient.GET('/health'),
+			() => apiClient.GET('/api/health'),
 			'health'
 		);
 		validateSuccessStatus(
@@ -68,7 +67,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 
 	async getLive(): Promise<HealthLiveResponse> {
 		const data = await executeApiCall<HealthLiveResponse>(
-			() => apiClient.GET('/health/live'),
+			() => apiClient.GET('/api/health/live'),
 			'liveness'
 		);
 		validateSuccessStatus(
@@ -84,7 +83,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 
 	async getReady(): Promise<HealthReadyResponse> {
 		const data = await executeApiCall<HealthReadyResponse>(
-			() => apiClient.GET('/health/ready'),
+			() => apiClient.GET('/api/health/ready'),
 			'readiness'
 		);
 		validateSuccessStatus(

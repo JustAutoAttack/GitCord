@@ -1,4 +1,3 @@
-// src/server-api/services/remote-config.ts
 import type {
 	RemoteConfigResponse,
 	RemoteConfigItemResponse,

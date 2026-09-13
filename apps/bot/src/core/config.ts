@@ -1,15 +1,13 @@
 import fs from 'fs';
 
-import { resolveRootPath, parseHex } from './utils';
+import { resolveRootPath, parseHexColor } from './utils';
 
-// TODO Rework the current config, removing logger configs
-// TODO Add colors to pass to loggers
-
-interface LoggerColorsConfig {
-	debug: number;
-	info: number;
-	warn: number;
-	error: number;
+interface LoggersColorsConfig {
+	app: number;
+	serverApi: number;
+	discord: number;
+	github: number;
+	http: number;
 }
 
 interface DiscordColorsConfig {
@@ -27,38 +25,23 @@ interface GithubColorsConfig {
 	release: number;
 }
 
-interface LimitsConfig {
-	maxCommitMessageLength: number;
-	maxDescriptionLength: number;
-	defaultCommitLimit: number;
-	maxCommitLimit: number;
-}
-
 interface BotConfig {
-	logger: {
-		level: string;
-		timestampFormat: string;
-		colors: LoggerColorsConfig;
-	};
+	loggers: LoggersColorsConfig;
 	discord: {
 		colors: DiscordColorsConfig;
 	};
 	github: {
 		colors: GithubColorsConfig;
 	};
-	limits: LimitsConfig;
 }
 
 const defaultConfig: BotConfig = {
-	logger: {
-		level: 'INFO',
-		timestampFormat: 'ISO',
-		colors: {
-			debug: 0x00bfff,
-			info: 0x32cd32,
-			warn: 0xffd700,
-			error: 0xff4500
-		}
+	loggers: {
+		app: 0xff3c00,
+		serverApi: 0xff9100,
+		discord: 0x0077ff,
+		github: 0xcc00ff,
+		http: 0x00ff2a
 	},
 	discord: {
 		colors: {
@@ -76,49 +59,29 @@ const defaultConfig: BotConfig = {
 			watch: 0xf0883e,
 			release: 0x7ee787
 		}
-	},
-	limits: {
-		maxCommitMessageLength: 140,
-		maxDescriptionLength: 250,
-		defaultCommitLimit: 5,
-		maxCommitLimit: 40
 	}
 };
 
 function parseToml(content: string): Record<string, Record<string, unknown>> {
 	const result: Record<string, Record<string, unknown>> = {};
-
 	let currentSection: Record<string, unknown> = result;
 
 	for (const line of content.split('\n')) {
 		const trimmed = line.trim();
-
-		if (!trimmed || trimmed.startsWith('#')) {
-			continue;
-		}
+		if (!trimmed || trimmed.startsWith('#')) continue;
 
 		const sectionMatch = trimmed.match(/^\[(.*)\]$/);
-
 		if (sectionMatch) {
 			const sectionName = sectionMatch[1].trim();
-
-			if (!result[sectionName]) {
-				result[sectionName] = {};
-			}
-
+			if (!result[sectionName]) result[sectionName] = {};
 			currentSection = result[sectionName];
-
 			continue;
 		}
 
 		const keyValueMatch = trimmed.match(/^([\w-]+)\s*=\s*(.*)$/);
-
-		if (!keyValueMatch) {
-			continue;
-		}
+		if (!keyValueMatch) continue;
 
 		const key = keyValueMatch[1];
-
 		let value: unknown = keyValueMatch[2].trim();
 
 		if (
@@ -142,28 +105,22 @@ function parseToml(content: string): Record<string, Record<string, unknown>> {
 }
 
 function loadConfig(): BotConfig {
-	const configPath = resolveRootPath('gitcord.toml');
-
-	if (!fs.existsSync(configPath)) {
-		return structuredClone(defaultConfig);
-	}
+	const configPath = resolveRootPath('gitcord-bot.toml');
+	if (!fs.existsSync(configPath)) return structuredClone(defaultConfig);
 
 	try {
 		const fileContent = fs.readFileSync(configPath, 'utf-8');
-
 		const parsed = parseToml(fileContent);
 
-		const loggerColors = { ...defaultConfig.logger.colors };
-		const parsedLoggerColors = (parsed['logger.colors'] ??
-			parsed.logger?.colors ??
-			{}) as Record<string, unknown>;
-		for (const [key, value] of Object.entries(parsedLoggerColors)) {
-			if (key in loggerColors) {
+		const loggers = { ...defaultConfig.loggers };
+		const parsedLoggers = (parsed.loggers ?? {}) as Record<string, unknown>;
+		for (const [key, value] of Object.entries(parsedLoggers)) {
+			if (key in loggers) {
 				if (typeof value === 'number') {
-					loggerColors[key as keyof LoggerColorsConfig] = value;
+					loggers[key as keyof LoggersColorsConfig] = value;
 				} else if (typeof value === 'string') {
-					loggerColors[key as keyof LoggerColorsConfig] =
-						parseHex(value);
+					loggers[key as keyof LoggersColorsConfig] =
+						parseHexColor(value);
 				}
 			}
 		}
@@ -174,12 +131,11 @@ function loadConfig(): BotConfig {
 			{}) as Record<string, unknown>;
 		for (const [key, value] of Object.entries(parsedDiscordColors)) {
 			if (key in discordColors) {
-				if (typeof value === 'number') {
+				if (typeof value === 'number')
 					discordColors[key as keyof DiscordColorsConfig] = value;
-				} else if (typeof value === 'string') {
+				else if (typeof value === 'string')
 					discordColors[key as keyof DiscordColorsConfig] =
-						parseHex(value);
-				}
+						parseHexColor(value);
 			}
 		}
 
@@ -189,46 +145,21 @@ function loadConfig(): BotConfig {
 			{}) as Record<string, unknown>;
 		for (const [key, value] of Object.entries(parsedGithubColors)) {
 			if (key in githubColors) {
-				if (typeof value === 'number') {
+				if (typeof value === 'number')
 					githubColors[key as keyof GithubColorsConfig] = value;
-				} else if (typeof value === 'string') {
+				else if (typeof value === 'string')
 					githubColors[key as keyof GithubColorsConfig] =
-						parseHex(value);
-				}
+						parseHexColor(value);
 			}
 		}
 
 		return {
-			logger: {
-				level:
-					typeof parsed.logger?.level === 'string'
-						? parsed.logger.level
-						: defaultConfig.logger.level,
-
-				timestampFormat:
-					typeof parsed.logger?.timestampFormat === 'string'
-						? parsed.logger.timestampFormat
-						: defaultConfig.logger.timestampFormat,
-
-				colors: loggerColors
-			},
-
-			discord: {
-				colors: discordColors
-			},
-
-			github: {
-				colors: githubColors
-			},
-
-			limits: {
-				...defaultConfig.limits,
-				...(parsed.limits ?? {})
-			} as LimitsConfig
+			loggers,
+			discord: { colors: discordColors },
+			github: { colors: githubColors }
 		};
 	} catch (error) {
-		console.error('[Config] Failed to parse gitcord.toml:', error);
-
+		console.error('[Config] Failed to parse gitcord-bot.toml:', error);
 		return structuredClone(defaultConfig);
 	}
 }

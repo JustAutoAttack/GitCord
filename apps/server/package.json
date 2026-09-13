@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "NODE_ENV=development tsx watch src/index.ts",
 		"start:prod": "NODE_ENV=production node dist/index.js",
-		"build": "tsc --project tsconfig.app.json && tsc-alias",
+		"build": "tsc --project tsconfig.app.json --outDir dist && tsc-alias --outDir dist",
 		"typecheck": "tsc --project tsconfig.app.json --noEmit",
 		"typecheck:test": "tsc --project tsconfig.test.json --noEmit",
 		"generate:schema": "node scripts/generate-schema.ts",

@@ -1,5 +1,5 @@
 export interface paths {
-    "/health/live": {
+    "/api/health/live": {
         parameters: {
             query?: never;
             header?: never;
@@ -57,7 +57,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/health/ready": {
+    "/api/health/ready": {
         parameters: {
             query?: never;
             header?: never;
@@ -143,7 +143,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/health": {
+    "/api/health": {
         parameters: {
             query?: never;
             header?: never;
@@ -2413,6 +2413,69 @@ export interface webhooks {
             };
             responses: {
                 /** @description Webhook processed successfully by the bot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    tableUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Database Table Update Webhook
+         * @description Outbound webhook dispatched by the server whenever a record is created, updated, or deleted, allowing the bot to invalidate its local cache.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @example TABLE_UPDATE */
+                        type: string;
+                        /** @example 1723917300000 */
+                        timestamp: number;
+                        data: {
+                            /** @example guild_settings */
+                            tableName: string;
+                            /**
+                             * @example UPDATE
+                             * @enum {string}
+                             */
+                            action: "CREATE" | "UPDATE" | "DELETE";
+                            /** @example 1234567890 */
+                            recordId: string;
+                            /**
+                             * @example {
+                             *       "prefix": "!"
+                             *     }
+                             */
+                            record?: Record<string, never> | null;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Cache invalidated successfully by the bot */
                 200: {
                     headers: {
                         [name: string]: unknown;

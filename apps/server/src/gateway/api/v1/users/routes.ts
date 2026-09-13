@@ -1,57 +1,56 @@
-import { createRoute, z } from '@hono/zod-openapi';
+import { createRoute as createHonoRoute, z } from '@hono/zod-openapi';
 
 import { response } from '@gateway/utils';
+import { IDParamSchema, ResponseSchema } from '../base-schemas';
 import {
-	CreateUserSchema,
-	DiscordParamSchema,
-	UserActionResponseSchema,
-	UserParamSchema,
-	UserSchema,
-	UpdateUserSchema
+	CreateSchema,
+	DiscordIDParamSchema,
+	ReadSchema,
+	UpdateSchema
 } from './schemas';
 
-export const listUsersRoute = createRoute({
+export const listRoute = createHonoRoute({
 	method: 'get',
 	path: '/',
 	tags: ['Users'],
 	summary: 'List users',
 	description: 'Returns all users.',
 	responses: {
-		200: response('Users', z.array(UserSchema))
+		200: response('Users', z.array(ReadSchema))
 	}
 });
 
-export const getUserByIdRoute = createRoute({
+export const getByIDRoute = createHonoRoute({
 	method: 'get',
 	path: '/{id}',
 	tags: ['Users'],
 	summary: 'Get user by ID',
 	description: 'Returns a user by ID.',
 	request: {
-		params: UserParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response('User', UserSchema),
+		200: response('User', ReadSchema),
 		404: response('User not found')
 	}
 });
 
-export const getUserByDiscordIdRoute = createRoute({
+export const getByDiscordIDRoute = createHonoRoute({
 	method: 'get',
 	path: '/discord/{discordId}',
 	tags: ['Users'],
 	summary: 'Get user by Discord ID',
 	description: 'Returns a user by their Discord ID.',
 	request: {
-		params: DiscordParamSchema
+		params: DiscordIDParamSchema
 	},
 	responses: {
-		200: response('User', UserSchema),
+		200: response('User', ReadSchema),
 		404: response('User not found')
 	}
 });
 
-export const createUserRoute = createRoute({
+export const createRoute = createHonoRoute({
 	method: 'post',
 	path: '/',
 	tags: ['Users'],
@@ -62,53 +61,53 @@ export const createUserRoute = createRoute({
 			required: true,
 			content: {
 				'application/json': {
-					schema: CreateUserSchema
+					schema: CreateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		201: response('User created', UserSchema),
+		201: response('User created', ReadSchema),
 		400: response('Invalid request'),
 		409: response('User already exists')
 	}
 });
 
-export const updateUserRoute = createRoute({
+export const updateRoute = createHonoRoute({
 	method: 'patch',
 	path: '/{id}',
 	tags: ['Users'],
 	summary: 'Update user',
 	description: 'Updates an existing user.',
 	request: {
-		params: UserParamSchema,
+		params: IDParamSchema,
 		body: {
 			required: true,
 			content: {
 				'application/json': {
-					schema: UpdateUserSchema
+					schema: UpdateSchema
 				}
 			}
 		}
 	},
 	responses: {
-		200: response('User updated', UserSchema),
+		200: response('User updated', ReadSchema),
 		400: response('Invalid request'),
 		404: response('User not found')
 	}
 });
 
-export const deleteUserRoute = createRoute({
+export const deleteRoute = createHonoRoute({
 	method: 'delete',
 	path: '/{id}',
 	tags: ['Users'],
 	summary: 'Delete user',
 	description: 'Deletes an existing user.',
 	request: {
-		params: UserParamSchema
+		params: IDParamSchema
 	},
 	responses: {
-		200: response('User deleted', UserActionResponseSchema),
+		200: response('User deleted', ResponseSchema),
 		404: response('User not found')
 	}
 });

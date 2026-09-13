@@ -7,6 +7,19 @@ export interface BaseWebhookPayload<TData = Record<string, unknown>> {
 	readonly data: TData;
 }
 
+export type TableAction = 'CREATE' | 'UPDATE' | 'DELETE';
+
+export interface TableUpdateData<TRecord = Record<string, unknown>> {
+	readonly tableName: string;
+	readonly action: TableAction;
+	readonly recordId: string | number;
+	readonly record?: TRecord;
+}
+
+export interface TableUpdateWebhookPayload extends BaseWebhookPayload<TableUpdateData> {
+	readonly type: 'TABLE_UPDATE';
+}
+
 export class WebhookDispatcherService {
 	public async broadcast<T extends BaseWebhookPayload>(
 		endpointUrl: string,
