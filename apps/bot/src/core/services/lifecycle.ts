@@ -17,20 +17,18 @@ export class LifecycleService {
 		const app = appFactory();
 
 		const url = new URL(ENV.BASE_URL);
-		const port = url.port
-			? parseInt(url.port, 10)
-			: url.protocol === 'https:'
-				? 443
-				: 80;
+		const port = url.port ? parseInt(url.port, 10) : ENV.PORT;
 
 		this.server = serve({
 			fetch: app.fetch,
 			port
 		});
 
-		appLogger.info(`Bot webhook server is running on ${ENV.BASE_URL}`);
-		appLogger.info(`Swagger UI available at ${ENV.BASE_URL}/swagger`);
-		appLogger.info(`OpenAPI Spec available at ${ENV.BASE_URL}/doc`);
+		const displayUrl = url.port ? ENV.BASE_URL : `${ENV.BASE_URL}:${port}`;
+
+		appLogger.info(`Bot webhook server is running on ${displayUrl}`);
+		appLogger.info(`Swagger UI available at ${displayUrl}/swagger`);
+		appLogger.info(`OpenAPI Spec available at ${displayUrl}/doc`);
 
 		if (ENV.NGROK_AUTHTOKEN) {
 			appLogger.info('Creating public webhook tunnel...');
@@ -66,7 +64,7 @@ export class LifecycleService {
 		}
 		this.isShuttingDown = true;
 
-		appLogger.info(`Received ${signal}. Shutting down GitCord...`);
+		appLogger.warn(`Received ${signal}. Shutting down GitCord...`);
 
 		try {
 			if (this.tunnel) {

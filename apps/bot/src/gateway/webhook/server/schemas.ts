@@ -30,8 +30,3 @@ export const tableUpdatePayloadSchema = z.object({
 		record: z.record(z.any()).nullable().optional()
 	})
 }) as unknown as z.ZodType<TableUpdateWebhookPayload>;
-
-
-
-export type ServerLifecyclePayload = ServerLifecycleWebhookPayload;
-export type TableUpdatePayload = TableUpdateWebhookPayload;

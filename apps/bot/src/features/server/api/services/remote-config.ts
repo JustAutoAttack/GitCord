@@ -6,7 +6,7 @@ import type {
 	DeleteRemoteConfigResponse
 } from '@gitcord/server-api';
 
-import { serverAPILogger } from '@core';
+import { logger } from '../../logger';
 import { apiClient } from '../client';
 import { executeApiCall } from '../utils';
 
@@ -32,7 +32,7 @@ export const ServerAPIRemoteConfigService: IServerAPIRemoteConfigService = {
 			() => apiClient.GET('/api/v1/remote-configs'),
 			'list remote configurations'
 		);
-		serverAPILogger.debug('Successfully listed remote configurations.');
+		logger.debug('Successfully listed remote configurations.');
 		return data;
 	},
 
@@ -44,7 +44,7 @@ export const ServerAPIRemoteConfigService: IServerAPIRemoteConfigService = {
 				}),
 			'get remote configuration'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully retrieved remote configuration with ID ${id}.`
 		);
 		return data;
@@ -63,7 +63,7 @@ export const ServerAPIRemoteConfigService: IServerAPIRemoteConfigService = {
 				),
 			'get remote configuration by command channel'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully retrieved remote configuration for command channel ${commandChannelId}.`
 		);
 		return data;
@@ -79,7 +79,7 @@ export const ServerAPIRemoteConfigService: IServerAPIRemoteConfigService = {
 				}),
 			'create remote configuration'
 		);
-		serverAPILogger.debug('Successfully created remote configuration.');
+		logger.debug('Successfully created remote configuration.');
 		return data;
 	},
 
@@ -95,7 +95,7 @@ export const ServerAPIRemoteConfigService: IServerAPIRemoteConfigService = {
 				}),
 			'update remote configuration'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully updated remote configuration with ID ${id}.`
 		);
 		return data;
@@ -109,7 +109,7 @@ export const ServerAPIRemoteConfigService: IServerAPIRemoteConfigService = {
 				}),
 			'delete remote configuration'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully deleted remote configuration with ID ${id}.`
 		);
 		return data;

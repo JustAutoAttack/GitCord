@@ -1,15 +1,15 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 
-import { healthService } from '@services';
+import { HealthService } from '@services';
 import { fullHealthRoute, liveRoute, readyRoute } from './routes';
 
 export const livenessHandler: RouteHandler<typeof liveRoute> = (ctx) => {
-	const result = healthService.getLiveness();
+	const result = HealthService.getLiveness();
 	return ctx.json(result, 200);
 };
 
 export const readinessHandler: RouteHandler<typeof readyRoute> = (ctx) => {
-	const result = healthService.getReadiness();
+	const result = HealthService.getReadiness();
 	const statusCode = result.success ? 200 : 503;
 	return ctx.json(result, statusCode);
 };
@@ -17,7 +17,7 @@ export const readinessHandler: RouteHandler<typeof readyRoute> = (ctx) => {
 export const fullHealthHandler: RouteHandler<typeof fullHealthRoute> = (
 	ctx
 ) => {
-	const result = healthService.getHealthOverview();
+	const result = HealthService.getHealthOverview();
 	const statusCode = result.success ? 200 : 503;
 	return ctx.json(result, statusCode);
 };

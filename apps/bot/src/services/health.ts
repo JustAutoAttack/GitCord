@@ -6,16 +6,12 @@ export interface IntegrationHealthResult {
 	latencyMs?: number;
 }
 
-export class HealthService {
-	getLiveness() {
-		appLogger.debug('Liveness probe check requested.');
-		return {
-			success: true,
-			message: 'Bot process is responsive',
-			timestamp: new Date().toISOString()
-		};
-	}
-
+export interface IHealthService {
+	getLiveness(): {
+		success: boolean;
+		message: string;
+		timestamp: string;
+	};
 	getReadiness(): {
 		success: boolean;
 		message: string;
@@ -24,7 +20,30 @@ export class HealthService {
 			server: IntegrationHealthResult;
 		};
 		timestamp: string;
-	} {
+	};
+	getHealthOverview(): {
+		success: boolean;
+		message: string;
+		uptimeSeconds: number;
+		timestamp: string;
+		checks: {
+			github: IntegrationHealthResult;
+			server: IntegrationHealthResult;
+		};
+	};
+}
+
+export const HealthService: IHealthService = {
+	getLiveness() {
+		appLogger.debug('Liveness probe check requested.');
+		return {
+			success: true,
+			message: 'Bot process is responsive',
+			timestamp: new Date().toISOString()
+		};
+	},
+
+	getReadiness() {
 		appLogger.debug('Readiness probe check requested.');
 
 		const githubCheck: IntegrationHealthResult = {
@@ -56,18 +75,9 @@ export class HealthService {
 			},
 			timestamp: new Date().toISOString()
 		};
-	}
+	},
 
-	getHealthOverview(): {
-		success: boolean;
-		message: string;
-		uptimeSeconds: number;
-		timestamp: string;
-		checks: {
-			github: IntegrationHealthResult;
-			server: IntegrationHealthResult;
-		};
-	} {
+	getHealthOverview() {
 		appLogger.debug('Full health overview requested.');
 		const readiness = this.getReadiness();
 
@@ -87,6 +97,4 @@ export class HealthService {
 			checks: readiness.checks
 		};
 	}
-}
-
-export const healthService = new HealthService();
+};

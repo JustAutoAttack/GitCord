@@ -1,17 +1,12 @@
 import { ContainerBuilder } from 'discord.js';
+import type { CreateEvent } from '@octokit/webhooks-types';
 
 import { CONFIG, createHeader, createFooter, createSeparator } from '@core';
-import type { GitHubRepository } from '../types';
 
-export interface CreateEventContext {
-	ref: string;
-	repository?: GitHubRepository;
-}
+export function handleCreate(event: CreateEvent): ContainerBuilder {
+	const ref = event.ref;
+	const repository = event.repository;
 
-export function handleCreateEvent({
-	ref,
-	repository
-}: CreateEventContext): ContainerBuilder {
 	const branchName = ref ?? 'unknown-branch';
 
 	return new ContainerBuilder({

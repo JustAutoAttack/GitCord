@@ -1,8 +1,8 @@
-// src/discord/client.ts
 import { Client, EmbedBuilder, GatewayIntentBits } from 'discord.js';
 
-import { CONFIG, ENV, discordLogger } from '@core';
+import { CONFIG, ENV } from '@core';
 import { registerClientHandlers, getNotificationChannels } from './handlers';
+import { logger } from './logger';
 
 export const client = new Client({
 	intents: [GatewayIntentBits.Guilds]
@@ -11,13 +11,13 @@ export const client = new Client({
 registerClientHandlers(client);
 
 export async function connectDiscord(): Promise<void> {
-	discordLogger.info('Connecting to Discord...');
+	logger.info('Connecting to Discord...');
 
 	await client.login(ENV.DISCORD_BOT_TOKEN);
 }
 
 export async function disconnectDiscord(signal: string): Promise<void> {
-	discordLogger.info(`Disconnecting from Discord after ${signal}...`);
+	logger.info(`Disconnecting from Discord after ${signal}...`);
 
 	try {
 		const targetChannels = await getNotificationChannels(client);
@@ -31,7 +31,7 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 			await Promise.all(
 				targetChannels.map(({ channel }) =>
 					channel.send({ embeds: [embed] }).catch((error) => {
-						discordLogger.error(
+						logger.error(
 							`Failed to send offline notification to channel ${channel.id}:`,
 							error
 						);
@@ -40,10 +40,7 @@ export async function disconnectDiscord(signal: string): Promise<void> {
 			);
 		}
 	} catch (error) {
-		discordLogger.error(
-			'Failed to send Discord offline notifications:',
-			error
-		);
+		logger.error('Failed to send Discord offline notifications:', error);
 	} finally {
 		client.destroy();
 	}

@@ -6,8 +6,8 @@ import {
 	PermissionFlagsBits
 } from 'discord.js';
 
-import { ServerAPIGuildSettingService } from '@server-api';
-import { discordLogger } from '@core';
+import { ServerAPIGuildSettingService } from '@features/server';
+import { logger } from '../../logger';
 import { COMMAND_DOCS } from '../constants';
 
 export const configGroup = new SlashCommandSubcommandGroupBuilder()
@@ -70,7 +70,7 @@ export async function executeConfig(
 	interaction: ChatInputCommandInteraction
 ): Promise<void> {
 	if (!interaction.guildId || !interaction.inGuild() || !interaction.guild) {
-		discordLogger.warn(
+		logger.warn(
 			'Attempted to execute config command outside of a server context.'
 		);
 		await interaction.reply({
@@ -85,7 +85,7 @@ export async function executeConfig(
 		interaction.guild.ownerId !== interaction.user.id &&
 		!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
 	) {
-		discordLogger.warn(
+		logger.warn(
 			`User ${interaction.user.id} attempted to configure server ${interaction.guildId} without permissions.`
 		);
 		await interaction.reply({
@@ -97,7 +97,7 @@ export async function executeConfig(
 	}
 
 	const subcommand = interaction.options.getSubcommand();
-	discordLogger.debug(
+	logger.debug(
 		`Executing /git config ${subcommand} in guild ${interaction.guildId} by user ${interaction.user.id}`
 	);
 
@@ -119,10 +119,7 @@ export async function executeConfig(
 				});
 		}
 	} catch (error) {
-		discordLogger.error(
-			`[Git Config] Failed to execute ${subcommand}:`,
-			error
-		);
+		logger.error(`[Git Config] Failed to execute ${subcommand}:`, error);
 		await interaction.reply({
 			content:
 				'An error occurred while processing your server configuration request.',
@@ -151,7 +148,7 @@ async function handleServerConfig(
 		await ServerAPIGuildSettingService.update(setting.id, {
 			systemChannelId
 		});
-		discordLogger.info(
+		logger.info(
 			`Successfully updated server configuration for guild ${guildId}. System channel set to ${systemChannelId}`
 		);
 		await interaction.reply({
@@ -163,7 +160,7 @@ async function handleServerConfig(
 			guildId,
 			systemChannelId
 		});
-		discordLogger.info(
+		logger.info(
 			`Successfully completed initial server setup for guild ${guildId}. System channel set to ${systemChannelId}`
 		);
 		await interaction.reply({
@@ -183,7 +180,7 @@ async function handleServerConfig(
 // 		const me = guild.members.me ?? (await guild.members.fetchMe());
 // 		await me.setNickname(nickname || null);
 
-// 		discordLogger.info(
+// 		logger.info(
 // 			`Successfully updated bot nickname in guild ${guild.id} to: ${nickname || 'Default'}`
 // 		);
 // 		await interaction.reply({
@@ -191,7 +188,7 @@ async function handleServerConfig(
 // 			flags: [MessageFlags.Ephemeral]
 // 		});
 // 	} catch (error) {
-// 		discordLogger.error(
+// 		logger.error(
 // 			`Failed to update bot nickname in guild ${guild.id}:`,
 // 			error
 // 		);
@@ -228,7 +225,7 @@ async function handleServerConfig(
 // 	if (ci !== null)
 // 		updates.push(`• CI/CD Checks: \`${ci ? 'Enabled' : 'Disabled'}\``);
 
-// 	discordLogger.info(
+// 	logger.info(
 // 		`Updated event filters in guild ${interaction.guildId}: prs=${prs}, issues=${issues}, ci=${ci}`
 // 	);
 

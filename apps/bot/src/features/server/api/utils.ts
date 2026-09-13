@@ -1,4 +1,5 @@
-import { AppError, ErrorCode, serverAPILogger } from '@core';
+import { AppError, ErrorCode } from '@core';
+import { logger } from '../logger';
 
 export function handleConnectionError(
 	error: unknown,
@@ -11,7 +12,7 @@ export function handleConnectionError(
 		? `Failed to connect to GitCord server during [${contextName}].`
 		: 'Failed to connect to GitCord server.';
 
-	serverAPILogger.warn(`${message} Target endpoint is offline.`);
+	logger.warn(`${message} Target endpoint is offline.`);
 	throw new AppError(ErrorCode.SERVER_API_ERROR, message);
 }
 

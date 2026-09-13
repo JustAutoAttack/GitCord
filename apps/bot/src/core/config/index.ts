@@ -1,66 +1,13 @@
 import fs from 'fs';
 
-import { resolveRootPath, parseHexColor } from './utils';
-
-interface LoggersColorsConfig {
-	app: number;
-	serverApi: number;
-	discord: number;
-	github: number;
-	http: number;
-}
-
-interface DiscordColorsConfig {
-	online: number;
-	offline: number;
-}
-
-interface GithubColorsConfig {
-	push: number;
-	pullRequest: number;
-	issue: number;
-	create: number;
-	fork: number;
-	watch: number;
-	release: number;
-}
-
-interface BotConfig {
-	loggers: LoggersColorsConfig;
-	discord: {
-		colors: DiscordColorsConfig;
-	};
-	github: {
-		colors: GithubColorsConfig;
-	};
-}
-
-const defaultConfig: BotConfig = {
-	loggers: {
-		app: 0xff3c00,
-		serverApi: 0xff9100,
-		discord: 0x0077ff,
-		github: 0xcc00ff,
-		http: 0x00ff2a
-	},
-	discord: {
-		colors: {
-			online: 0x238636,
-			offline: 0xda3633
-		}
-	},
-	github: {
-		colors: {
-			push: 0x2f81f7,
-			pullRequest: 0x238636,
-			issue: 0x8957e5,
-			create: 0xda3633,
-			fork: 0xdb6d28,
-			watch: 0xf0883e,
-			release: 0x7ee787
-		}
-	}
-};
+import { resolveRootPath, parseHexColor } from '../utils';
+import {
+	DiscordColorsConfig,
+	GithubColorsConfig,
+	IConfig,
+	LoggersColorsConfig
+} from './types';
+import { defaultConfig } from './default';
 
 function parseToml(content: string): Record<string, Record<string, unknown>> {
 	const result: Record<string, Record<string, unknown>> = {};
@@ -104,7 +51,7 @@ function parseToml(content: string): Record<string, Record<string, unknown>> {
 	return result;
 }
 
-function loadConfig(): BotConfig {
+function loadConfig(): IConfig {
 	const configPath = resolveRootPath('gitcord-bot.toml');
 	if (!fs.existsSync(configPath)) return structuredClone(defaultConfig);
 
@@ -112,6 +59,7 @@ function loadConfig(): BotConfig {
 		const fileContent = fs.readFileSync(configPath, 'utf-8');
 		const parsed = parseToml(fileContent);
 
+		// Logger Colors
 		const loggers = { ...defaultConfig.loggers };
 		const parsedLoggers = (parsed.loggers ?? {}) as Record<string, unknown>;
 		for (const [key, value] of Object.entries(parsedLoggers)) {
@@ -125,6 +73,7 @@ function loadConfig(): BotConfig {
 			}
 		}
 
+		// Discord Colors
 		const discordColors = { ...defaultConfig.discord.colors };
 		const parsedDiscordColors = (parsed['discord.colors'] ??
 			parsed.discord?.colors ??
@@ -139,6 +88,7 @@ function loadConfig(): BotConfig {
 			}
 		}
 
+		// GitHub Colors
 		const githubColors = { ...defaultConfig.github.colors };
 		const parsedGithubColors = (parsed['github.colors'] ??
 			parsed.github?.colors ??

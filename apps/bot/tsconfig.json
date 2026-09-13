@@ -17,8 +17,6 @@
 			"@services/*": ["./src/services/*"],
 			"@gateway": ["./src/gateway"],
 			"@gateway/*": ["./src/gateway/*"],
-			"@server-api": ["./src/server-api"],
-			"@server-api/*": ["./src/server-api/*"],
 			"@discord": ["./src/discord"],
 			"@discord/*": ["./src/discord/*"],
 			"@features": ["./src/features"],

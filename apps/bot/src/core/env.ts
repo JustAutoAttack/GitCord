@@ -16,10 +16,18 @@ const envSchema = z.object({
 	DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required'),
 	DISCORD_DEPLOY_GUILD_ID: z.string().optional(),
 	NGROK_AUTHTOKEN: z.string().optional(),
+	NGROK_URL: z.string().url('NGROK_URL must be a valid URL').optional(),
 	SERVER_API_URL: z.string().url('SERVER_API_URL must be a valid URL'),
 	SERVER_WEBHOOK_SECRET: z
 		.string()
-		.min(1, 'SERVER_WEBHOOK_SECRET is required')
+		.min(1, 'SERVER_WEBHOOK_SECRET is required'),
+	GITHUB_APP_ID: z.coerce.number().min(1, 'GITHUB_APP_ID is required'),
+	GITHUB_CLIENT_ID: z.string().min(1, 'GITHUB_CLIENT_ID is required'),
+	GITHUB_CLIENT_SECRET: z.string().min(1, 'GITHUB_CLIENT_SECRET is required'),
+	GITHUB_PRIVATE_KEY: z.string().min(1, 'GITHUB_PRIVATE_KEY is required'),
+	GITHUB_WEBHOOK_SECRET: z
+		.string()
+		.min(1, 'GITHUB_WEBHOOK_SECRET is required')
 });
 
 export type EnvDTO = z.infer<typeof envSchema>;

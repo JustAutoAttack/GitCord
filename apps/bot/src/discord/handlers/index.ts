@@ -6,12 +6,13 @@ import {
 	type ChatInputCommandInteraction
 } from 'discord.js';
 
-import { CONFIG, discordLogger } from '@core';
+import { CONFIG } from '@core';
 import {
-    isServerOnline,
+	isServerOnline,
 	ServerAPIGuildSettingService,
 	ServerAPIRemoteConfigService
-} from '@server-api';
+} from '@features/server';
+import { logger } from '../logger';
 import { handleInteraction } from './interaction';
 
 let cachedNotificationChannels: { channel: TextChannel; guildId: string }[] =
@@ -29,7 +30,7 @@ export async function getNotificationChannels(
 			? response
 			: ((response as any)?.data ?? []);
 	} catch (error) {
-		discordLogger.warn(
+		logger.warn(
 			'Failed to bulk-fetch guild settings from server, falling back to individual checks:',
 			error
 		);
@@ -59,7 +60,7 @@ export async function getNotificationChannels(
 			}
 
 			if (!channelId) {
-				discordLogger.warn(
+				logger.warn(
 					`No system channel configured for guild: ${guild.id} (${guild.name})`
 				);
 				continue;
@@ -68,7 +69,7 @@ export async function getNotificationChannels(
 			const channel = await client.channels.fetch(channelId);
 
 			if (!channel || !channel.isTextBased() || !('send' in channel)) {
-				discordLogger.warn(
+				logger.warn(
 					`Configured Discord channel unavailable: ${channelId} (Guild: ${guild.id})`
 				);
 				continue;
@@ -79,7 +80,7 @@ export async function getNotificationChannels(
 				guildId: guild.id
 			});
 		} catch (error) {
-			discordLogger.warn(
+			logger.warn(
 				`Failed to process notification channel for guild ${guild.id}:`,
 				error
 			);
@@ -98,10 +99,10 @@ export function getCachedNotificationChannels(): {
 }
 
 async function handleClientReady(discordClient: Client<true>): Promise<void> {
-	discordLogger.info(`Connected to Discord as ${discordClient.user.tag}`);
+	logger.info(`Connected to Discord as ${discordClient.user.tag}`);
 
 	if (!(await isServerOnline())) {
-		discordLogger.warn(
+		logger.warn(
 			'GitCord server is offline. Skipping initial channel notification sync.'
 		);
 		return;
@@ -151,7 +152,7 @@ async function handleClientReady(discordClient: Client<true>): Promise<void> {
 
 					await channel.send({ embeds: [embed] });
 				} catch (error) {
-					discordLogger.error(
+					logger.error(
 						`Failed to send online notification to channel ${channel.id}:`,
 						error
 					);
@@ -159,15 +160,12 @@ async function handleClientReady(discordClient: Client<true>): Promise<void> {
 			})
 		);
 	} catch (error) {
-		discordLogger.error(
-			'Failed to send Discord online notifications:',
-			error
-		);
+		logger.error('Failed to send Discord online notifications:', error);
 	}
 }
 
 async function handleGuildCreate(guild: Guild): Promise<void> {
-	discordLogger.info(`Joined new guild: ${guild.id} (${guild.name})`);
+	logger.info(`Joined new guild: ${guild.id} (${guild.name})`);
 
 	try {
 		await ServerAPIGuildSettingService.create({
@@ -194,7 +192,7 @@ async function handleGuildCreate(guild: Guild): Promise<void> {
 
 		await systemChannel.send({ embeds: [embed] });
 	} catch (error) {
-		discordLogger.error(
+		logger.error(
 			`Failed to send welcome setup message for guild ${guild.id}:`,
 			error
 		);
@@ -209,7 +207,7 @@ async function handleInteractionCreate(interaction: any): Promise<void> {
 	try {
 		await handleInteraction(interaction as ChatInputCommandInteraction);
 	} catch (error) {
-		discordLogger.error(
+		logger.error(
 			`Unhandled interaction error for ${interaction.commandName}:`,
 			error
 		);

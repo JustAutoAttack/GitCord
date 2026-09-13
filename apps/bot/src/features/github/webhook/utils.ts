@@ -1,26 +1,9 @@
-import { GitHubCommit, GitHubWebhookPayload } from './types';
-
 export function getBranchName(ref?: string): string {
 	if (!ref) {
 		return 'unknown-branch';
 	}
 
 	return ref.replace(/^refs\/heads\//, '').replace(/^refs\/tags\//, '');
-}
-
-export function getCommitUsername(
-	commit: GitHubCommit,
-	body: GitHubWebhookPayload
-): string {
-	return (
-		commit.author?.login ??
-		commit.committer?.login ??
-		commit.author?.name ??
-		commit.committer?.name ??
-		body.sender?.login ??
-		body.pusher?.name ??
-		'unknown'
-	);
 }
 
 export function discordRelativeTimestamp(timestamp?: string): string {

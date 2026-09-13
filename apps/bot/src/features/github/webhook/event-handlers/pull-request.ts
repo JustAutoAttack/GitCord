@@ -1,19 +1,15 @@
 import { ContainerBuilder } from 'discord.js';
+import type { PullRequestEvent } from '@octokit/webhooks-types';
 
 import { CONFIG, createHeader, createFooter, createSeparator } from '@core';
-import type { GitHubPullRequest, GitHubRepository } from '../types';
 
-export interface PullRequestEventContext {
-	pullRequest: GitHubPullRequest;
-	action: string;
-	repository?: GitHubRepository;
-}
+export function handlePullRequest(
+	event: PullRequestEvent
+): ContainerBuilder {
+	const pullRequest = event.pull_request;
+	const action = event.action;
+	const repository = event.repository;
 
-export function handlePullRequestEvent({
-	pullRequest,
-	action,
-	repository
-}: PullRequestEventContext): ContainerBuilder {
 	let accentColor = CONFIG.github.colors.pullRequest;
 
 	if (action === 'closed' && !pullRequest.merged) {

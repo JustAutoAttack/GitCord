@@ -1,9 +1,12 @@
 import type { RouteHandler } from '@hono/zod-openapi';
+import {
+	ServerLifecycleWebhookPayload,
+	TableUpdateWebhookPayload
+} from '@gitcord/server-api';
 
-import { appLogger } from '@core';
-import { webhookService } from '@services';
+import { httpLogger } from '@core';
+import { ServerWebhookService } from '@features/server';
 import type { lifecycleRoute, tableUpdateRoute } from './routes';
-import type { ServerLifecyclePayload, TableUpdatePayload } from './schemas';
 
 export const lifecycleHandler: RouteHandler<typeof lifecycleRoute> = async (
 	ctx
@@ -11,15 +14,18 @@ export const lifecycleHandler: RouteHandler<typeof lifecycleRoute> = async (
 	const signature = ctx.req.header('X-GitCord-Signature');
 	const rawBody = await ctx.req.text();
 
-	const isValid = webhookService.verifyServerSignature(rawBody, signature);
+	const isValid = ServerWebhookService.verifyServerSignature(
+		rawBody,
+		signature
+	);
 
 	if (!signature || !isValid) {
-		appLogger.warn('Received webhook with invalid or missing signature.');
+		httpLogger.warn('Received webhook with invalid or missing signature.');
 		return ctx.json({ success: false, error: 'Invalid signature' }, 401);
 	}
 
-	const payload = JSON.parse(rawBody) as ServerLifecyclePayload;
-	await webhookService.handleServerLifecycle(payload);
+	const payload = JSON.parse(rawBody) as ServerLifecycleWebhookPayload;
+	await ServerWebhookService.handleServerLifecycle(payload);
 
 	return ctx.json({ success: true }, 200);
 };
@@ -30,15 +36,18 @@ export const tableUpdateHandler: RouteHandler<typeof tableUpdateRoute> = async (
 	const signature = ctx.req.header('X-GitCord-Signature');
 	const rawBody = await ctx.req.text();
 
-	const isValid = webhookService.verifyServerSignature(rawBody, signature);
+	const isValid = ServerWebhookService.verifyServerSignature(
+		rawBody,
+		signature
+	);
 
 	if (!signature || !isValid) {
-		appLogger.warn('Received webhook with invalid or missing signature.');
+		httpLogger.warn('Received webhook with invalid or missing signature.');
 		return ctx.json({ success: false, error: 'Invalid signature' }, 401);
 	}
 
-	const payload = JSON.parse(rawBody) as TableUpdatePayload;
-	await webhookService.handleTableUpdate(payload);
+	const payload = JSON.parse(rawBody) as TableUpdateWebhookPayload;
+	await ServerWebhookService.handleTableUpdate(payload);
 
 	return ctx.json({ success: true }, 200);
 };

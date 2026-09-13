@@ -6,7 +6,7 @@ import type {
 	DeleteGuildSettingResponse
 } from '@gitcord/server-api';
 
-import { serverAPILogger } from '@core';
+import { logger } from '../../logger';
 import { apiClient } from '../client';
 import { executeApiCall } from '../utils';
 
@@ -33,7 +33,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 			() => apiClient.GET('/api/v1/guild-settings'),
 			'list guild settings'
 		);
-		serverAPILogger.debug('Successfully listed guild settings.');
+		logger.debug('Successfully listed guild settings.');
 		return data;
 	},
 
@@ -45,7 +45,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 				}),
 			'get guild setting'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully retrieved guild setting with ID ${id}.`
 		);
 		return data;
@@ -59,7 +59,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 				}),
 			'get guild setting by guild ID'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully retrieved guild setting for guild ID ${guildId}.`
 		);
 		return data;
@@ -78,7 +78,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 				),
 			'get guild setting by system channel'
 		);
-		serverAPILogger.debug(
+		logger.debug(
 			`Successfully retrieved guild setting for system channel ${systemChannelId}.`
 		);
 		return data;
@@ -94,7 +94,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 				}),
 			'create guild setting'
 		);
-		serverAPILogger.debug('Successfully created guild setting.');
+		logger.debug('Successfully created guild setting.');
 		return data;
 	},
 
@@ -110,9 +110,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 				}),
 			'update guild setting'
 		);
-		serverAPILogger.debug(
-			`Successfully updated guild setting with ID ${id}.`
-		);
+		logger.debug(`Successfully updated guild setting with ID ${id}.`);
 		return data;
 	},
 
@@ -124,9 +122,7 @@ export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
 				}),
 			'delete guild setting'
 		);
-		serverAPILogger.debug(
-			`Successfully deleted guild setting with ID ${id}.`
-		);
+		logger.debug(`Successfully deleted guild setting with ID ${id}.`);
 		return data;
 	}
 };

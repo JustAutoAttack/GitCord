@@ -5,8 +5,8 @@ import {
 	MessageFlags
 } from 'discord.js';
 
-import { ServerAPIRemoteConfigService } from '@server-api';
-import { discordLogger } from '@core';
+import { ServerAPIRemoteConfigService } from '@features/server';
+import { logger } from '../../logger';
 import { COMMAND_DOCS } from '../constants';
 
 export const remoteGroup = new SlashCommandSubcommandGroupBuilder()
@@ -61,7 +61,7 @@ export async function executeRemote(
 	interaction: ChatInputCommandInteraction
 ): Promise<void> {
 	if (!interaction.guildId) {
-		discordLogger.warn(
+		logger.warn(
 			'Attempted to execute remote command outside of a server context.'
 		);
 		await interaction.reply({
@@ -72,7 +72,7 @@ export async function executeRemote(
 	}
 
 	const subcommand = interaction.options.getSubcommand();
-	discordLogger.debug(
+	logger.debug(
 		`Executing /git remote ${subcommand} in guild ${interaction.guildId} by user ${interaction.user.id}`
 	);
 
@@ -89,10 +89,7 @@ export async function executeRemote(
 				break;
 		}
 	} catch (error) {
-		discordLogger.error(
-			`[Git Remote] Failed to execute ${subcommand}:`,
-			error
-		);
+		logger.error(`[Git Remote] Failed to execute ${subcommand}:`, error);
 		await interaction.reply({
 			content: 'An error occurred while processing your request.',
 			flags: [MessageFlags.Ephemeral]
@@ -109,7 +106,7 @@ async function handleAdd(
 		interaction.channel;
 
 	if (!notifChannel) {
-		discordLogger.warn(
+		logger.warn(
 			`Invalid channel configuration during /git remote add for repo ${url}`
 		);
 		await interaction.reply({
@@ -132,7 +129,7 @@ async function handleAdd(
 		);
 
 		if (existingConfig) {
-			discordLogger.warn(
+			logger.warn(
 				`Repository ${url} is already linked to server ${interaction.guildId}.`
 			);
 			await interaction.reply({
@@ -142,7 +139,7 @@ async function handleAdd(
 			return;
 		}
 	} catch (error) {
-		discordLogger.debug(
+		logger.debug(
 			'Failed to pre-check existing configs during add, proceeding to create:',
 			error
 		);
@@ -155,7 +152,7 @@ async function handleAdd(
 		notificationChannelId: notifChannel.id
 	});
 
-	discordLogger.info(
+	logger.info(
 		`Successfully subscribed server ${interaction.guildId} to repository ${url}`
 	);
 	await interaction.reply({
@@ -181,9 +178,7 @@ async function handleList(
 	);
 
 	if (serverConfigs.length === 0) {
-		discordLogger.debug(
-			`No repositories found for server ${interaction.guildId}`
-		);
+		logger.debug(`No repositories found for server ${interaction.guildId}`);
 		await interaction.reply({
 			content:
 				'There are no GitHub repositories configured for this server.',
@@ -192,7 +187,7 @@ async function handleList(
 		return;
 	}
 
-	discordLogger.debug(
+	logger.debug(
 		`Listing ${serverConfigs.length} configured repositories for server ${interaction.guildId}`
 	);
 	let message = '**Connected Repositories**\n\n';
@@ -232,7 +227,7 @@ async function handleRemove(
 	);
 
 	if (!targetConfig) {
-		discordLogger.warn(
+		logger.warn(
 			`Attempted to remove non-existent repository subscription ${urlToRemove} in server ${interaction.guildId}`
 		);
 		await interaction.reply({
@@ -244,7 +239,7 @@ async function handleRemove(
 
 	await ServerAPIRemoteConfigService.delete(targetConfig.id);
 
-	discordLogger.info(
+	logger.info(
 		`Successfully removed repository subscription ${urlToRemove} (ID: ${targetConfig.id}) from server ${interaction.guildId}`
 	);
 	await interaction.reply({

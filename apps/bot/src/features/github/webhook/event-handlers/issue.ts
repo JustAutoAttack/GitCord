@@ -1,19 +1,13 @@
 import { ContainerBuilder } from 'discord.js';
+import type { IssuesEvent } from '@octokit/webhooks-types';
 
 import { CONFIG, createHeader, createFooter, createSeparator } from '@core';
-import type { GitHubIssue, GitHubRepository } from '../types';
 
-export interface IssueEventContext {
-	issue: GitHubIssue;
-	action: string;
-	repository?: GitHubRepository;
-}
+export function handleIssue(event: IssuesEvent): ContainerBuilder {
+	const issue = event.issue;
+	const action = event.action;
+	const repository = event.repository;
 
-export function handleIssueEvent({
-	issue,
-	action,
-	repository
-}: IssueEventContext): ContainerBuilder {
 	const numberDisplay = `#${issue.number}`;
 	const titleDisplay = issue.html_url
 		? `[${issue.title}](${issue.html_url})`

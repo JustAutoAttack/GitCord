@@ -1,19 +1,13 @@
 import { ContainerBuilder } from 'discord.js';
+import type { ReleaseEvent } from '@octokit/webhooks-types';
 
 import { CONFIG, createHeader, createFooter, createSeparator } from '@core';
-import type { GitHubRelease, GitHubRepository } from '../types';
 
-export interface ReleaseEventContext {
-	release: GitHubRelease;
-	action: string;
-	repository?: GitHubRepository;
-}
+export function handleRelease(event: ReleaseEvent): ContainerBuilder {
+	const release = event.release;
+	const action = event.action;
+	const repository = event.repository;
 
-export function handleReleaseEvent({
-	release,
-	action,
-	repository
-}: ReleaseEventContext): ContainerBuilder {
 	const name = release.name ?? release.tag_name ?? 'Untitled release';
 	const releaseDisplay = release.html_url
 		? `[${name}](${release.html_url})`

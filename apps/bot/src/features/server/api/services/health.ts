@@ -4,7 +4,8 @@ import type {
 	HealthReadyResponse
 } from '@gitcord/server-api';
 
-import { AppError, ErrorCode, serverAPILogger } from '@core';
+import { AppError, ErrorCode } from '@core';
+import { logger } from '../../logger';
 import { apiClient } from '../client';
 import { executeApiCall } from '../utils';
 
@@ -59,9 +60,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			'server health check'
 		);
 		validateDatabaseCheck(data.checks);
-		serverAPILogger.debug(
-			'GitCord server full health check passed successfully.'
-		);
+		logger.debug('GitCord server full health check passed successfully.');
 		return data;
 	},
 
@@ -75,9 +74,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			`server process is unresponsive: ${data.message}`,
 			'liveness check'
 		);
-		serverAPILogger.debug(
-			'GitCord server liveness check passed successfully.'
-		);
+		logger.debug('GitCord server liveness check passed successfully.');
 		return data;
 	},
 
@@ -92,9 +89,7 @@ export const ServerAPIHealthService: IServerAPIHealthService = {
 			'readiness check'
 		);
 		validateDatabaseCheck(data.checks);
-		serverAPILogger.debug(
-			'GitCord server readiness check passed successfully.'
-		);
+		logger.debug('GitCord server readiness check passed successfully.');
 		return data;
 	}
 };

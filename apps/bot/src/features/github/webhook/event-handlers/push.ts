@@ -1,4 +1,5 @@
 import { ContainerBuilder } from 'discord.js';
+import type { PushEvent } from '@octokit/webhooks-types';
 
 import {
 	CONFIG,
@@ -7,35 +8,16 @@ import {
 	createSeparator,
 	createText
 } from '@core';
-import type {
-	GitHubCommit,
-	GitHubRepository,
-	GitHubWebhookPayload
-} from '../types';
-import {
-	discordRelativeTimestamp,
-	getBranchName,
-	getCommitUsername
-} from '../utils';
-
-export interface PushEventContext {
-	ref: string;
-	commits: GitHubCommit[];
-	repository?: GitHubRepository;
-	rawPayload: GitHubWebhookPayload;
-}
+import { discordRelativeTimestamp, getBranchName } from '../utils';
 
 const DEFAULT_COMMIT_LIMIT = 5;
 const MAX_COMMIT_LIMIT = 10;
 const MAX_COMMIT_MESSAGE_LENGTH = 72;
 
-export function handlePushEvent({
-	ref,
-	commits,
-	repository,
-	rawPayload
-}: PushEventContext): ContainerBuilder {
-	const branchName = getBranchName(ref) || 'unknown';
+export function handlePush(event: PushEvent): ContainerBuilder {
+	const branchName = getBranchName(event.ref) || 'unknown';
+	const commits = event.commits;
+	const repository = event.repository;
 
 	const commitLimit = Math.min(DEFAULT_COMMIT_LIMIT, MAX_COMMIT_LIMIT);
 
@@ -52,7 +34,7 @@ export function handlePushEvent({
 				? `${message.substring(0, maxLength - 3)}...`
 				: message;
 
-		const username = getCommitUsername(commit, rawPayload);
+		const username = getCommitUsername(commit, event);
 		const authorName = commit.author?.name ?? username ?? 'Unknown';
 
 		const authorDisplay =
@@ -84,7 +66,7 @@ export function handlePushEvent({
 		accent_color: CONFIG.github.colors.push,
 		components: [
 			createHeader(
-				`Branch Update: \`${branchName}\``,
+				`Push: \`${branchName}\``,
 				`${commits.length} Commit${commits.length === 1 ? '' : 's'}`
 			),
 			createSeparator(),
@@ -97,4 +79,19 @@ export function handlePushEvent({
 				: [])
 		]
 	});
+}
+
+export function getCommitUsername(
+	commit: PushEvent['commits'][number],
+	body: PushEvent
+): string {
+	return (
+		commit.author?.username ??
+		commit.committer?.username ??
+		commit.author?.name ??
+		commit.committer?.name ??
+		body.sender?.login ??
+		body.pusher?.name ??
+		'unknown'
+	);
 }
