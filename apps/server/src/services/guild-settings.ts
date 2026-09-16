@@ -10,30 +10,45 @@ export class GuildSettingsService extends BaseService<
 	typeof guildSettingsRepo
 > {
 	constructor() {
-		super(guildSettingsRepo, 'guild setting');
+		super(guildSettingsRepo, 'guild setting', 'guild_settings');
 	}
 
-	async getByGuildId(guildId: string): Promise<GuildSetting.Model | null> {
+	async list(notifyOnConnection?: boolean): Promise<GuildSetting.Model[]> {
+		if (notifyOnConnection !== undefined) {
+			appLogger.debug(
+				`Listing guild settings by notifyOnConnection: ${notifyOnConnection}`
+			);
+			return guildSettingsRepo.findByNotifyOnConnection(
+				notifyOnConnection
+			);
+		}
+		return super.list();
+	}
+
+	async getByGuildId(
+		guildId: string
+	): Promise<GuildSetting.Model | undefined> {
 		appLogger.debug(`Fetching guild setting for guild ID: ${guildId}`);
-		const result = guildSettingsRepo.findByGuildId(guildId) ?? null;
+		const result = guildSettingsRepo.findByGuildId(guildId);
 		if (!result) {
 			appLogger.debug(`No guild setting found for guild ID: ${guildId}`);
+			return undefined;
 		}
 		return result;
 	}
 
 	async getBySystemChannelId(
 		systemChannelId: string
-	): Promise<GuildSetting.Model | null> {
+	): Promise<GuildSetting.Model | undefined> {
 		appLogger.debug(
 			`Fetching guild setting by system channel ID: ${systemChannelId}`
 		);
-		const result =
-			guildSettingsRepo.findBySystemChannelId(systemChannelId) ?? null;
+		const result = guildSettingsRepo.findBySystemChannelId(systemChannelId);
 		if (!result) {
 			appLogger.debug(
 				`No guild setting found for system channel ID: ${systemChannelId}`
 			);
+			return undefined;
 		}
 		return result;
 	}
@@ -61,10 +76,7 @@ export class GuildSettingsService extends BaseService<
 			`Creating new guild settings for guild: ${input.guildId}`
 		);
 
-		return super.create({
-			guildId: input.guildId,
-			systemChannelId: input.systemChannelId
-		});
+		return super.create(input);
 	}
 }
 

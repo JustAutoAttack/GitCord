@@ -1,76 +1,95 @@
-import { describe, it, expect } from 'vitest';
-import { asyncLocalStorageService, AppError, ErrorCode } from '@core';
+import { describe, it, expect, vi } from 'vitest';
+import {
+	AsyncLocalStorageService,
+	asyncLocalStorageService
+} from '../../../../src/core/services/async-storage';
+import { AppError, ErrorCode } from '../../../../src/core';
+
+// Mock appLogger to silence expected error prints in tests
+vi.mock('../../../../src/core/loggers', () => ({
+	appLogger: {
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn()
+	}
+}));
 
 describe('AsyncLocalStorageService', () => {
-	const mockContext = {
-		serverRequestId: 'req_123',
-		clientRequestId: 'client_456',
-		userId: 'user_789',
-		roles: ['admin', 'user'] as const
-	};
+	const service = new AsyncLocalStorageService();
 
-	// --- Context Execution and Retrieval ---
-	it('runs a callback within context and retrieves full store values', () => {
-		const result = asyncLocalStorageService.run(mockContext, () => {
-			expect(asyncLocalStorageService.getStore()).toEqual(mockContext);
-			expect(asyncLocalStorageService.getServerRequestId()).toBe(
-				'req_123'
-			);
-			expect(asyncLocalStorageService.getClientRequestId()).toBe(
-				'client_456'
-			);
-			expect(asyncLocalStorageService.getUserId()).toBe('user_789');
-			expect(asyncLocalStorageService.getRoles()).toEqual([
-				'admin',
-				'user'
-			]);
-			return 'done';
+	it('should run a callback within context and return its result', () => {
+		const context = { serverRequestId: 'req-123', timestamp: Date.now() };
+		const result = service.run(context, () => {
+			const store = service.getStore();
+			expect(store).toEqual(context);
+			return 'success';
 		});
 
-		expect(result).toBe('done');
+		expect(result).toBe('success');
+		expect(service.getStore()).toBeUndefined();
 	});
 
-	// --- Inactive Store Fallbacks ---
-	it('returns null or empty defaults when store is not active', () => {
-		expect(asyncLocalStorageService.getStore()).toBeUndefined();
-		expect(asyncLocalStorageService.getClientRequestId()).toBeNull();
-		expect(asyncLocalStorageService.getUserId()).toBeNull();
-		expect(asyncLocalStorageService.getRoles()).toEqual([]);
-	});
+	it('should update the current store using updateStore', () => {
+		const context: any = {
+			serverRequestId: 'req-456',
+			timestamp: Date.now()
+		};
+		service.run(context, () => {
+			service.updateStore((store) => {
+				store.auth = { userId: 'user-789', roles: ['admin'] };
+			});
 
-	// --- Missing Server Request ID Error ---
-	it('throws AppError when server request ID is missing or store is inactive', () => {
-		expect(() => asyncLocalStorageService.getServerRequestId()).toThrow(
-			AppError
-		);
-
-		asyncLocalStorageService.run({ roles: [] } as any, () => {
-			expect(() => asyncLocalStorageService.getServerRequestId()).toThrow(
-				AppError
-			);
-			try {
-				asyncLocalStorageService.getServerRequestId();
-			} catch (error) {
-				expect(error).toBeInstanceOf(AppError);
-				expect((error as AppError).code).toBe(ErrorCode.INTERNAL_ERROR);
-				expect((error as AppError).message).toBe(
-					'Request context missing server request ID.'
-				);
-			}
+			expect(service.getUserId()).toBe('user-789');
+			expect(service.getRoles()).toEqual(['admin']);
 		});
 	});
 
-	// --- Optional Fields Handling ---
-	it('handles missing optional fields in context gracefully', () => {
-		asyncLocalStorageService.run(
-			{ serverRequestId: 'req_partial', roles: [] },
+	it('should do nothing when updateStore is called outside of a run context', () => {
+		expect(() => {
+			service.updateStore((store) => {
+				store.auth = { userId: 'unreachable', roles: [] };
+			});
+		}).not.toThrow();
+		expect(service.getStore()).toBeUndefined();
+	});
+
+	it('should throw AppError if getServerRequestId is called outside context or missing id', () => {
+		expect(() => service.getServerRequestId()).toThrow(AppError);
+
+		service.run({ serverRequestId: '', timestamp: Date.now() }, () => {
+			expect(() => service.getServerRequestId()).toThrowError(
+				expect.objectContaining({ code: ErrorCode.INTERNAL_ERROR })
+			);
+		});
+	});
+
+	it('should retrieve serverRequestId, userId, and roles correctly from store', () => {
+		const context = {
+			serverRequestId: 'req-xyz',
+			timestamp: Date.now(),
+			auth: { userId: 'user-111', roles: ['user', 'moderator'] }
+		};
+
+		service.run(context, () => {
+			expect(service.getServerRequestId()).toBe('req-xyz');
+			expect(service.getUserId()).toBe('user-111');
+			expect(service.getRoles()).toEqual(['user', 'moderator']);
+		});
+	});
+
+	it('should return safe fallback values when auth is missing', () => {
+		service.run(
+			{ serverRequestId: 'req-abc', timestamp: Date.now() },
 			() => {
-				expect(
-					asyncLocalStorageService.getClientRequestId()
-				).toBeNull();
-				expect(asyncLocalStorageService.getUserId()).toBeNull();
-				expect(asyncLocalStorageService.getRoles()).toEqual([]);
+				expect(service.getUserId()).toBeNull();
+				expect(service.getRoles()).toEqual([]);
 			}
+		);
+	});
+
+	it('should export a working singleton instance', () => {
+		expect(asyncLocalStorageService).toBeInstanceOf(
+			AsyncLocalStorageService
 		);
 	});
 });

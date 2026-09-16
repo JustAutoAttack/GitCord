@@ -1,19 +1,24 @@
-import { eq, type InferSelectModel } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { UserSession } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { userSessions } from '../generated';
 import { BaseRepo } from './base';
+import { userSessionMapper } from '../mappers';
 
-export type UserSessionEntity = InferSelectModel<typeof userSessions>;
-
-export class UserSessionsRepo extends BaseRepo<typeof userSessions> {
+export class UserSessionsRepo extends BaseRepo<
+	typeof userSessions,
+	UserSession.Model,
+	UserSession.CreateInput,
+	UserSession.UpdateInput
+> {
 	constructor(database: typeof db = db) {
-		super(userSessions, database);
+		super(userSessions, userSessionMapper, database);
 	}
 
-	findByUserId(userId: string): UserSessionEntity | undefined {
-		databaseLogger.debug(`Executing findByUserId with userId: ${userId}`);
+	findByUserId(userId: string): UserSession.Model | undefined {
+		logger.debug(`Executing findByUserId with userId: ${userId}`);
 		const result = this.db
 			.select()
 			.from(this.table)
@@ -21,9 +26,10 @@ export class UserSessionsRepo extends BaseRepo<typeof userSessions> {
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(`No session found for userId: ${userId}`);
+			logger.debug(`No session found for userId: ${userId}`);
+			return undefined;
 		}
-		return result;
+		return userSessionMapper.toDomain(result);
 	}
 }
 

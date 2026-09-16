@@ -1,6 +1,6 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 
-import { AppError, ErrorCode, httpLogger } from '@core';
+import { AppError, ErrorCode } from '@core';
 import { githubRepositoriesService } from '@services';
 import {
 	createRoute,
@@ -10,15 +10,16 @@ import {
 	listRoute,
 	updateRoute
 } from './routes';
+import { logger } from '../../logger';
 
 export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
 	const { githubAppInstallationId } = ctx.req.valid('query');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: List GitHub repositories${githubAppInstallationId ? ` for installation [${githubAppInstallationId}]` : ''}`
 	);
 
 	const repos = await githubRepositoriesService.list(githubAppInstallationId);
-	httpLogger.debug(
+	logger.debug(
 		`API Success: Returning ${repos.length} GitHub repositories`
 	);
 	return ctx.json(repos, 200);
@@ -28,7 +29,7 @@ export const getByUrlHandler: RouteHandler<typeof getByUrlRoute> = async (
 	ctx
 ) => {
 	const { repositoryUrl } = ctx.req.valid('query');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: Get GitHub repository by URL [${repositoryUrl}]`
 	);
 
@@ -46,7 +47,7 @@ export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (
 	ctx
 ) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.debug(`API Request: Get GitHub repository by ID [${id}]`);
+	logger.debug(`API Request: Get GitHub repository by ID [${id}]`);
 
 	const repo = await githubRepositoriesService.getById(id);
 
@@ -59,7 +60,7 @@ export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (
 
 export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 	const body = ctx.req.valid('json');
-	httpLogger.info(
+	logger.info(
 		`API Request: Create GitHub repository [${body.repositoryFullName}]`
 	);
 
@@ -69,7 +70,7 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 		repositoryFullName: body.repositoryFullName
 	});
 
-	httpLogger.info(
+	logger.info(
 		`API Success: Created GitHub repository [ID: ${newRepo.id}]`
 	);
 	return ctx.json(newRepo, 201);
@@ -78,7 +79,7 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
 	const body = ctx.req.valid('json');
-	httpLogger.info(`API Request: Update GitHub repository [ID: ${id}]`);
+	logger.info(`API Request: Update GitHub repository [ID: ${id}]`);
 
 	const updatedRepo = await githubRepositoriesService.update(id, {
 		githubAppInstallationId: body.githubAppInstallationId,
@@ -90,13 +91,13 @@ export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 		throw new AppError(ErrorCode.NOT_FOUND, 'GitHub repository not found');
 	}
 
-	httpLogger.info(`API Success: Updated GitHub repository [ID: ${id}]`);
+	logger.info(`API Success: Updated GitHub repository [ID: ${id}]`);
 	return ctx.json(updatedRepo, 200);
 };
 
 export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.info(`API Request: Delete GitHub repository [ID: ${id}]`);
+	logger.info(`API Request: Delete GitHub repository [ID: ${id}]`);
 
 	const deleted = await githubRepositoriesService.delete(id);
 
@@ -104,7 +105,7 @@ export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 		throw new AppError(ErrorCode.NOT_FOUND, 'GitHub repository not found');
 	}
 
-	httpLogger.info(`API Success: Deleted GitHub repository [ID: ${id}]`);
+	logger.info(`API Success: Deleted GitHub repository [ID: ${id}]`);
 	return ctx.json(
 		{
 			success: true,

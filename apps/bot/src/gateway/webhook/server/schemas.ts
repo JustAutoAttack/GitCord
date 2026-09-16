@@ -6,7 +6,6 @@ import type {
 } from '@gitcord/server-api';
 
 export const serverLifecyclePayloadSchema = z.object({
-	type: z.string().openapi({ example: 'SERVER_LIFECYCLE' }),
 	timestamp: z.number().openapi({ example: 1723917300000 }),
 	data: z.object({
 		status: z
@@ -20,7 +19,6 @@ export const serverLifecyclePayloadSchema = z.object({
 }) as unknown as z.ZodType<ServerLifecycleWebhookPayload>;
 
 export const tableUpdatePayloadSchema = z.object({
-	type: z.string().openapi({ example: 'TABLE_UPDATE' }),
 	timestamp: z.number().openapi({ example: 1723917300000 }),
 	data: z.object({
 		tableName: z.string().openapi({ example: 'guild_settings' }),
@@ -33,7 +31,6 @@ export const tableUpdatePayloadSchema = z.object({
 }) as unknown as z.ZodType<TableUpdateWebhookPayload>;
 
 export const githubEventPayloadSchema = z.object({
-	type: z.string().openapi({ example: 'GITHUB_EVENT' }),
 	timestamp: z.number().openapi({ example: 1723917300000 }),
 	data: z.object({
 		eventName: z.string().openapi({ example: 'push' }),

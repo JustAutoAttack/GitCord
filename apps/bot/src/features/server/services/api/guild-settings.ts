@@ -12,7 +12,7 @@ import { apiClient } from '../../client';
 import { executeApiCall } from '../../utils';
 
 export interface IServerAPIGuildSettingService {
-	list(): Promise<GuildSettingResponse>;
+	list(notifyOnConnection?: boolean): Promise<GuildSettingResponse>;
 	getById(id: string): Promise<GuildSettingItemResponse>;
 	getByGuildId(guildId: string): Promise<GuildSettingItemResponse>;
 	getBySystemChannelId(
@@ -29,9 +29,20 @@ export interface IServerAPIGuildSettingService {
 }
 
 export const ServerAPIGuildSettingService: IServerAPIGuildSettingService = {
-	async list(): Promise<GuildSettingResponse> {
+	async list(notifyOnConnection?: boolean): Promise<GuildSettingResponse> {
 		const data = await executeApiCall<GuildSettingResponse>(
-			() => apiClient.GET('/api/v1/guild-settings'),
+			() =>
+				apiClient.GET('/api/v1/guild-settings', {
+					params: {
+						query:
+							notifyOnConnection !== undefined
+								? {
+										notifyOnConnection:
+											String(notifyOnConnection)
+									}
+								: undefined
+					}
+				}),
 			'list guild settings'
 		);
 		for (const item of data) {

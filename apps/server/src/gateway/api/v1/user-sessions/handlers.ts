@@ -1,6 +1,6 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 
-import { AppError, ErrorCode, httpLogger } from '@core';
+import { AppError, ErrorCode } from '@core';
 import { userSessionsService } from '@services';
 import {
 	createRoute,
@@ -10,12 +10,13 @@ import {
 	listRoute,
 	updateRoute
 } from './routes';
+import { logger } from '../../logger';
 
 export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
-	httpLogger.debug('API Request: List user sessions');
+	logger.debug('API Request: List user sessions');
 
 	const sessions = await userSessionsService.list();
-	httpLogger.debug(
+	logger.debug(
 		`API Success: Returning ${sessions.length} user session(s)`
 	);
 	return ctx.json(sessions, 200);
@@ -23,7 +24,7 @@ export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
 
 export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.debug(`API Request: Get user session by ID [${id}]`);
+	logger.debug(`API Request: Get user session by ID [${id}]`);
 
 	const session = await userSessionsService.getById(id);
 	if (!session) {
@@ -37,7 +38,7 @@ export const getByUserIdHandler: RouteHandler<typeof getByUserIdRoute> = async (
 	ctx
 ) => {
 	const { userId } = ctx.req.valid('param');
-	httpLogger.debug(`API Request: Get user session by user ID [${userId}]`);
+	logger.debug(`API Request: Get user session by user ID [${userId}]`);
 
 	const session = await userSessionsService.getByUserId(userId);
 	if (!session) {
@@ -49,7 +50,7 @@ export const getByUserIdHandler: RouteHandler<typeof getByUserIdRoute> = async (
 
 export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 	const body = ctx.req.valid('json');
-	httpLogger.info(
+	logger.info(
 		`API Request: Create user session for user [${body.userId}]`
 	);
 
@@ -60,14 +61,14 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 		expiresAt: body.expiresAt
 	});
 
-	httpLogger.info(`API Success: Created user session [ID: ${newSession.id}]`);
+	logger.info(`API Success: Created user session [ID: ${newSession.id}]`);
 	return ctx.json(newSession, 201);
 };
 
 export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
 	const body = ctx.req.valid('json');
-	httpLogger.info(`API Request: Update user session [ID: ${id}]`);
+	logger.info(`API Request: Update user session [ID: ${id}]`);
 
 	const updatedSession = await userSessionsService.update(id, {
 		userId: body.userId,
@@ -80,20 +81,20 @@ export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 		throw new AppError(ErrorCode.NOT_FOUND, 'User session not found');
 	}
 
-	httpLogger.info(`API Success: Updated user session [ID: ${id}]`);
+	logger.info(`API Success: Updated user session [ID: ${id}]`);
 	return ctx.json(updatedSession, 200);
 };
 
 export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.info(`API Request: Delete user session [ID: ${id}]`);
+	logger.info(`API Request: Delete user session [ID: ${id}]`);
 
 	const deleted = await userSessionsService.delete(id);
 	if (!deleted) {
 		throw new AppError(ErrorCode.NOT_FOUND, 'User session not found');
 	}
 
-	httpLogger.info(`API Success: Deleted user session [ID: ${id}]`);
+	logger.info(`API Success: Deleted user session [ID: ${id}]`);
 	return ctx.json(
 		{
 			success: true,

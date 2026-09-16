@@ -5,6 +5,7 @@ import { IDParamSchema, ResponseSchema } from '../base-schemas';
 import {
 	CreateSchema,
 	GuildIdParamSchema,
+	ListQuerySchema,
 	ReadSchema,
 	SystemChannelParamSchema,
 	UpdateSchema
@@ -15,7 +16,11 @@ export const listRoute = createHonoRoute({
 	path: '/',
 	tags: ['Guild Settings'],
 	summary: 'List guild settings',
-	description: 'Returns all guild settings configurations.',
+	description:
+		'Returns all guild settings configurations, optionally filtered by notifyOnConnection.',
+	request: {
+		query: ListQuerySchema
+	},
 	responses: {
 		200: response('Guild settings', z.array(ReadSchema))
 	}

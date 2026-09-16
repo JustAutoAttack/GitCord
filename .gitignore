@@ -55,3 +55,6 @@ src-tauri/target/
 
 # Madge
 /madge/
+
+# Test Generated
+tmp/

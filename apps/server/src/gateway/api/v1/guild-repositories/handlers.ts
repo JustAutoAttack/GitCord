@@ -1,6 +1,6 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 
-import { AppError, ErrorCode, httpLogger } from '@core';
+import { AppError, ErrorCode } from '@core';
 import { guildRepositoriesService } from '@services';
 import {
 	createRoute,
@@ -11,10 +11,11 @@ import {
 	listRoute,
 	updateRoute
 } from './routes';
+import { logger } from '../../logger';
 
 export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
 	const { guildId, githubRepositoryId } = ctx.req.valid('query');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: List guild repositories${guildId ? ` for guild [${guildId}]` : ''}${githubRepositoryId ? ` for GitHub repository [${githubRepositoryId}]` : ''}`
 	);
 
@@ -22,7 +23,7 @@ export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
 		guildId,
 		githubRepositoryId
 	);
-	httpLogger.debug(
+	logger.debug(
 		`API Success: Returning ${guildRepos.length} guild repositories`
 	);
 	return ctx.json(guildRepos, 200);
@@ -32,7 +33,7 @@ export const getByGuildAndGithubRepositoryHandler: RouteHandler<
 	typeof getByGuildAndGithubRepositoryRoute
 > = async (ctx) => {
 	const { guildId, githubRepositoryId } = ctx.req.valid('query');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: Get guild repository for guild [${guildId}] and GitHub repository [${githubRepositoryId}]`
 	);
 
@@ -53,7 +54,7 @@ export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (
 	ctx
 ) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.debug(`API Request: Get guild repository by ID [${id}]`);
+	logger.debug(`API Request: Get guild repository by ID [${id}]`);
 
 	const guildRepo = await guildRepositoriesService.getById(id);
 
@@ -68,7 +69,7 @@ export const getByCommandChannelHandler: RouteHandler<
 	typeof getByCommandChannelRoute
 > = async (ctx) => {
 	const { commandChannelId } = ctx.req.valid('param');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: Get guild repository by command channel [${commandChannelId}]`
 	);
 
@@ -87,7 +88,7 @@ export const getByCommandChannelHandler: RouteHandler<
 
 export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 	const body = ctx.req.valid('json');
-	httpLogger.info(
+	logger.info(
 		`API Request: Create guild repository for guild [${body.guildId}] (GitHub repository ID: ${body.githubRepositoryId})`
 	);
 
@@ -98,7 +99,7 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 		notificationChannelId: body.notificationChannelId
 	});
 
-	httpLogger.info(
+	logger.info(
 		`API Success: Created guild repository [ID: ${newGuildRepo.id}]`
 	);
 	return ctx.json(newGuildRepo, 201);
@@ -107,7 +108,7 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
 	const body = ctx.req.valid('json');
-	httpLogger.info(`API Request: Update guild repository [ID: ${id}]`);
+	logger.info(`API Request: Update guild repository [ID: ${id}]`);
 
 	const updatedGuildRepo = await guildRepositoriesService.update(id, {
 		guildId: body.guildId,
@@ -120,13 +121,13 @@ export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 		throw new AppError(ErrorCode.NOT_FOUND, 'Guild repository not found');
 	}
 
-	httpLogger.info(`API Success: Updated guild repository [ID: ${id}]`);
+	logger.info(`API Success: Updated guild repository [ID: ${id}]`);
 	return ctx.json(updatedGuildRepo, 200);
 };
 
 export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.info(`API Request: Delete guild repository [ID: ${id}]`);
+	logger.info(`API Request: Delete guild repository [ID: ${id}]`);
 
 	const deleted = await guildRepositoriesService.delete(id);
 
@@ -134,7 +135,7 @@ export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 		throw new AppError(ErrorCode.NOT_FOUND, 'Guild repository not found');
 	}
 
-	httpLogger.info(`API Success: Deleted guild repository [ID: ${id}]`);
+	logger.info(`API Success: Deleted guild repository [ID: ${id}]`);
 	return ctx.json(
 		{
 			success: true,

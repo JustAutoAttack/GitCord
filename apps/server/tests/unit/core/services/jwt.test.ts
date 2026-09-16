@@ -1,97 +1,110 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { JwtService } from '@core';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { JwtService, jwtService } from '../../../../src/core/services/jwt';
+
+// Mock appLogger to keep test output clean during warning/error path tests
+vi.mock('../../../../src/core/loggers', () => ({
+	appLogger: {
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn()
+	}
+}));
 
 describe('JwtService', () => {
-	const testSecret = 'test-jwt-secret-key-12345';
-	let jwtService: JwtService;
+	const testSecret = 'test-secret-key-1234567890';
+	let service: JwtService;
 
 	beforeEach(() => {
-		jwtService = new JwtService(testSecret, 900);
+		service = new JwtService(testSecret, 900);
+		vi.clearAllMocks();
 	});
 
-	afterEach(() => {
-		vi.useRealTimers();
+	describe('constructor and options', () => {
+		it('should use default expiration and environment secret if not provided', () => {
+			const defaultJwt = new JwtService();
+			const token = defaultJwt.sign({ sub: 'test' });
+			const decoded = defaultJwt.verify(token);
+			expect(decoded).not.toBeNull();
+		});
 	});
 
-	// --- Token Signing and Verification ---
-	it('signs and verifies a valid token with default expiration', () => {
-		const payload = { sub: 'user_123', email: 'test@example.com' };
-		const token = jwtService.sign(payload);
+	describe('sign and verify', () => {
+		it('should successfully sign and verify a payload with default expiration', () => {
+			const payload = {
+				sub: 'usr_123',
+				userId: 'usr_123',
+				role: 'admin'
+			};
+			const token = service.sign(payload);
 
-		expect(typeof token).toBe('string');
-		expect(token.split('.').length).toBe(3);
+			expect(typeof token).toBe('string');
+			expect(token.split('.').length).toBe(3);
 
-		const decoded = jwtService.verify(token);
-		expect(decoded).not.toBeNull();
-		expect(decoded?.sub).toBe('user_123');
-		expect(decoded?.email).toBe('test@example.com');
-		expect(decoded?.iat).toBeDefined();
-		expect(decoded?.exp).toBeDefined();
+			const decoded = service.verify(token) as any;
+			expect(decoded).not.toBeNull();
+			expect(decoded?.sub).toBe('usr_123');
+			expect(decoded?.userId).toBe('usr_123');
+			expect(decoded?.role).toBe('admin');
+			expect(decoded?.iat).toBeDefined();
+			expect(decoded?.exp).toBeDefined();
+		});
+
+		it('should support custom expiration time overrides', () => {
+			const token = service.sign({ sub: 'custom' }, 60);
+			const decoded = service.verify(token);
+
+			expect(decoded).not.toBeNull();
+			expect(decoded?.exp).toBe((decoded?.iat ?? 0) + 60);
+		});
+
+		it('should return null and warn if token structure is malformed (not 3 parts)', () => {
+			expect(service.verify('invalidtoken')).toBeNull();
+			expect(service.verify('too.many.dots.here.token')).toBeNull();
+		});
+
+		it('should return null and warn if signature verification fails', () => {
+			const token = service.sign({ sub: 'tamper' });
+			const parts = token.split('.');
+			const tamperedToken = `${parts[0]}.${parts[1]}.invalidsignature`;
+
+			expect(service.verify(tamperedToken)).toBeNull();
+		});
+
+		it('should return null and warn if the token has expired', () => {
+			const expiredService = new JwtService(testSecret, -10); // expires immediately
+			const token = expiredService.sign({ sub: 'expired' });
+
+			expect(service.verify(token)).toBeNull();
+		});
+
+		it('should catch exceptions and log error if payload JSON parsing fails', () => {
+			// Construct a token with valid signature but invalid base64json payload
+			const header = Buffer.from(
+				JSON.stringify({ alg: 'HS256', typ: 'JWT' })
+			).toString('base64url');
+			const badPayload =
+				Buffer.from('not-valid-json').toString('base64url');
+
+			// Create a matching signature for the malformed parts
+			const signService = new JwtService(testSecret);
+			const tokenWithBadJson = `${header}.${badPayload}.fake-signature-will-fail-anyway`;
+
+			const parts = tokenWithBadJson.split('.');
+			const validSigForBadJson = (signService as any).createSignature(
+				parts[0],
+				parts[1]
+			);
+			const executableToken = `${parts[0]}.${parts[1]}.${validSigForBadJson}`;
+
+			expect(service.verify(executableToken)).toBeNull();
+		});
 	});
 
-	// --- Custom Expiration ---
-	it('signs a token with custom expiration time', () => {
-		const now = 1000000000;
-		vi.useFakeTimers();
-		vi.setSystemTime(now * 1000);
-
-		const token = jwtService.sign({ sub: 'user_custom' }, 60);
-		const decoded = jwtService.verify(token);
-
-		expect(decoded?.exp).toBe(now + 60);
-	});
-
-	// --- Invalid Token Structure ---
-	it('returns null when verifying a token with invalid parts count', () => {
-		expect(jwtService.verify('invalidtoken')).toBeNull();
-		expect(jwtService.verify('part1.part2')).toBeNull();
-		expect(jwtService.verify('part1.part2.part3.part4')).toBeNull();
-	});
-
-	// --- Invalid Signature ---
-	it('returns null when verifying a token with an invalid signature', () => {
-		const token = jwtService.sign({ sub: 'user_123' });
-		const [header, payload] = token.split('.');
-		const tamperedToken = `${header}.${payload}.invalidsignature`;
-
-		expect(jwtService.verify(tamperedToken)).toBeNull();
-	});
-
-	// --- Expired Token ---
-	it('returns null when verifying an expired token', () => {
-		const now = 1000000000;
-		vi.useFakeTimers();
-		vi.setSystemTime(now * 1000);
-
-		const token = jwtService.sign({ sub: 'user_expired' }, -10);
-		expect(jwtService.verify(token)).toBeNull();
-	});
-
-	// --- Malformed Payload ---
-	it('returns null when decoding malformed payload JSON or base64 data', () => {
-		const validToken = jwtService.sign({ sub: 'user_123' });
-		const [header, _, signature] = validToken.split('.');
-		const badPayloadToken = `${header}.notbase64orjson.${signature}`;
-
-		expect(jwtService.verify(badPayloadToken)).toBeNull();
-	});
-
-	// --- Default Constructor Fallback ---
-	it('falls back to default ENV secret when no secret is provided', () => {
-		const defaultService = new JwtService();
-		expect(defaultService).toBeInstanceOf(JwtService);
-	});
-
-	// --- Unexpected Verification Exceptions ---
-	it('handles unexpected exceptions during verification gracefully', () => {
-		const decodeSpy = vi
-			.spyOn(JwtService.prototype as any, 'base64UrlDecode')
-			.mockImplementationOnce(() => {
-				throw new Error('Unexpected decode failure');
-			});
-
-		const token = jwtService.sign({ sub: 'user_123' });
-		expect(jwtService.verify(token)).toBeNull();
-		decodeSpy.mockRestore();
+	describe('singleton instance', () => {
+		it('should export a working default jwtService singleton', () => {
+			expect(jwtService).toBeInstanceOf(JwtService);
+			const token = jwtService.sign({ sub: 'usr_singleton', test: true });
+			expect(jwtService.verify(token)).not.toBeNull();
+		});
 	});
 });

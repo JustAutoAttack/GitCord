@@ -26,6 +26,14 @@
 					"enum": ["ISO", "LOCALE", "UNIX"],
 					"default": "ISO"
 				},
+				"showFilePath": {
+					"type": "boolean",
+					"default": false
+				},
+				"showLoc": {
+					"type": "boolean",
+					"default": false
+				},
 				"colors": {
 					"type": "object",
 					"properties": {
@@ -44,13 +52,17 @@
 						"error": {
 							"type": ["string", "integer"],
 							"default": "#ff4500"
+						},
+						"highlight": {
+							"type": ["string", "integer"],
+							"default": "#00ffff"
 						}
 					},
-					"additionalProperties": false,
+					"additionalProperties": true,
 					"default": {}
 				}
 			},
-			"additionalProperties": false,
+			"additionalProperties": true,
 			"default": {}
 		}
 	},

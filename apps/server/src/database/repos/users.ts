@@ -1,21 +1,24 @@
-import { eq, type InferSelectModel } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { User } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { users } from '../generated';
 import { BaseRepo } from './base';
+import { userMapper } from '../mappers';
 
-export type UserEntity = InferSelectModel<typeof users>;
-
-export class UsersRepo extends BaseRepo<typeof users> {
+export class UsersRepo extends BaseRepo<
+	typeof users,
+	User.Model,
+	User.CreateInput,
+	User.UpdateInput
+> {
 	constructor(database: typeof db = db) {
-		super(users, database);
+		super(users, userMapper, database);
 	}
 
-	findByDiscordId(discordId: string): UserEntity | undefined {
-		databaseLogger.debug(
-			`Executing findByDiscordId with discordId: ${discordId}`
-		);
+	findByDiscordId(discordId: string): User.Model | undefined {
+		logger.debug(`Executing findByDiscordId with discordId: ${discordId}`);
 		const result = this.db
 			.select()
 			.from(this.table)
@@ -23,9 +26,10 @@ export class UsersRepo extends BaseRepo<typeof users> {
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(`No user found for discordId: ${discordId}`);
+			logger.debug(`No user found for discordId: ${discordId}`);
+			return undefined;
 		}
-		return result;
+		return userMapper.toDomain(result);
 	}
 }
 

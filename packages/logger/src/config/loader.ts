@@ -23,6 +23,8 @@ function cloneDefaultConfig(): LoggerConfig {
 	return {
 		level: DEFAULT_LOGGER_CONFIG.level,
 		timestampFormat: DEFAULT_LOGGER_CONFIG.timestampFormat,
+		showFilePath: DEFAULT_LOGGER_CONFIG.showFilePath,
+		showLoc: DEFAULT_LOGGER_CONFIG.showLoc,
 		colors: {
 			...DEFAULT_LOGGER_CONFIG.colors
 		}
@@ -111,9 +113,21 @@ function parseConfig(content: string): LoggerConfig {
 		? normalizedLevel
 		: DEFAULT_LOGGER_CONFIG.level;
 
+	const showFilePath =
+		typeof logger.showFilePath === 'boolean'
+			? logger.showFilePath
+			: DEFAULT_LOGGER_CONFIG.showFilePath;
+
+	const showLoc =
+		typeof logger.showLoc === 'boolean'
+			? logger.showLoc
+			: DEFAULT_LOGGER_CONFIG.showLoc;
+
 	return {
 		level,
 		timestampFormat: parseTimestampFormat(logger.timestampFormat),
+		showFilePath,
+		showLoc,
 		colors: parseColors(logger.colors)
 	};
 }

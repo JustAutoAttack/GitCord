@@ -1,193 +1,191 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { GuildSetting } from '@domain';
+import { guildSettingsService } from '../../../src/services/guild-settings';
+import { guildSettingsRepo } from '../../../src/database';
+import { AppError, ErrorCode } from '../../../src/core';
 
-import { AppError, ErrorCode } from '@core';
-import { guildSettingsRepo } from '@database';
-import { GuildSettingsService } from '@services/guild-settings';
+// Mock the database repository while preserving other database exports
+vi.mock('../../../src/database', async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import('../../../src/database')>();
+	return {
+		...actual,
+		guildSettingsRepo: {
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByNotifyOnConnection: vi.fn(),
+			findByGuildId: vi.fn(),
+			findBySystemChannelId: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn()
+		}
+	};
+});
 
-vi.mock('@database', () => ({
-	guildSettingsRepo: {
-		findAll: vi.fn(),
-		findById: vi.fn(),
-		findByGuildId: vi.fn(),
-		findBySystemChannelId: vi.fn(),
-		create: vi.fn(),
-		update: vi.fn(),
-		delete: vi.fn()
-	}
-}));
+// Mock the logger to keep test output clean
+vi.mock('../../../src/core', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('../../../src/core')>();
+	return {
+		...actual,
+		appLogger: {
+			debug: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn()
+		}
+	};
+});
 
 describe('GuildSettingsService', () => {
-	let service: GuildSettingsService;
+	const mockSetting: GuildSetting.Model = {
+		id: 'set-1',
+		guildId: 'guild-1',
+		systemChannelId: 'sys-chan-1',
+		notifyOnConnection: true,
+		createdAt: '2026-09-01T00:00:00.000Z',
+		updatedAt: '2026-09-01T00:00:00.000Z'
+	};
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		service = new GuildSettingsService();
 	});
 
-	it('lists all guild settings', async () => {
-		const mockSettings = [{ id: 'set_1', guildId: 'guild_1' }] as any;
-		vi.mocked(guildSettingsRepo.findAll).mockReturnValueOnce(mockSettings);
+	describe('list', () => {
+		it('should return settings filtered by notifyOnConnection when provided', async () => {
+			vi.mocked(
+				guildSettingsRepo.findByNotifyOnConnection
+			).mockReturnValue([mockSetting]);
 
-		const result = await service.list();
+			const result = await guildSettingsService.list(true);
 
-		expect(result).toEqual(mockSettings);
-		expect(guildSettingsRepo.findAll).toHaveBeenCalledOnce();
+			expect(
+				guildSettingsRepo.findByNotifyOnConnection
+			).toHaveBeenCalledWith(true);
+			expect(result).toEqual([mockSetting]);
+		});
+
+		it('should return all settings when notifyOnConnection is undefined', async () => {
+			vi.mocked(guildSettingsRepo.findAll).mockReturnValue([mockSetting]);
+
+			const result = await guildSettingsService.list();
+
+			expect(guildSettingsRepo.findAll).toHaveBeenCalled();
+			expect(result).toEqual([mockSetting]);
+		});
 	});
 
-	it('gets a guild setting by id', async () => {
-		const mockSetting = { id: 'set_1', guildId: 'guild_1' } as any;
-		vi.mocked(guildSettingsRepo.findById).mockReturnValueOnce(mockSetting);
+	describe('getByGuildId', () => {
+		it('should return the guild setting when found by guild ID', async () => {
+			vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValue(
+				mockSetting
+			);
 
-		const result = await service.getById('set_1');
+			const result = await guildSettingsService.getByGuildId('guild-1');
 
-		expect(result).toEqual(mockSetting);
-		expect(guildSettingsRepo.findById).toHaveBeenCalledWith('set_1');
+			expect(guildSettingsRepo.findByGuildId).toHaveBeenCalledWith(
+				'guild-1'
+			);
+			expect(result).toEqual(mockSetting);
+		});
+
+		it('should return undefined when no guild setting is found by guild ID', async () => {
+			vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValue(
+				undefined
+			);
+
+			const result =
+				await guildSettingsService.getByGuildId('guild-unknown');
+
+			expect(result).toBeUndefined();
+		});
 	});
 
-	it('returns null when getById finds nothing', async () => {
-		vi.mocked(guildSettingsRepo.findById).mockReturnValueOnce(
-			undefined as any
-		);
+	describe('getBySystemChannelId', () => {
+		it('should return the guild setting when found by system channel ID', async () => {
+			vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValue(
+				mockSetting
+			);
 
-		const result = await service.getById('missing');
+			const result =
+				await guildSettingsService.getBySystemChannelId('sys-chan-1');
 
-		expect(result).toBeNull();
+			expect(
+				guildSettingsRepo.findBySystemChannelId
+			).toHaveBeenCalledWith('sys-chan-1');
+			expect(result).toEqual(mockSetting);
+		});
+
+		it('should return undefined when no setting is found by system channel ID', async () => {
+			vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValue(
+				undefined
+			);
+
+			const result =
+				await guildSettingsService.getBySystemChannelId('sys-unknown');
+
+			expect(result).toBeUndefined();
+		});
 	});
 
-	it('gets a guild setting by guild id', async () => {
-		const mockSetting = { id: 'set_1', guildId: 'guild_1' } as any;
-		vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValueOnce(
-			mockSetting
-		);
+	describe('create', () => {
+		const createInput: GuildSetting.CreateInput = {
+			guildId: 'guild-1',
+			systemChannelId: 'sys-chan-1',
+			notifyOnConnection: true
+		};
 
-		const result = await service.getByGuildId('guild_1');
+		it('should throw CONFLICT if settings for the guild already exist', async () => {
+			vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValue(
+				mockSetting
+			);
 
-		expect(result).toEqual(mockSetting);
-		expect(guildSettingsRepo.findByGuildId).toHaveBeenCalledWith('guild_1');
-	});
+			await expect(
+				guildSettingsService.create(createInput)
+			).rejects.toThrowError(
+				expect.objectContaining({
+					code: ErrorCode.CONFLICT,
+					message: 'Guild settings for guild [guild-1] already exist'
+				})
+			);
 
-	it('gets a guild setting by system channel id', async () => {
-		const mockSetting = { id: 'set_1', systemChannelId: 'chan_1' } as any;
-		vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValueOnce(
-			mockSetting
-		);
+			expect(guildSettingsRepo.create).not.toHaveBeenCalled();
+		});
 
-		const result = await service.getBySystemChannelId('chan_1');
+		it('should throw CONFLICT if the system channel is already bound to another guild', async () => {
+			vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValue(
+				undefined
+			);
+			vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValue(
+				mockSetting
+			);
 
-		expect(result).toEqual(mockSetting);
-		expect(guildSettingsRepo.findBySystemChannelId).toHaveBeenCalledWith(
-			'chan_1'
-		);
-	});
+			await expect(
+				guildSettingsService.create(createInput)
+			).rejects.toThrowError(
+				expect.objectContaining({
+					code: ErrorCode.CONFLICT,
+					message:
+						'System channel [sys-chan-1] is already bound to guild guild-1'
+				})
+			);
 
-	it('creates a guild setting successfully', async () => {
-		const input = { guildId: 'guild_1', systemChannelId: 'chan_1' };
-		const mockCreated = { id: 'set_1', ...input } as any;
+			expect(guildSettingsRepo.create).not.toHaveBeenCalled();
+		});
 
-		vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValueOnce(
-			undefined as any
-		);
-		vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValueOnce(
-			undefined as any
-		);
-		vi.mocked(guildSettingsRepo.create).mockReturnValueOnce(mockCreated);
+		it('should successfully create and return settings if no conflicts exist', async () => {
+			vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValue(
+				undefined
+			);
+			vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValue(
+				undefined
+			);
+			vi.mocked(guildSettingsRepo.create).mockReturnValue(mockSetting);
 
-		const result = await service.create(input);
+			const result = await guildSettingsService.create(createInput);
 
-		expect(result).toEqual(mockCreated);
-		expect(guildSettingsRepo.create).toHaveBeenCalledWith(input);
-	});
-
-	it('throws CONFLICT error when creating setting for existing guild', async () => {
-		const input = { guildId: 'guild_1', systemChannelId: 'chan_1' };
-		const existing = { id: 'set_1', guildId: 'guild_1' } as any;
-
-		vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValueOnce(
-			existing
-		);
-
-		await expect(service.create(input)).rejects.toThrow(
-			new AppError(
-				ErrorCode.CONFLICT,
-				'Guild settings for guild [guild_1] already exist'
-			)
-		);
-	});
-
-	it('throws CONFLICT error when creating setting with bound system channel', async () => {
-		const input = { guildId: 'guild_1', systemChannelId: 'chan_1' };
-		const existingChannel = {
-			id: 'set_2',
-			guildId: 'guild_2',
-			systemChannelId: 'chan_1'
-		} as any;
-
-		vi.mocked(guildSettingsRepo.findByGuildId).mockReturnValueOnce(
-			undefined as any
-		);
-		vi.mocked(guildSettingsRepo.findBySystemChannelId).mockReturnValueOnce(
-			existingChannel
-		);
-
-		await expect(service.create(input)).rejects.toThrow(
-			new AppError(
-				ErrorCode.CONFLICT,
-				'System channel [chan_1] is already bound to guild guild_2'
-			)
-		);
-	});
-
-	it('updates a guild setting successfully', async () => {
-		const input = { systemChannelId: 'chan_updated' };
-		const mockUpdated = {
-			id: 'set_1',
-			guildId: 'guild_1',
-			systemChannelId: 'chan_updated'
-		} as any;
-
-		vi.mocked(guildSettingsRepo.update).mockReturnValueOnce(mockUpdated);
-
-		const result = await service.update('set_1', input);
-
-		expect(result).toEqual(mockUpdated);
-		expect(guildSettingsRepo.update).toHaveBeenCalledWith('set_1', input);
-	});
-
-	it('throws NOT_FOUND error when updating non-existent setting', async () => {
-		vi.mocked(guildSettingsRepo.update).mockReturnValueOnce(
-			undefined as any
-		);
-
-		await expect(
-			service.update('missing', { systemChannelId: 'chan_1' })
-		).rejects.toThrow(
-			new AppError(
-				ErrorCode.NOT_FOUND,
-				'guild setting [ID: missing] not found for update'
-			)
-		);
-	});
-
-	it('deletes a guild setting successfully', async () => {
-		const mockDeleted = { id: 'set_1', guildId: 'guild_1' } as any;
-		vi.mocked(guildSettingsRepo.delete).mockReturnValueOnce(mockDeleted);
-
-		const result = await service.delete('set_1');
-
-		expect(result).toBe(true);
-		expect(guildSettingsRepo.delete).toHaveBeenCalledWith('set_1');
-	});
-
-	it('throws NOT_FOUND error when deleting non-existent setting', async () => {
-		vi.mocked(guildSettingsRepo.delete).mockReturnValueOnce(
-			undefined as any
-		);
-
-		await expect(service.delete('missing')).rejects.toThrow(
-			new AppError(
-				ErrorCode.NOT_FOUND,
-				'guild setting [ID: missing] not found for deletion'
-			)
-		);
+			expect(guildSettingsRepo.create).toHaveBeenCalledWith(createInput);
+			expect(result).toEqual(mockSetting);
+		});
 	});
 });

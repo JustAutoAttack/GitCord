@@ -3,7 +3,9 @@ import {
 	ChannelType,
 	SlashCommandSubcommandGroupBuilder,
 	MessageFlags,
-	PermissionFlagsBits
+	PermissionFlagsBits,
+	ContainerBuilder,
+	TextDisplayBuilder
 } from 'discord.js';
 
 import { ServerAPIGuildSettingService } from '@features/server';
@@ -26,45 +28,19 @@ export const configGroup = new SlashCommandSubcommandGroupBuilder()
 					.addChannelTypes(ChannelType.GuildText)
 					.setRequired(false)
 			)
+			.addStringOption((option) =>
+				option
+					.setName('notify_on_connection')
+					.setDescription(
+						'Enable or disable connection/status notifications'
+					)
+					.addChoices(
+						{ name: 'Yes', value: 'true' },
+						{ name: 'No', value: 'false' }
+					)
+					.setRequired(false)
+			)
 	);
-
-// .addSubcommand((subcommand) =>
-// 	subcommand
-// 		.setName('bot')
-// 		.setDescription(COMMAND_DOCS['config bot'].description)
-// 		.addStringOption((option) =>
-// 			option
-// 				.setName('nickname')
-// 				.setDescription(
-// 					'Change the bot display name for this server (leave blank to reset)'
-// 				)
-// 				.setRequired(false)
-// 		)
-// )
-// .addSubcommand((subcommand) =>
-// 	subcommand
-// 		.setName('events')
-// 		.setDescription(COMMAND_DOCS['config events'].description)
-// 		.addBooleanOption((option) =>
-// 			option
-// 				.setName('pull_requests')
-// 				.setDescription('Enable or disable Pull Request alerts')
-// 				.setRequired(false)
-// 		)
-// 		.addBooleanOption((option) =>
-// 			option
-// 				.setName('issues')
-// 				.setDescription('Enable or disable Issue tracking alerts')
-// 				.setRequired(false)
-// 		)
-// 		.addBooleanOption((option) =>
-// 			option
-// 				.setName('ci_checks')
-// 				.setDescription(
-// 					'Enable or disable GitHub Actions CI/CD status alerts'
-// 				)
-// 				.setRequired(false)
-// 		)
 
 export async function executeConfig(
 	interaction: ChatInputCommandInteraction
@@ -73,14 +49,18 @@ export async function executeConfig(
 		logger.warn(
 			'Attempted to execute config command outside of a server context.'
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'Server configuration must be done within a server.'
+			)
+		);
 		await interaction.reply({
-			content: 'Server configuration must be done within a server.',
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
 
-	// TODO: Use proper auth with our server
 	if (
 		interaction.guild.ownerId !== interaction.user.id &&
 		!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
@@ -88,10 +68,14 @@ export async function executeConfig(
 		logger.warn(
 			`User ${interaction.user.id} attempted to configure server ${interaction.guildId} without permissions.`
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'You must be the server owner or an administrator to configure server settings.'
+			)
+		);
 		await interaction.reply({
-			content:
-				'You must be the server owner or an administrator to configure server settings.',
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
@@ -106,131 +90,119 @@ export async function executeConfig(
 			case 'server':
 				await handleServerConfig(interaction);
 				break;
-			// case 'bot':
-			// 	await handleBotConfig(interaction);
-			// 	break;
-			// case 'events':
-			// 	await handleEventsConfig(interaction);
-			// 	break;
-			default:
+			default: {
+				const container =
+					new ContainerBuilder().addTextDisplayComponents(
+						new TextDisplayBuilder().setContent(
+							'Unknown configuration subcommand.'
+						)
+					);
 				await interaction.reply({
-					content: 'Unknown configuration subcommand.',
-					flags: [MessageFlags.Ephemeral]
+					components: [container],
+					flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 				});
+			}
 		}
 	} catch (error) {
 		logger.error(`[Git Config] Failed to execute ${subcommand}:`, error);
-		await interaction.reply({
-			content:
-				'An error occurred while processing your server configuration request.',
-			flags: [MessageFlags.Ephemeral]
-		});
+
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'An error occurred while processing your server configuration request.'
+			)
+		);
+
+		if (interaction.deferred || interaction.replied) {
+			await interaction.editReply({
+				components: [container],
+				flags: MessageFlags.IsComponentsV2
+			});
+		} else {
+			await interaction.reply({
+				components: [container],
+				flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+			});
+		}
 	}
 }
 
 async function handleServerConfig(
 	interaction: ChatInputCommandInteraction
 ): Promise<void> {
-	const systemChannel = interaction.options.getChannel('system_channel');
-	const systemChannelId = systemChannel
-		? systemChannel.id
-		: interaction.channelId;
+	await interaction.deferReply({
+		flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+	});
+
 	const guildId = interaction.guildId!;
+	const selectedSystemChannel =
+		interaction.options.getChannel('system_channel');
+	const notifyVal = interaction.options.getString('notify_on_connection');
+
+	const notifyOnConnection =
+		notifyVal !== null ? notifyVal === 'true' : undefined;
 
 	let setting;
+
 	try {
 		setting = await ServerAPIGuildSettingService.getByGuildId(guildId);
 	} catch {
-		// Not found or network error, will fall back to creation
+		// Setting does not exist or could not be fetched.
 	}
+
+	const systemChannelId =
+		selectedSystemChannel?.id ??
+		setting?.systemChannelId ??
+		interaction.channelId;
+
+	const container = new ContainerBuilder();
 
 	if (setting) {
 		await ServerAPIGuildSettingService.update(setting.id, {
-			systemChannelId
+			systemChannelId,
+			...(notifyOnConnection !== undefined ? { notifyOnConnection } : {})
 		});
+
 		logger.info(
 			`Successfully updated server configuration for guild ${guildId}. System channel set to ${systemChannelId}`
 		);
-		await interaction.reply({
-			content: `**Server Configuration Updated**\nSystem notification channel set to <#${systemChannelId}>.`,
-			flags: [MessageFlags.Ephemeral]
-		});
+
+		container.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				`### Server Configuration Updated\nSystem notification channel set to <#${systemChannelId}>${
+					notifyOnConnection !== undefined
+						? `\nNotify on connection: **${
+								notifyOnConnection ? 'Yes' : 'No'
+							}**`
+						: ''
+				}.`
+			)
+		);
 	} else {
 		await ServerAPIGuildSettingService.create({
 			guildId,
-			systemChannelId
+			systemChannelId,
+			...(notifyOnConnection !== undefined ? { notifyOnConnection } : {})
 		});
+
 		logger.info(
 			`Successfully completed initial server setup for guild ${guildId}. System channel set to ${systemChannelId}`
 		);
-		await interaction.reply({
-			content: `**Initial Server Setup Complete**\nSystem notification channel set to <#${systemChannelId}>.`,
-			flags: [MessageFlags.Ephemeral]
-		});
+
+		container.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				`### Initial Server Setup Complete\nSystem notification channel set to <#${systemChannelId}>${
+					notifyOnConnection !== undefined
+						? `\nNotify on connection: **${
+								notifyOnConnection ? 'Yes' : 'No'
+							}**`
+						: ''
+				}.`
+			)
+		);
 	}
+
+	await interaction.editReply({
+		components: [container],
+		flags: MessageFlags.IsComponentsV2
+	});
 }
-
-// async function handleBotConfig(
-// 	interaction: ChatInputCommandInteraction
-// ): Promise<void> {
-// 	const nickname = interaction.options.getString('nickname');
-// 	const guild = interaction.guild!;
-
-// 	try {
-// 		const me = guild.members.me ?? (await guild.members.fetchMe());
-// 		await me.setNickname(nickname || null);
-
-// 		logger.info(
-// 			`Successfully updated bot nickname in guild ${guild.id} to: ${nickname || 'Default'}`
-// 		);
-// 		await interaction.reply({
-// 			content: `**Bot Profile Updated**\nServer nickname changed to: \`${nickname || 'Default (Reset)'}\``,
-// 			flags: [MessageFlags.Ephemeral]
-// 		});
-// 	} catch (error) {
-// 		logger.error(
-// 			`Failed to update bot nickname in guild ${guild.id}:`,
-// 			error
-// 		);
-// 		await interaction.reply({
-// 			content:
-// 				'Failed to update bot nickname. Ensure the bot has the **Change Nickname** permission and an appropriate role hierarchy.',
-// 			flags: [MessageFlags.Ephemeral]
-// 		});
-// 	}
-// }
-
-// async function handleEventsConfig(
-// 	interaction: ChatInputCommandInteraction
-// ): Promise<void> {
-// 	const prs = interaction.options.getBoolean('pull_requests');
-// 	const issues = interaction.options.getBoolean('issues');
-// 	const ci = interaction.options.getBoolean('ci_checks');
-
-// 	// If no flags were passed, inspect current or report status
-// 	if (prs === null && issues === null && ci === null) {
-// 		await interaction.reply({
-// 			content:
-// 				'**Event Filters Status**\nUse options like `pull_requests:true` or `ci_checks:false` to modify event streams.',
-// 			flags: [MessageFlags.Ephemeral]
-// 		});
-// 		return;
-// 	}
-
-// 	const updates: string[] = [];
-// 	if (prs !== null)
-// 		updates.push(`• Pull Requests: \`${prs ? 'Enabled' : 'Disabled'}\``);
-// 	if (issues !== null)
-// 		updates.push(`• Issues: \`${issues ? 'Enabled' : 'Disabled'}\``);
-// 	if (ci !== null)
-// 		updates.push(`• CI/CD Checks: \`${ci ? 'Enabled' : 'Disabled'}\``);
-
-// 	logger.info(
-// 		`Updated event filters in guild ${interaction.guildId}: prs=${prs}, issues=${issues}, ci=${ci}`
-// 	);
-
-// 	await interaction.reply({
-// 		content: `**Event Filters Updated**\n${updates.join('\n')}`,
-// 		flags: [MessageFlags.Ephemeral]
-// 	});
-// }

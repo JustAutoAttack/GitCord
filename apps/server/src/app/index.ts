@@ -17,18 +17,18 @@ export function createApp(): OpenAPIHono {
 	const app = new OpenAPIHono();
 
 	// Register global middleware pipeline
-	appLogger.info('Configuring middleware...');
+	appLogger.debug('Configuring middleware...');
 	app.use('*', httpLoggerMiddleware());
 	app.use('*', cors());
 	app.use('*', requestContextMiddleware);
 	app.onError(errorHandlerMiddleware());
 
 	// Register application route groups
-	appLogger.info('Mounting route handlers...');
+	appLogger.debug('Mounting route handlers...');
 	app.route('/', gatewayRouter);
 
 	// Register OpenAPI specification and interactive documentation UI
-	appLogger.info('Configuring API documentation...');
+	appLogger.debug('Configuring API documentation...');
 	app.doc('/doc', openAPIConfig);
 	app.get('/swagger', swaggerUI({ url: '/doc' }));
 

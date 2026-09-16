@@ -1,25 +1,26 @@
-import { and, eq, type InferSelectModel } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { GithubRepository } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { githubRepositories } from '../generated';
 import { BaseRepo } from './base';
-
-export type GithubRepositoryEntity = InferSelectModel<
-	typeof githubRepositories
->;
+import { githubRepositoryMapper } from '../mappers';
 
 export class GithubRepositoriesRepo extends BaseRepo<
-	typeof githubRepositories
+	typeof githubRepositories,
+	GithubRepository.Model,
+	GithubRepository.CreateInput,
+	GithubRepository.UpdateInput
 > {
 	constructor(database: typeof db = db) {
-		super(githubRepositories, database);
+		super(githubRepositories, githubRepositoryMapper, database);
 	}
 
 	findByRepositoryUrl(
 		repositoryUrl: string
-	): GithubRepositoryEntity | undefined {
-		databaseLogger.debug(
+	): GithubRepository.Model | undefined {
+		logger.debug(
 			`Executing findByRepositoryUrl with repositoryUrl: ${repositoryUrl}`
 		);
 		const result = this.db
@@ -29,17 +30,18 @@ export class GithubRepositoriesRepo extends BaseRepo<
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(
+			logger.debug(
 				`No GitHub repository found for URL: ${repositoryUrl}`
 			);
+			return undefined;
 		}
-		return result;
+		return githubRepositoryMapper.toDomain(result);
 	}
 
 	findByGithubAppInstallationId(
 		githubAppInstallationId: string
-	): GithubRepositoryEntity[] {
-		databaseLogger.debug(
+	): GithubRepository.Model[] {
+		logger.debug(
 			`Executing findByGithubAppInstallationId with installationId: ${githubAppInstallationId}`
 		);
 		const results = this.db
@@ -50,10 +52,10 @@ export class GithubRepositoriesRepo extends BaseRepo<
 			)
 			.all();
 
-		databaseLogger.debug(
+		logger.debug(
 			`Retrieved ${results.length} GitHub repository(s) for installation ID: ${githubAppInstallationId}`
 		);
-		return results;
+		return githubRepositoryMapper.toDomainList(results);
 	}
 }
 

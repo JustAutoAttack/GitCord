@@ -1,3 +1,6 @@
+export * from './github-sync';
+export * from './discord-sync';
+export * from './integrations';
 export * from './health';
 export * from './auth';
 export * from './users';

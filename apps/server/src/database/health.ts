@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 
-import { databaseLogger } from '@core';
+import { logger } from './logger';
 import { sqlite } from './client';
 
 export interface DbHealthResult {
@@ -33,7 +33,7 @@ export function checkDatabaseHealth(
 			};
 		}
 
-		databaseLogger.error(
+		logger.error(
 			'CRITICAL: Database health check returned unexpected output (row.alive !== 1).'
 		);
 		return {
@@ -43,7 +43,7 @@ export function checkDatabaseHealth(
 	} catch (error) {
 		const errorMsg =
 			error instanceof Error ? error.message : 'Database check failed';
-		databaseLogger.error(
+		logger.error(
 			`CRITICAL: Database health check failed with exception: ${errorMsg}`
 		);
 		return {

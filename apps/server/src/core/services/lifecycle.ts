@@ -11,13 +11,10 @@ export class LifecycleService {
 	private server: ServerType | null = null;
 	private ngrokListener: any = null;
 
-	async start(appFactory: () => any, migrationFn: () => void): Promise<void> {
+	async start(appFactory: () => any): Promise<void> {
 		appLogger.info('Starting GitCord server initialization sequence...');
 
-		migrationFn();
-
 		const app = appFactory();
-
 		const port = ENV.PORT;
 
 		this.server = serve({
@@ -31,12 +28,17 @@ export class LifecycleService {
 
 		if (ENV.NGROK_AUTHTOKEN) {
 			try {
+				let ngrokDomain: string | undefined = undefined;
+				if (ENV.NGROK_URL) {
+					ngrokDomain = ENV.NGROK_URL.includes('://')
+						? new URL(ENV.NGROK_URL).hostname
+						: ENV.NGROK_URL;
+				}
+
 				this.ngrokListener = await forward({
 					addr: port,
 					authtoken: ENV.NGROK_AUTHTOKEN,
-					domain: ENV.NGROK_URL
-						? new URL(ENV.NGROK_URL).hostname
-						: undefined
+					domain: ngrokDomain
 				});
 				const ngrokUrl = this.ngrokListener.url();
 				appLogger.info(
@@ -49,8 +51,10 @@ export class LifecycleService {
 
 		if (ENV.BOT_WEBHOOK_URL && ENV.BOT_WEBHOOK_SECRET) {
 			const lifecycleUrl = new URL(
-				'/lifecycle',
-				ENV.BOT_WEBHOOK_URL
+				'lifecycle',
+				ENV.BOT_WEBHOOK_URL.endsWith('/')
+					? ENV.BOT_WEBHOOK_URL
+					: `${ENV.BOT_WEBHOOK_URL}/`
 			).toString();
 			const payload: ServerLifecyclePayload = {
 				timestamp: Date.now(),
@@ -70,7 +74,7 @@ export class LifecycleService {
 					error?.cause?.code === 'ECONNREFUSED' ||
 					error?.code === 'ECONNREFUSED'
 				) {
-					appLogger.info(
+					appLogger.debug(
 						'Bot target endpoint was offline during startup notification.'
 					);
 				} else {
@@ -96,8 +100,10 @@ export class LifecycleService {
 		try {
 			if (ENV.BOT_WEBHOOK_URL && ENV.BOT_WEBHOOK_SECRET) {
 				const lifecycleUrl = new URL(
-					'/lifecycle',
-					ENV.BOT_WEBHOOK_URL
+					'lifecycle',
+					ENV.BOT_WEBHOOK_URL.endsWith('/')
+						? ENV.BOT_WEBHOOK_URL
+						: `${ENV.BOT_WEBHOOK_URL}/`
 				).toString();
 				const payload: ServerLifecyclePayload = {
 					timestamp: Date.now(),
@@ -117,7 +123,7 @@ export class LifecycleService {
 						error?.cause?.code === 'ECONNREFUSED' ||
 						error?.code === 'ECONNREFUSED'
 					) {
-						appLogger.info(
+						appLogger.debug(
 							'Bot target endpoint was already offline.'
 						);
 					} else {

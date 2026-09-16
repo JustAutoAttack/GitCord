@@ -15,11 +15,12 @@ export class BotCommandsService extends BaseService<
 
 	async getByCommandName(
 		commandName: string
-	): Promise<BotCommand.Model | null> {
+	): Promise<BotCommand.Model | undefined> {
 		appLogger.debug(`Fetching bot command by name: ${commandName}`);
-		const result = botCommandsRepo.findByCommandName(commandName) ?? null;
+		const result = botCommandsRepo.findByCommandName(commandName);
 		if (!result) {
 			appLogger.debug(`No bot command found for name: ${commandName}`);
+			return undefined;
 		}
 		return result;
 	}
@@ -35,10 +36,7 @@ export class BotCommandsService extends BaseService<
 
 		appLogger.info(`Creating new bot command: ${input.commandName}`);
 
-		return super.create({
-			commandName: input.commandName,
-			description: input.description
-		});
+		return super.create(input);
 	}
 }
 

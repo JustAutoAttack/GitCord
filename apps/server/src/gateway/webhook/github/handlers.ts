@@ -1,16 +1,18 @@
 import { RouteHandler } from '@hono/zod-openapi';
 import type {
 	InstallationEvent,
-	InstallationRepositoriesEvent
+	InstallationRepositoriesEvent,
+	RepositoryEvent
 } from '@octokit/webhooks-types';
 
-import { ENV, httpLogger, webhookDispatcher } from '@core';
+import { ENV, webhookDispatcher } from '@core';
 import type { GithubEventPayload } from '@core';
 import {
 	githubAppInstallationsService,
 	githubRepositoriesService
 } from '@services';
 import { eventRoute } from './routes';
+import { logger } from '../logger';
 
 async function handleInstallationEvent(body: InstallationEvent) {
 	const installationId = body.installation.id;
@@ -28,7 +30,7 @@ async function handleInstallationEvent(body: InstallationEvent) {
 			accountLogin,
 			accountType
 		});
-		httpLogger.info(
+		logger.info(
 			`[GitHub Webhook] Created installation record for ID ${installationId}`
 		);
 
@@ -40,11 +42,11 @@ async function handleInstallationEvent(body: InstallationEvent) {
 						repositoryUrl: `https://github.com/${repo.full_name}`,
 						repositoryFullName: repo.full_name
 					});
-					httpLogger.info(
+					logger.info(
 						`[GitHub Webhook] Added repository ${repo.full_name} via installation created event`
 					);
 				} catch (err) {
-					httpLogger.error(
+					logger.error(
 						`[GitHub Webhook] Failed to add repository ${repo.full_name}:`,
 						err
 					);
@@ -59,12 +61,12 @@ async function handleInstallationEvent(body: InstallationEvent) {
 				);
 			if (record?.id) {
 				await githubAppInstallationsService.delete(record.id);
-				httpLogger.info(
+				logger.info(
 					`[GitHub Webhook] Deleted installation record for ID ${installationId}`
 				);
 			}
 		} catch {
-			httpLogger.warn(
+			logger.warn(
 				`[GitHub Webhook] Installation record for ID ${installationId} not found for deletion.`
 			);
 		}
@@ -83,7 +85,7 @@ async function handleInstallationRepositoriesEvent(
 				installationId
 			);
 	} catch {
-		httpLogger.warn(
+		logger.warn(
 			`[GitHub Webhook] App installation ${installationId} not found for repository sync.`
 		);
 		return;
@@ -99,11 +101,11 @@ async function handleInstallationRepositoriesEvent(
 					repositoryUrl: `https://github.com/${repo.full_name}`,
 					repositoryFullName: repo.full_name
 				});
-				httpLogger.info(
+				logger.info(
 					`[GitHub Webhook] Added repository ${repo.full_name} via installation event`
 				);
 			} catch (err) {
-				httpLogger.error(
+				logger.error(
 					`[GitHub Webhook] Failed to add repository ${repo.full_name}:`,
 					err
 				);
@@ -118,12 +120,12 @@ async function handleInstallationRepositoriesEvent(
 					);
 				if (existingRepo?.id) {
 					await githubRepositoriesService.delete(existingRepo.id);
-					httpLogger.info(
+					logger.info(
 						`[GitHub Webhook] Removed repository ${repo.full_name} via installation event`
 					);
 				}
 			} catch (err) {
-				httpLogger.error(
+				logger.error(
 					`[GitHub Webhook] Failed to remove repository ${repo.full_name}:`,
 					err
 				);
@@ -132,11 +134,67 @@ async function handleInstallationRepositoriesEvent(
 	}
 }
 
+async function handleRepositoryEvent(body: RepositoryEvent) {
+	const action = body.action;
+	const repo = body.repository;
+	const currentFullName = repo.full_name;
+	const currentUrl = repo.html_url;
+
+	if (action === 'deleted') {
+		try {
+			const existingRepo =
+				await githubRepositoriesService.getByRepositoryUrl(currentUrl);
+			if (existingRepo?.id) {
+				await githubRepositoriesService.delete(existingRepo.id);
+				logger.info(
+					`[GitHub Webhook] Deleted repository ${currentFullName} due to repository deletion`
+				);
+			}
+		} catch (err) {
+			logger.error(
+				`[GitHub Webhook] Failed to delete repository ${currentFullName}:`,
+				err
+			);
+		}
+	} else if (
+		action === 'renamed' &&
+		'changes' in body &&
+		body.changes?.repository?.name
+	) {
+		const oldNameFrom = body.changes.repository.name.from;
+		const owner = repo.owner.login;
+		const oldFullName = `${owner}/${oldNameFrom}`;
+		const oldUrl = `https://github.com/${oldFullName}`;
+
+		try {
+			const existingRepo =
+				await githubRepositoriesService.getByRepositoryUrl(oldUrl);
+			if (existingRepo?.id) {
+				await githubRepositoriesService.delete(existingRepo.id);
+				await githubRepositoriesService.create({
+					githubAppInstallationId:
+						existingRepo.githubAppInstallationId,
+					repositoryUrl: currentUrl,
+					repositoryFullName: currentFullName
+				});
+				logger.info(
+					`[GitHub Webhook] Updated renamed repository from ${oldFullName} to ${currentFullName}`
+				);
+			}
+		} catch (err) {
+			logger.error(
+				`[GitHub Webhook] Failed to update renamed repository ${currentFullName}:`,
+				err
+			);
+		}
+	}
+}
+
 export const eventHandler: RouteHandler<typeof eventRoute> = async (ctx) => {
 	const eventName = ctx.req.header('x-github-event') ?? 'unknown';
 
 	const body = await ctx.req.json().catch((error) => {
-		httpLogger.error('Failed to parse GitHub webhook JSON:', error);
+		logger.error('Failed to parse GitHub webhook JSON:', error);
 		return null;
 	});
 
@@ -157,19 +215,24 @@ export const eventHandler: RouteHandler<typeof eventRoute> = async (ctx) => {
 					body as InstallationRepositoriesEvent
 				);
 				break;
+			case 'repository':
+				await handleRepositoryEvent(body as RepositoryEvent);
+				break;
 			case 'security_advisory':
-				httpLogger.debug(
+				logger.debug(
 					`[GitHub Webhook] Muted unhandled event: ${eventName}`
 				);
 				break;
 			default:
-				httpLogger.info(
+				logger.info(
 					`[GitHub Webhook] Forwarding unhandled event ${eventName} to bot.`
 				);
 				if (ENV.BOT_WEBHOOK_URL && ENV.BOT_WEBHOOK_SECRET) {
 					const githubEventUrl = new URL(
-						'/github-event',
-						ENV.BOT_WEBHOOK_URL
+						'github',
+						ENV.BOT_WEBHOOK_URL.endsWith('/')
+							? ENV.BOT_WEBHOOK_URL
+							: `${ENV.BOT_WEBHOOK_URL}/`
 					).toString();
 					const payload: GithubEventPayload = {
 						timestamp: Date.now(),
@@ -185,7 +248,7 @@ export const eventHandler: RouteHandler<typeof eventRoute> = async (ctx) => {
 							payload
 						);
 					} catch (err) {
-						httpLogger.error(
+						logger.error(
 							`[GitHub Webhook] Failed to forward event ${eventName} to bot:`,
 							err
 						);
@@ -194,12 +257,12 @@ export const eventHandler: RouteHandler<typeof eventRoute> = async (ctx) => {
 				break;
 		}
 	} catch (error) {
-		httpLogger.error(
+		logger.error(
 			`[GitHub Webhook] Error processing event ${eventName}:`,
 			error
 		);
 		return ctx.json(
-			{ success: false, error: 'Failed to process installation webhook' },
+			{ success: false, error: 'Failed to process webhook event' },
 			500
 		);
 	}

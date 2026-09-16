@@ -1,4 +1,4 @@
-import { JwtBody, JwtHeader, JwtPayload, ENV } from '@core';
+import { JwtHeader, JwtPayload, ENV } from '@core';
 import { cryptoService } from './crypto';
 import { appLogger } from '../loggers';
 
@@ -13,7 +13,10 @@ export class JwtService {
 		}
 	}
 
-	public sign(payload: JwtBody, expiresInSeconds?: number): string {
+	public sign(
+		payload: Record<string, any>,
+		expiresInSeconds?: number
+	): string {
 		const header: JwtHeader = { alg: 'HS256', typ: 'JWT' };
 		const currentTime: number = Math.floor(Date.now() / 1000);
 		const expiration: number =
@@ -23,7 +26,7 @@ export class JwtService {
 			...payload,
 			iat: currentTime,
 			exp: expiration
-		};
+		} as JwtPayload;
 
 		const encodedHeader: string = this.base64UrlEncode(
 			JSON.stringify(header)

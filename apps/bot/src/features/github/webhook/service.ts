@@ -1,10 +1,7 @@
-import type { WebhookEvent, InstallationEvent } from '@octokit/webhooks-types';
+import type { WebhookEvent } from '@octokit/webhooks-types';
 import { ContainerBuilder } from 'discord.js';
 
-import {
-	ServerAPIGithubAppInstallationsService,
-	ServerAPIGithubRepositoriesService
-} from '@features/server';
+import { ServerAPIGithubAppInstallationsService } from '@features/server';
 import { logger } from '../logger';
 import { handleEvent } from './event-handlers';
 
@@ -35,13 +32,6 @@ export const GitHubWebhookService: IGitHubWebhookService = {
 
 		const webhookEvent = body as WebhookEvent;
 
-		if (event === 'installation') {
-			await handleInstallationEvent(
-				webhookEvent as unknown as InstallationEvent
-			);
-			return null;
-		}
-
 		await ensureInstallationRecord(webhookEvent);
 
 		const repository =
@@ -70,67 +60,6 @@ export const GitHubWebhookService: IGitHubWebhookService = {
 		};
 	}
 };
-
-async function handleInstallationEvent(
-	payload: InstallationEvent
-): Promise<void> {
-	const action = payload.action;
-	const installationId = payload.installation?.id;
-	const account = payload.installation?.account;
-
-	if (!installationId) return;
-
-	if (action === 'created') {
-		logger.info(
-			`[GitHub App] Installed on account ${account?.login} (ID: ${installationId})`
-		);
-		try {
-			const existing =
-				await ServerAPIGithubAppInstallationsService.getByInstallationId(
-					installationId
-				).catch(() => null);
-			if (!existing) {
-				await ServerAPIGithubAppInstallationsService.create({
-					installationId,
-					accountLogin: account?.login ?? 'unknown',
-					accountType: account?.type ?? 'Unknown'
-				});
-			}
-		} catch (error) {
-			logger.error(
-				'Failed to create installation record on install:',
-				error
-			);
-		}
-	} else if (action === 'deleted') {
-		logger.info(
-			`[GitHub App] Uninstalled from account ${account?.login} (ID: ${installationId})`
-		);
-		try {
-			const record =
-				await ServerAPIGithubAppInstallationsService.getByInstallationId(
-					installationId
-				).catch(() => null);
-			if (record && record.id) {
-				const repos = await ServerAPIGithubRepositoriesService.list(
-					record.id
-				).catch(() => []);
-				const reposArray = Array.isArray(repos)
-					? repos
-					: ((repos as any)?.data ?? []);
-				for (const repo of reposArray) {
-					await ServerAPIGithubRepositoriesService.delete(repo.id);
-				}
-				await ServerAPIGithubAppInstallationsService.delete(record.id);
-			}
-		} catch (error) {
-			logger.error(
-				'Failed to cleanup repository records on uninstall:',
-				error
-			);
-		}
-	}
-}
 
 async function ensureInstallationRecord(
 	webhookEvent: WebhookEvent

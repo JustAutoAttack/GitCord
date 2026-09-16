@@ -1,5 +1,5 @@
 export interface paths {
-    "/health/live": {
+    "/api/health/live": {
         parameters: {
             query?: never;
             header?: never;
@@ -65,7 +65,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/health/ready": {
+    "/api/health/ready": {
         parameters: {
             query?: never;
             header?: never;
@@ -167,7 +167,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/health": {
+    "/api/health": {
         parameters: {
             query?: never;
             header?: never;
@@ -269,7 +269,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/webhooks/server": {
+    "/webhook/server/lifecycle": {
         parameters: {
             query?: never;
             header?: never;
@@ -280,7 +280,7 @@ export interface paths {
         put?: never;
         /**
          * Server Lifecycle Webhook
-         * @description Ingests state synchronization events from the API server.
+         * @description Outbound webhook dispatched by the server to notify the bot of startup and shutdown state changes.
          */
         post: {
             parameters: {
@@ -292,22 +292,24 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
+                        /** @example SERVER_LIFECYCLE */
+                        type: string;
                         /** @example 1723917300000 */
                         timestamp: number;
                         data: {
                             /**
-                             * @example SHUTTING_DOWN
+                             * @example ONLINE
                              * @enum {string}
                              */
                             status: "ONLINE" | "OFFLINE" | "STARTING" | "SHUTTING_DOWN";
-                            /** @example SIGTERM signal received */
+                            /** @example Server startup complete */
                             reason?: string;
                         };
                     };
                 };
             };
             responses: {
-                /** @description Webhook processed successfully */
+                /** @description Webhook processed successfully by the bot */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -343,7 +345,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/webhooks/github": {
+    "/webhook/server/table-update": {
         parameters: {
             query?: never;
             header?: never;
@@ -353,8 +355,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * GitHub Webhook
-         * @description Ingests repository event payloads directly from GitHub.
+         * Database Table Update Webhook
+         * @description Outbound webhook dispatched by the server whenever a record is created, updated, or deleted, allowing the bot to invalidate its local cache.
          */
         post: {
             parameters: {
@@ -366,13 +368,119 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        /** @example TABLE_UPDATE */
+                        type: string;
+                        /** @example 1723917300000 */
+                        timestamp: number;
+                        data: {
+                            /** @example guild_settings */
+                            tableName: string;
+                            /**
+                             * @example UPDATE
+                             * @enum {string}
+                             */
+                            action: "CREATE" | "UPDATE" | "DELETE";
+                            /** @example 1234567890 */
+                            recordId: string;
+                            record?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
                     };
                 };
             };
             responses: {
-                /** @description GitHub webhook processed successfully */
+                /** @description Cache invalidated successfully by the bot */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Invalid signature */
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Unauthorized signature failure */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Invalid signature */
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhook/server/github": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * GitHub Event Webhook
+         * @description Outbound webhook dispatched by the server to forward GitHub events to the bot.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @example GITHUB_EVENT */
+                        type: string;
+                        /** @example 1723917300000 */
+                        timestamp: number;
+                        data: {
+                            /** @example push */
+                            eventName: string;
+                            /** @description Raw GitHub event payload */
+                            payload: {
+                                [key: string]: unknown;
+                            };
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Webhook processed successfully by the bot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Invalid signature */
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Unauthorized signature failure */
+                401: {
                     headers: {
                         [name: string]: unknown;
                     };

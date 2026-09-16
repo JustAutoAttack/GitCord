@@ -1,7 +1,15 @@
+import path from 'node:path';
 import { loadLoggerConfig } from './config';
 import { LogLevel, parseLogLevel } from './levels';
-import { colorize, getTimestamp } from './utils';
-import type { ILogger, LoggerConfig, LoggerOptions } from './types';
+import { colorize, getTimestamp, parseHex } from './utils';
+import { getCallerInfo } from './utils/caller';
+import { parseHighlights } from './utils/highlighter';
+import type {
+	ILogger,
+	LoggerConfig,
+	LoggerOptions,
+	LogCallOptions
+} from './types';
 
 interface LogMethod {
 	readonly name: string;
@@ -13,17 +21,26 @@ interface LogMethod {
 export class Logger implements ILogger {
 	private readonly prefix: string;
 	public readonly config: LoggerConfig;
-	private readonly minimumLevel: LogLevel;
+	private readonly homeDir?: string;
+	private readonly color?: number;
+	private readonly showFilePath: boolean;
+	private readonly showLoc: boolean;
+	private readonly highlightColor?: number | string;
 
 	constructor(name: string, options: LoggerOptions = {}) {
 		const rawPrefix = `[${name}]`;
 
+		this.color = options.color;
 		this.prefix =
-			options.color !== undefined
-				? colorize(rawPrefix, options.color)
+			this.color !== undefined
+				? colorize(rawPrefix, this.color)
 				: rawPrefix;
 		this.config = loadLoggerConfig();
-		this.minimumLevel = parseLogLevel(this.config.level);
+		this.homeDir = options.home ? path.resolve(options.home) : undefined;
+		this.showFilePath =
+			options.showFilePath ?? this.config.showFilePath ?? false;
+		this.showLoc = options.showLoc ?? this.config.showLoc ?? false;
+		this.highlightColor = options.highlightColor;
 	}
 
 	trace(message: string, ...args: unknown[]): void {
@@ -91,22 +108,83 @@ export class Logger implements ILogger {
 		);
 	}
 
-	private write(method: LogMethod, message: string, args: unknown[]): void {
+	private parseLogArguments(args: unknown[]): {
+		options: LogCallOptions;
+		restArgs: unknown[];
+	} {
+		const [first, ...rest] = args;
+
+		if (
+			first &&
+			typeof first === 'object' &&
+			!Array.isArray(first) &&
+			!(first instanceof Date) &&
+			('showFilePath' in first ||
+				'showLoc' in first ||
+				'highlightColor' in first)
+		) {
+			return { options: first as LogCallOptions, restArgs: rest };
+		}
+
+		return { options: {}, restArgs: args };
+	}
+
+	private write(
+		method: LogMethod,
+		message: string,
+		callArgs: unknown[]
+	): void {
 		const currentMinLevel = parseLogLevel(this.config.level);
 
 		if (method.level < currentMinLevel) {
 			return;
 		}
 
+		const { options, restArgs } = this.parseLogArguments(callArgs);
 		const timestamp = getTimestamp(this.config.timestampFormat);
-
 		const level = colorize(`[${method.name}]`, method.color);
 
-		const output = colorize(message, method.color);
+		const shouldShowPath = options.showFilePath ?? this.showFilePath;
+		const shouldShowLoc = options.showLoc ?? this.showLoc;
+
+		let locationString = '';
+		if (shouldShowPath || shouldShowLoc) {
+			const caller = getCallerInfo(this.homeDir);
+			if (caller) {
+				const parts: string[] = [];
+				if (shouldShowPath) parts.push(caller.filePath);
+				if (shouldShowLoc) parts.push(String(caller.line));
+				const rawLoc = `[${parts.join(':')}]`;
+				locationString =
+					this.color !== undefined
+						? colorize(rawLoc, this.color)
+						: rawLoc;
+			}
+		}
+
+		const rawHighlightColor =
+			options.highlightColor ??
+			this.highlightColor ??
+			this.config.colors.highlight ??
+			method.color;
+
+		let highlightTargetColor = method.color;
+		if (typeof rawHighlightColor === 'number') {
+			highlightTargetColor = rawHighlightColor;
+		} else if (typeof rawHighlightColor === 'string') {
+			const parsed = parseHex(rawHighlightColor);
+			if (parsed !== undefined) {
+				highlightTargetColor = parsed;
+			}
+		}
+
+		const parsedMessage = parseHighlights(message, highlightTargetColor);
+		const output = colorize(parsedMessage, method.color);
+		const locPart = locationString ? ` ${locationString}` : '';
 
 		method.write(
-			`${this.prefix} ${level} [${timestamp}] ${output}`,
-			...args
+			`${this.prefix} ${level} [${timestamp}]${locPart} ${output}`,
+			...restArgs
 		);
 	}
 }

@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 
-import { AppError, ErrorCode, ENV, jwtService, cryptoService } from '@core';
-import { asyncLocalStorageService } from '../services';
+import { asyncLocalStorageService, jwtService } from '../services';
+import { AppError, ErrorCode } from '../errors';
 
 export const requireAuth = createMiddleware(async (c, next) => {
 	const authHeader = c.req.header('Authorization');
@@ -12,7 +12,7 @@ export const requireAuth = createMiddleware(async (c, next) => {
 		);
 	}
 
-	const token = authHeader.split(' ')[1];
+	const token = authHeader.split(' ')[1]?.trim();
 	if (!token) {
 		throw new AppError(
 			ErrorCode.UNAUTHORIZED,

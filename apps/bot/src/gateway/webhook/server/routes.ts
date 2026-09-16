@@ -1,10 +1,16 @@
-import { createRoute } from '@hono/zod-openapi';
+import { createRoute, z } from '@hono/zod-openapi';
 
 import { webhookResponseSchema } from '../base-schemas';
 import {
+	githubEventPayloadSchema,
 	serverLifecyclePayloadSchema,
 	tableUpdatePayloadSchema
 } from './schemas';
+
+const errorResponseSchema = z.object({
+	success: z.boolean().openapi({ example: false }),
+	error: z.string().optional().openapi({ example: 'Invalid signature' })
+});
 
 export const lifecycleRoute = createRoute({
 	method: 'post',
@@ -26,6 +32,12 @@ export const lifecycleRoute = createRoute({
 				'application/json': { schema: webhookResponseSchema }
 			},
 			description: 'Webhook processed successfully by the bot'
+		},
+		400: {
+			content: {
+				'application/json': { schema: errorResponseSchema }
+			},
+			description: 'Bad request or validation failure'
 		},
 		401: {
 			content: {
@@ -57,6 +69,12 @@ export const tableUpdateRoute = createRoute({
 			},
 			description: 'Cache invalidated successfully by the bot'
 		},
+		400: {
+			content: {
+				'application/json': { schema: errorResponseSchema }
+			},
+			description: 'Bad request or validation failure'
+		},
 		401: {
 			content: {
 				'application/json': { schema: webhookResponseSchema }
@@ -66,4 +84,38 @@ export const tableUpdateRoute = createRoute({
 	}
 });
 
-// Github
+export const githubEventRoute = createRoute({
+	method: 'post',
+	path: '/github',
+	tags: ['Webhooks'],
+	summary: 'GitHub Event Webhook',
+	description:
+		'Outbound webhook dispatched by the server to forward GitHub events to the bot.',
+	request: {
+		body: {
+			content: {
+				'application/json': { schema: githubEventPayloadSchema }
+			}
+		}
+	},
+	responses: {
+		200: {
+			content: {
+				'application/json': { schema: webhookResponseSchema }
+			},
+			description: 'Webhook processed successfully by the bot'
+		},
+		400: {
+			content: {
+				'application/json': { schema: errorResponseSchema }
+			},
+			description: 'Bad request or validation failure'
+		},
+		401: {
+			content: {
+				'application/json': { schema: webhookResponseSchema }
+			},
+			description: 'Unauthorized signature failure'
+		}
+	}
+});

@@ -2,7 +2,11 @@ import {
 	ChatInputCommandInteraction,
 	ChannelType,
 	SlashCommandSubcommandGroupBuilder,
-	MessageFlags
+	MessageFlags,
+	ContainerBuilder,
+	TextDisplayBuilder,
+	SeparatorBuilder,
+	SeparatorSpacingSize
 } from 'discord.js';
 
 import {
@@ -69,9 +73,14 @@ export async function executeRemote(
 		logger.warn(
 			'Attempted to execute remote command outside of a server context.'
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'Repository management must be done within a server.'
+			)
+		);
 		await interaction.reply({
-			content: 'Repository management must be done within a server.',
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
@@ -95,9 +104,14 @@ export async function executeRemote(
 		}
 	} catch (error) {
 		logger.error(`[Git Remote] Failed to execute ${subcommand}:`, error);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'An error occurred while processing your request.'
+			)
+		);
 		await interaction.reply({
-			content: 'An error occurred while processing your request.',
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 	}
 }
@@ -114,54 +128,91 @@ async function handleAdd(
 		logger.warn(
 			`Invalid channel configuration during /git remote add for repo ${url}`
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'Invalid channel configuration.'
+			)
+		);
 		await interaction.reply({
-			content: 'Invalid channel configuration.',
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
 
-	// Fetch the repository row by URL
-	let githubRepo: any;
-	try {
-		githubRepo =
-			await ServerAPIGithubRepositoriesService.getByRepositoryUrl(url);
-	} catch {
-		githubRepo = null;
+	let githubRepo: any = null;
+	const cachedRepos =
+		serverCacheService.getAll?.('github_repositories') ?? [];
+	for (const cached of cachedRepos.values()) {
+		if (cached.repositoryUrl === url) {
+			githubRepo = cached;
+			break;
+		}
+	}
+
+	if (!githubRepo) {
+		try {
+			githubRepo =
+				await ServerAPIGithubRepositoriesService.getByRepositoryUrl(
+					url
+				);
+		} catch {
+			githubRepo = null;
+		}
 	}
 
 	if (!githubRepo) {
 		logger.warn(
 			`Attempted to link unindexed repository ${url} in server ${interaction.guildId}`
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				`### Repository Not Connected\nThe repository \`${url}\` is not connected to the bot. Please ensure the GitHub App is installed on this repository before adding it.`
+			)
+		);
 		await interaction.reply({
-			content: `**Repository Not Connected**\nThe repository \`${url}\` is not connected to the bot. Please ensure the GitHub App is installed on this repository before adding it.`,
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
 
-	// Fetch the GitHub installation row using the installation foreign key reference
-	let installationRecord: any;
-	try {
-		installationRecord =
-			await ServerAPIGithubAppInstallationsService.getById(
-				githubRepo.github_app_installation_id
-			);
-	} catch (error) {
-		logger.warn(
-			`Failed to fetch GitHub app installation with ID ${githubRepo.github_app_installation_id}:`,
-			error
+	let githubAppInstallationRecord: any = null;
+	const githubAppInstallationID = githubRepo.githubAppInstallationId;
+
+	if (githubAppInstallationID) {
+		githubAppInstallationRecord = serverCacheService.get(
+			'github_app_installations',
+			githubAppInstallationID
 		);
 	}
 
-	if (!installationRecord) {
+	if (!githubAppInstallationRecord && githubAppInstallationID) {
+		try {
+			githubAppInstallationRecord =
+				await ServerAPIGithubAppInstallationsService.getById(
+					githubAppInstallationID
+				);
+		} catch (error) {
+			logger.warn(
+				`Failed to fetch GitHub app installation with ID ${githubAppInstallationID}:`,
+				error
+			);
+		}
+	}
+
+	if (!githubAppInstallationRecord) {
 		logger.warn(
 			`Associated GitHub app installation record missing for repository ${url}`
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				`Could not find the associated GitHub app installation for \`${url}\`.`
+			)
+		);
 		await interaction.reply({
-			content: `Could not find the associated GitHub app installation for \`${url}\`.`,
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
@@ -177,9 +228,14 @@ async function handleAdd(
 			logger.warn(
 				`Repository ${url} is already linked to server ${interaction.guildId}.`
 			);
+			const container = new ContainerBuilder().addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					`### Repository Already Linked\nThe repository \`${url}\` is already registered in this server.\n• Commands accepted in: <#${existingGuildRepo.commandChannelId}>\n• Notifications routed to: <#${existingGuildRepo.notificationChannelId}>`
+				)
+			);
 			await interaction.reply({
-				content: `**Repository Already Linked**\nThe repository \`${url}\` is already registered in this server.\n• Commands accepted in: <#${existingGuildRepo.commandChannelId}>\n• Notifications routed to: <#${existingGuildRepo.notificationChannelId}>`,
-				flags: [MessageFlags.Ephemeral]
+				components: [container],
+				flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 			});
 			return;
 		}
@@ -200,9 +256,14 @@ async function handleAdd(
 	logger.info(
 		`Successfully subscribed server ${interaction.guildId} to repository ${url}`
 	);
+	const successContainer = new ContainerBuilder().addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(
+			`### Repository Added\nSubscribed to \`${url}\`.\n• Commands accepted in: <#${interaction.channelId}>\n• Notifications routed to: <#${notifChannel.id}>`
+		)
+	);
 	await interaction.reply({
-		content: `**Repository Added**\nSubscribed to \`${url}\`.\n• Commands accepted in: <#${interaction.channelId}>\n• Notifications routed to: <#${notifChannel.id}>`,
-		flags: [MessageFlags.Ephemeral]
+		components: [successContainer],
+		flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 	});
 }
 
@@ -220,10 +281,14 @@ async function handleList(
 
 	if (guildRepos.length === 0) {
 		logger.debug(`No repositories found for server ${interaction.guildId}`);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				'There are no GitHub repositories configured for this server.'
+			)
+		);
 		await interaction.reply({
-			content:
-				'There are no GitHub repositories configured for this server.',
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
@@ -231,43 +296,65 @@ async function handleList(
 	logger.debug(
 		`Listing ${guildRepos.length} configured repositories for server ${interaction.guildId}`
 	);
-	let message = '**Connected Repositories**\n\n';
+	let repoLines = '';
 
 	for (const guildRepo of guildRepos) {
+		let repoFullName = guildRepo.githubRepository?.repositoryFullName;
 		let repoUrl = guildRepo.githubRepository?.repositoryUrl;
-		if (!repoUrl && guildRepo.githubRepositoryId) {
+
+		if ((!repoFullName || !repoUrl) && guildRepo.githubRepositoryId) {
 			const cachedRepo = serverCacheService.get(
 				'github_repositories',
 				guildRepo.githubRepositoryId
 			);
 			if (cachedRepo) {
-				repoUrl = cachedRepo.repositoryUrl;
+				repoFullName = repoFullName || cachedRepo.repositoryFullName;
+				repoUrl = repoUrl || cachedRepo.repositoryUrl;
 			} else {
 				try {
 					const repoRecord =
 						await ServerAPIGithubRepositoriesService.getById(
 							guildRepo.githubRepositoryId
 						);
-					repoUrl = repoRecord?.repositoryUrl;
+					repoFullName =
+						repoFullName || repoRecord?.repositoryFullName;
+					repoUrl = repoUrl || repoRecord?.repositoryUrl;
 				} catch {
-					repoUrl = 'Unknown URL';
+					// Fallback handled below
 				}
 			}
 		}
 
-		message += `• **\`${repoUrl ?? 'Unknown URL'}\`**\n`;
+		const safeName = repoFullName ?? 'Unknown Repository';
+		const displayLink = repoUrl
+			? `[\`${safeName}\`](${repoUrl})`
+			: `\`${safeName}\``;
+
+		const createdAt = guildRepo.createdAt ?? guildRepo.updatedAt;
+		const unixTimestamp = createdAt
+			? Math.floor(new Date(createdAt).getTime() / 1000)
+			: null;
+		const timeDisplay = unixTimestamp ? `<t:${unixTimestamp}:R>` : null;
+
+		repoLines += `• ${displayLink}${timeDisplay ? ` · ${timeDisplay}` : ''}\n`;
 		if (isVerbose) {
-			message += `  ↳ **Commands:** <#${guildRepo.commandChannelId}>\n`;
-			message += `  ↳ **Notifications:** <#${guildRepo.notificationChannelId}>\n\n`;
+			repoLines += `  ↳ **Commands:** <#${guildRepo.commandChannelId}>\n`;
+			repoLines += `  ↳ **Notifications:** <#${guildRepo.notificationChannelId}>\n\n`;
 		} else {
-			message += `  ↳ Commands: <#${guildRepo.commandChannelId}>\n`;
-			message += `  ↳ Notifications: <#${guildRepo.notificationChannelId}>\n\n`;
+			repoLines += `  ↳ Commands: <#${guildRepo.commandChannelId}>\n`;
+			repoLines += `  ↳ Notifications: <#${guildRepo.notificationChannelId}>\n\n`;
 		}
 	}
 
+	const container = new ContainerBuilder().addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(
+			`### Connected Repositories (${guildRepos.length})\n\n${repoLines.trim()}`
+		)
+	);
+
 	await interaction.reply({
-		content: message.trim(),
-		flags: [MessageFlags.Ephemeral]
+		components: [container],
+		flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 	});
 }
 
@@ -290,9 +377,14 @@ async function handleRemove(
 		logger.warn(
 			`Attempted to remove non-existent repository ${urlToRemove} in server ${interaction.guildId}`
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				`Could not find a subscription for \`${urlToRemove}\` in this server.`
+			)
+		);
 		await interaction.reply({
-			content: `Could not find a subscription for \`${urlToRemove}\` in this server.`,
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
@@ -315,9 +407,14 @@ async function handleRemove(
 		logger.warn(
 			`Attempted to remove non-existent repository subscription ${urlToRemove} in server ${interaction.guildId}`
 		);
+		const container = new ContainerBuilder().addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(
+				`Could not find a subscription for \`${urlToRemove}\` in this server.`
+			)
+		);
 		await interaction.reply({
-			content: `Could not find a subscription for \`${urlToRemove}\` in this server.`,
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
@@ -327,8 +424,13 @@ async function handleRemove(
 	logger.info(
 		`Successfully removed repository subscription ${urlToRemove} (ID: ${targetGuildRepo.id}) from server ${interaction.guildId}`
 	);
+	const successContainer = new ContainerBuilder().addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(
+			`### Repository Removed\nUnsubscribed from \`${urlToRemove}\`.`
+		)
+	);
 	await interaction.reply({
-		content: `**Repository Removed**\nUnsubscribed from \`${urlToRemove}\`.`,
-		flags: [MessageFlags.Ephemeral]
+		components: [successContainer],
+		flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 	});
 }

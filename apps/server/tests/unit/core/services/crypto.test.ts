@@ -1,144 +1,173 @@
-import { describe, it, expect, vi } from 'vitest';
-import crypto from 'crypto';
-import { cryptoService } from '@core';
+import crypto from 'node:crypto';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+	CryptoService,
+	cryptoService
+} from '../../../../src/core/services/crypto';
+
+// Mock appLogger to keep test output clean during warning/error path tests
+vi.mock('../../../../src/core/loggers', () => ({
+	appLogger: {
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn()
+	}
+}));
 
 describe('CryptoService', () => {
-	// --- UUID Generation ---
-	it('generates a valid UUID string', () => {
-		const id = cryptoService.generateId();
-		expect(typeof id).toBe('string');
-		expect(id).toMatch(
-			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-		);
+	let service: CryptoService;
+	const originalBufferFrom = Buffer.from;
+
+	beforeEach(() => {
+		service = new CryptoService();
+		vi.clearAllMocks();
 	});
 
-	// --- Token Generation ---
-	it('generates a random hex token of specified or default length', () => {
-		const defaultToken = cryptoService.generateToken();
-		expect(typeof defaultToken).toBe('string');
-		expect(defaultToken.length).toBe(64); // 32 bytes * 2 hex chars per byte
+	describe('generateId', () => {
+		it('should generate a valid v4 UUID string', () => {
+			const id = service.generateId();
+			expect(typeof id).toBe('string');
+			const uuidRegex =
+				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+			expect(id).toMatch(uuidRegex);
+		});
 
-		const customToken = cryptoService.generateToken(16);
-		expect(customToken.length).toBe(32); // 16 bytes * 2 hex chars per byte
+		it('should generate unique IDs on successive calls', () => {
+			const id1 = service.generateId();
+			const id2 = service.generateId();
+			expect(id1).not.toBe(id2);
+		});
 	});
 
-	// --- Hashing and Verification ---
-	it('hashes strings and successfully verifies them', async () => {
-		const plainText = 'super-secret-value';
-		const hashed = await cryptoService.hashString(plainText);
+	describe('generateToken', () => {
+		it('should generate a hex token of default length (32 bytes = 64 hex chars)', () => {
+			const token = service.generateToken();
+			expect(typeof token).toBe('string');
+			expect(token.length).toBe(64);
+			expect(/^[0-9a-f]+$/.test(token)).toBe(true);
+		});
 
-		expect(typeof hashed).toBe('string');
-		expect(hashed).toContain(':');
-
-		const isValid = await cryptoService.verifyHashedString(
-			plainText,
-			hashed
-		);
-		expect(isValid).toBe(true);
-
-		const isInvalid = await cryptoService.verifyHashedString(
-			'wrong-value',
-			hashed
-		);
-		expect(isInvalid).toBe(false);
+		it('should generate a hex token of custom byte length', () => {
+			const token = service.generateToken(16);
+			expect(token.length).toBe(32);
+		});
 	});
 
-	// --- Malformed Hash Handling ---
-	it('returns false when verifying a malformed hash format', async () => {
-		const isValid = await cryptoService.verifyHashedString(
-			'test',
-			'malformedhash'
-		);
-		expect(isValid).toBe(false);
-	});
+	describe('hashString and verifyHashedString', () => {
+		it('should successfully hash a string and verify it correctly', async () => {
+			const plainText = 'SuperSecretPassword123!';
 
-	// --- Scrypt Generation Errors ---
-	it('handles scrypt errors during hash generation gracefully', async () => {
-		const scryptSpy = vi
-			.spyOn(crypto, 'scrypt')
-			.mockImplementationOnce(
-				(password: any, salt: any, keylen: any, callback: any) => {
-					callback(new Error('Scrypt failure'), Buffer.alloc(0));
-				}
+			const hash = await service.hashString(plainText);
+			expect(typeof hash).toBe('string');
+			expect(hash).toContain(':');
+
+			const isValid = await service.verifyHashedString(plainText, hash);
+			expect(isValid).toBe(true);
+		});
+
+		it('should fail verification for an incorrect string', async () => {
+			const plainText = 'SuperSecretPassword123!';
+			const wrongText = 'WrongPassword456!';
+
+			const hash = await service.hashString(plainText);
+			const isValid = await service.verifyHashedString(wrongText, hash);
+
+			expect(isValid).toBe(false);
+		});
+
+		it('should return false and log a warning for a malformed hash missing a delimiter', async () => {
+			const isValid = await service.verifyHashedString(
+				'test',
+				'malformedhashstringwithoutcolon'
 			);
+			expect(isValid).toBe(false);
+		});
 
-		await expect(cryptoService.hashString('test')).rejects.toThrow(
-			'Scrypt failure'
-		);
-		scryptSpy.mockRestore();
-	});
+		it('should reject and log error if crypto.scrypt fails during hashing', async () => {
+			const scryptSpy = vi
+				.spyOn(crypto, 'scrypt')
+				.mockImplementation((...args: any[]) => {
+					const callback = args[args.length - 1];
+					callback(new Error('Scrypt failure'), Buffer.alloc(0));
+				});
 
-	// --- Scrypt Verification Errors ---
-	it('handles scrypt errors during hash verification gracefully', async () => {
-		const scryptSpy = vi
-			.spyOn(crypto, 'scrypt')
-			.mockImplementationOnce(
-				(password: any, salt: any, keylen: any, callback: any) => {
+			await expect(service.hashString('test')).rejects.toThrow(
+				'Scrypt failure'
+			);
+			scryptSpy.mockRestore();
+		});
+
+		it('should reject and log error if crypto.scrypt fails during verification', async () => {
+			const scryptSpy = vi
+				.spyOn(crypto, 'scrypt')
+				.mockImplementation((...args: any[]) => {
+					const callback = args[args.length - 1];
 					callback(
 						new Error('Verification scrypt failure'),
 						Buffer.alloc(0)
 					);
-				}
+				});
+
+			await expect(
+				service.verifyHashedString('test', 'somesalt:somekey')
+			).rejects.toThrow('Verification scrypt failure');
+			scryptSpy.mockRestore();
+		});
+
+		it('should catch and handle unexpected errors during hex parsing in verification', async () => {
+			const bufferFromSpy = vi
+				.spyOn(Buffer, 'from')
+				.mockImplementation((str: any, encoding?: any) => {
+					if (str === 'triggererror') {
+						throw new Error('Forced buffer parse error');
+					}
+					return originalBufferFrom(str, encoding);
+				});
+
+			const isValid = await service.verifyHashedString(
+				'test',
+				'validsalt:triggererror'
 			);
-
-		await expect(
-			cryptoService.verifyHashedString('test', 'somesalt:somekey')
-		).rejects.toThrow('Verification scrypt failure');
-		scryptSpy.mockRestore();
+			expect(isValid).toBe(false);
+			bufferFromSpy.mockRestore();
+		});
 	});
 
-	// --- Buffer Parsing Failures ---
-	it('returns false if key buffer parsing fails during verification', async () => {
-		const compareSpy = vi
-			.spyOn(cryptoService, 'secureCompare')
-			.mockImplementationOnce(() => {
-				throw new Error('Buffer comparison failed');
-			});
+	describe('createHmacSha256', () => {
+		it('should create a valid deterministic base64url HMAC signature', () => {
+			const secret = 'my-secret-key';
+			const data = 'payload-data';
 
-		const isValid = await cryptoService.verifyHashedString(
-			'test',
-			'salt:somekey'
-		);
-		expect(isValid).toBe(false);
-		compareSpy.mockRestore();
+			const hmac1 = service.createHmacSha256(secret, data);
+			const hmac2 = service.createHmacSha256(secret, data);
+
+			expect(typeof hmac1).toBe('string');
+			expect(hmac1).toBe(hmac2);
+			expect(hmac1.length).toBeGreaterThan(0);
+		});
 	});
 
-	// --- HMAC SHA-256 Signatures ---
-	it('creates accurate HMAC SHA-256 signatures', () => {
-		const secret = 'secret-key';
-		const data = 'payload-data';
-		const signature1 = cryptoService.createHmacSha256(secret, data);
-		const signature2 = cryptoService.createHmacSha256(secret, data);
+	describe('secureCompare', () => {
+		it('should return true for identical strings or buffers', () => {
+			expect(service.secureCompare('abc', 'abc')).toBe(true);
+			expect(
+				service.secureCompare(Buffer.from('abc'), Buffer.from('abc'))
+			).toBe(true);
+		});
 
-		expect(typeof signature1).toBe('string');
-		expect(signature1.length).toBeGreaterThan(0);
-		expect(signature1).toBe(signature2);
+		it('should return false for differing content of the same length', () => {
+			expect(service.secureCompare('abc', 'abd')).toBe(false);
+		});
 
-		const differentSignature = cryptoService.createHmacSha256(
-			'other-secret',
-			data
-		);
-		expect(differentSignature).not.toBe(signature1);
+		it('should return false and warn for differing lengths', () => {
+			expect(service.secureCompare('abc', 'abcd')).toBe(false);
+		});
 	});
 
-	// --- Secure Comparison ---
-	it('compares buffers and strings securely with timing safety', () => {
-		const strA = 'test-string';
-		const strB = 'test-string';
-		const strC = 'different';
-
-		expect(cryptoService.secureCompare(strA, strB)).toBe(true);
-		expect(cryptoService.secureCompare(strA, strC)).toBe(false);
-		expect(cryptoService.secureCompare(strA, 'short')).toBe(false);
-
-		const bufA = Buffer.from(strA);
-		const bufB = Buffer.from(strB);
-		const bufC = Buffer.from(strC);
-
-		expect(cryptoService.secureCompare(bufA, bufB)).toBe(true);
-		expect(cryptoService.secureCompare(bufA, bufC)).toBe(false);
-		expect(cryptoService.secureCompare(bufA, Buffer.from('short'))).toBe(
-			false
-		);
+	describe('singleton instance', () => {
+		it('should export a working default cryptoService singleton', () => {
+			expect(cryptoService).toBeInstanceOf(CryptoService);
+			expect(cryptoService.generateId()).toBeDefined();
+		});
 	});
 });

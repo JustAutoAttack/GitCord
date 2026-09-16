@@ -1,4 +1,3 @@
-import { appLogger } from '@core';
 import type {
 	GithubAppInstallationItemResponse,
 	GithubRepositoryItemResponse,
@@ -9,6 +8,7 @@ import type {
 	UserItemResponse,
 	UserSessionItemResponse
 } from '@gitcord/server-api';
+import { logger } from '../logger';
 
 export type TableAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -54,6 +54,10 @@ export class ServerCacheService {
 		return targetMap?.get(id) ?? null;
 	}
 
+	getAll<T extends TableName>(table: T): Map<string, TableNameMap[T]> {
+		return this.cache[table];
+	}
+	
 	set<T extends TableName>(
 		table: T,
 		id: string,
@@ -61,6 +65,9 @@ export class ServerCacheService {
 	): void {
 		const targetMap = this.cache[table];
 		targetMap?.set(id, record);
+		logger.debug(
+			`[Server Cache] Cached record ID ${id} in table ${table}`
+		);
 	}
 
 	handleTableUpdate<T extends TableName>(payload: {
@@ -77,12 +84,12 @@ export class ServerCacheService {
 
 		if (action === 'DELETE') {
 			targetMap.delete(recordId);
-			appLogger.info(
+			logger.info(
 				`[Server Cache] Evicted record ID ${recordId} from table ${table}`
 			);
 		} else if (action === 'CREATE' || action === 'UPDATE') {
 			targetMap.set(recordId, record);
-			appLogger.info(
+			logger.info(
 				`[Server Cache] Updated record ID ${recordId} in table ${table}`
 			);
 		}

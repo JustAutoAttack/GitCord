@@ -1,5 +1,20 @@
 import { z } from '@hono/zod-openapi';
 
+export const ListQuerySchema = z.object({
+	notifyOnConnection: z
+		.preprocess((val) => {
+			if (val === 'true' || val === '1') return true;
+			if (val === 'false' || val === '0') return false;
+			return val;
+		}, z.boolean().optional())
+		.openapi({
+			type: 'boolean',
+			example: true,
+			description:
+				'Filter guild settings by whether they notify on connection'
+		})
+});
+
 export const GuildIdParamSchema = z.object({
 	guildId: z.string().openapi({
 		example: '123456789012345678',
@@ -24,6 +39,10 @@ export const ReadSchema = z.object({
 	systemChannelId: z.string().openapi({
 		example: '123456789012345679'
 	}),
+	notifyOnConnection: z.boolean().openapi({
+		example: true,
+		description: 'Whether to notify on connection'
+	}),
 	updatedAt: z.string().openapi({
 		example: '2026-08-17T14:30:00.000Z'
 	}),
@@ -38,6 +57,10 @@ export const CreateSchema = z.object({
 	}),
 	systemChannelId: z.string().min(1).openapi({
 		example: '123456789012345679'
+	}),
+	notifyOnConnection: z.boolean().optional().openapi({
+		example: true,
+		description: 'Whether to notify on connection'
 	})
 });
 
@@ -47,5 +70,9 @@ export const UpdateSchema = z.object({
 	}),
 	systemChannelId: z.string().min(1).optional().openapi({
 		example: '123456789012345679'
+	}),
+	notifyOnConnection: z.boolean().optional().openapi({
+		example: true,
+		description: 'Whether to notify on connection'
 	})
 });

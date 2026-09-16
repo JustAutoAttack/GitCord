@@ -1,19 +1,24 @@
-import { eq, type InferSelectModel } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { BotCommand } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { botCommands } from '../generated';
 import { BaseRepo } from './base';
+import { botCommandMapper } from '../mappers';
 
-export type BotCommandEntity = InferSelectModel<typeof botCommands>;
-
-export class BotCommandsRepo extends BaseRepo<typeof botCommands> {
+export class BotCommandsRepo extends BaseRepo<
+	typeof botCommands,
+	BotCommand.Model,
+	BotCommand.CreateInput,
+	BotCommand.UpdateInput
+> {
 	constructor(database: typeof db = db) {
-		super(botCommands, database);
+		super(botCommands, botCommandMapper, database);
 	}
 
-	findByCommandName(commandName: string): BotCommandEntity | undefined {
-		databaseLogger.debug(
+	findByCommandName(commandName: string): BotCommand.Model | undefined {
+		logger.debug(
 			`Executing findByCommandName with commandName: ${commandName}`
 		);
 		const result = this.db
@@ -23,11 +28,12 @@ export class BotCommandsRepo extends BaseRepo<typeof botCommands> {
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(
+			logger.debug(
 				`No bot command found for command name: ${commandName}`
 			);
+			return undefined;
 		}
-		return result;
+		return botCommandMapper.toDomain(result);
 	}
 }
 

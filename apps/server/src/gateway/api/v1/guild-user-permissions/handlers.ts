@@ -1,6 +1,6 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 
-import { AppError, ErrorCode, httpLogger } from '@core';
+import { AppError, ErrorCode } from '@core';
 import { guildUserPermissionsService } from '@services';
 import {
 	createRoute,
@@ -10,15 +10,16 @@ import {
 	listRoute,
 	updateRoute
 } from './routes';
+import { logger } from '../../logger';
 
 export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
 	const { guildId } = ctx.req.valid('query');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: List guild user permissions${guildId ? ` for guild [${guildId}]` : ''}`
 	);
 
 	const permissions = await guildUserPermissionsService.list(guildId);
-	httpLogger.debug(
+	logger.debug(
 		`API Success: Returning ${permissions.length} permission record(s)`
 	);
 	return ctx.json(permissions, 200);
@@ -28,7 +29,7 @@ export const getByGuildAndUserHandler: RouteHandler<
 	typeof getByGuildAndUserRoute
 > = async (ctx) => {
 	const { guildId, discordUserId } = ctx.req.valid('query');
-	httpLogger.debug(
+	logger.debug(
 		`API Request: Get permissions for user [${discordUserId}] in guild [${guildId}]`
 	);
 
@@ -43,7 +44,7 @@ export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (
 	ctx
 ) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.debug(`API Request: Get guild user permission by ID [${id}]`);
+	logger.debug(`API Request: Get guild user permission by ID [${id}]`);
 
 	const permission = await guildUserPermissionsService.getById(id);
 	if (!permission) {
@@ -58,7 +59,7 @@ export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (
 
 export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 	const body = ctx.req.valid('json');
-	httpLogger.info(
+	logger.info(
 		`API Request: Grant command [${body.commandId}] to user [${body.discordUserId}] in guild [${body.guildId}]`
 	);
 
@@ -68,7 +69,7 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 		commandId: body.commandId
 	});
 
-	httpLogger.info(
+	logger.info(
 		`API Success: Created guild user permission [ID: ${newPermission.id}]`
 	);
 	return ctx.json(newPermission, 201);
@@ -77,7 +78,7 @@ export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
 	const body = ctx.req.valid('json');
-	httpLogger.info(`API Request: Update guild user permission [ID: ${id}]`);
+	logger.info(`API Request: Update guild user permission [ID: ${id}]`);
 
 	const updatedPermission = await guildUserPermissionsService.update(id, {
 		guildId: body.guildId,
@@ -92,13 +93,13 @@ export const updateHandler: RouteHandler<typeof updateRoute> = async (ctx) => {
 		);
 	}
 
-	httpLogger.info(`API Success: Updated guild user permission [ID: ${id}]`);
+	logger.info(`API Success: Updated guild user permission [ID: ${id}]`);
 	return ctx.json(updatedPermission, 200);
 };
 
 export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 	const { id } = ctx.req.valid('param');
-	httpLogger.info(`API Request: Delete guild user permission [ID: ${id}]`);
+	logger.info(`API Request: Delete guild user permission [ID: ${id}]`);
 
 	const deleted = await guildUserPermissionsService.delete(id);
 	if (!deleted) {
@@ -108,7 +109,7 @@ export const deleteHandler: RouteHandler<typeof deleteRoute> = async (ctx) => {
 		);
 	}
 
-	httpLogger.info(`API Success: Deleted guild user permission [ID: ${id}]`);
+	logger.info(`API Success: Deleted guild user permission [ID: ${id}]`);
 	return ctx.json(
 		{
 			success: true,

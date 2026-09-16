@@ -1,43 +1,76 @@
 import { describe, it, expect } from 'vitest';
-import { Responses, ErrorCode } from '@core';
+import { Responses } from '../../../src/core/responses';
 
 describe('Responses Utility', () => {
-	// --- Success Responses ---
-	it('creates a success response with optional message', () => {
-		const res1 = Responses.success({ id: 1 });
-		expect(res1).toEqual({ success: true, data: { id: 1 } });
+	describe('success', () => {
+		it('should return a success response without a message', () => {
+			const data = { id: 1, name: 'Test' };
+			const result = Responses.success(data);
 
-		const res2 = Responses.success({ id: 1 }, 'Custom message');
-		expect(res2).toEqual({
-			success: true,
-			data: { id: 1 },
-			message: 'Custom message'
+			expect(result).toEqual({
+				success: true,
+				data
+			});
+		});
+
+		it('should return a success response with a custom message', () => {
+			const data = [1, 2, 3];
+			const message = 'Fetched successfully';
+			const result = Responses.success(data, message);
+
+			expect(result).toEqual({
+				success: true,
+				data,
+				message
+			});
 		});
 	});
 
-	// --- Created Responses ---
-	it('creates a created response with default or custom message', () => {
-		const res1 = Responses.created({ id: 1 });
-		expect(res1).toEqual({
-			success: true,
-			data: { id: 1 },
-			message: 'Resource created successfully'
+	describe('created', () => {
+		it('should return a created response with the default message', () => {
+			const data = { id: 2 };
+			const result = Responses.created(data);
+
+			expect(result).toEqual({
+				success: true,
+				data,
+				message: 'Resource created successfully'
+			});
 		});
 
-		const res2 = Responses.created({ id: 1 }, 'Custom created');
-		expect(res2).toEqual({
-			success: true,
-			data: { id: 1 },
-			message: 'Custom created'
+		it('should return a created response with a custom message', () => {
+			const data = { id: 2 };
+			const message = 'User registered';
+			const result = Responses.created(data, message);
+
+			expect(result).toEqual({
+				success: true,
+				data,
+				message
+			});
 		});
 	});
 
-	// --- Error Responses ---
-	it('creates an error response with error code or custom message', () => {
-		const res1 = Responses.error(ErrorCode.NOT_FOUND);
-		expect(res1).toEqual({ success: false, error: ErrorCode.NOT_FOUND });
+	describe('error', () => {
+		it('should return an error response using the error code as the error value when message is omitted', () => {
+			const code = 'UNAUTHORIZED' as any;
+			const result = Responses.error(code);
 
-		const res2 = Responses.error(ErrorCode.BAD_REQUEST, 'Custom error');
-		expect(res2).toEqual({ success: false, error: 'Custom error' });
+			expect(result).toEqual({
+				success: false,
+				error: 'UNAUTHORIZED'
+			});
+		});
+
+		it('should return an error response using the custom message when provided', () => {
+			const code = 'BAD_REQUEST' as any;
+			const message = 'Invalid payload data';
+			const result = Responses.error(code, message);
+
+			expect(result).toEqual({
+				success: false,
+				error: message
+			});
+		});
 	});
 });

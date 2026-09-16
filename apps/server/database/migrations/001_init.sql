@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     id TEXT PRIMARY KEY NOT NULL,
     guild_id TEXT NOT NULL,
     system_channel_id TEXT NOT NULL,
+    notify_on_connection BOOLEAN NOT NULL,
     updated_at TEXT NOT NULL,
     created_at TEXT NOT NULL
 );

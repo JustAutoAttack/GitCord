@@ -1,12 +1,17 @@
 import { appLogger, lifecycleService } from './core';
 import { createApp } from './app';
 import { migrateDatabase } from './database';
-import { gitHubSyncService } from '@services/github-sync';
+import { gitHubSyncService, discordSyncService } from '@services';
 
 async function main(): Promise<void> {
 	try {
-		await lifecycleService.start(createApp, migrateDatabase);
+		appLogger.info('Initializing database migrations...');
+		migrateDatabase();
+
 		await gitHubSyncService.syncInstallations();
+		await discordSyncService.sync();
+
+		await lifecycleService.start(createApp);
 
 		process.on('SIGTERM', () => {
 			void lifecycleService.handleShutdown('SIGTERM');

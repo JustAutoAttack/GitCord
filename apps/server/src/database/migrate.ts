@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import Database from 'better-sqlite3';
 
-import { ENV, databaseLogger } from '@core';
+import { ENV } from '@core';
+import { logger } from './logger';
 
 function resolveDatabasePath(): string {
 	const rawPath = ENV.DATABASE_URL.replace(/^file:/, '');
@@ -22,14 +23,14 @@ export function migrateDatabase(): void {
 	const dbDir = path.dirname(dbPath);
 
 	if (!fs.existsSync(dbDir)) {
-		databaseLogger.info(
+		logger.info(
 			`Creating missing database directory for migrations: ${dbDir}`
 		);
 		fs.mkdirSync(dbDir, { recursive: true });
 	}
 
 	if (!fs.existsSync(migrationsDir)) {
-		databaseLogger.error(
+		logger.error(
 			`CRITICAL: Database migrations directory does not exist: ${migrationsDir}`
 		);
 		throw new Error(
@@ -37,7 +38,7 @@ export function migrateDatabase(): void {
 		);
 	}
 
-	databaseLogger.info(
+	logger.info(
 		`Opening database connection for migration runner at: ${dbPath}`
 	);
 	const sqlite = new Database(dbPath);
@@ -86,7 +87,7 @@ export function migrateDatabase(): void {
 			const filePath = path.join(migrationsDir, filename);
 			const sql = fs.readFileSync(filePath, 'utf8');
 
-			databaseLogger.info(`Applying database migration: ${filename}`);
+			logger.info(`Applying database migration: ${filename}`);
 
 			sqlite.exec(sql);
 
@@ -96,21 +97,21 @@ export function migrateDatabase(): void {
 		}
 
 		if (appliedCount === 0) {
-			databaseLogger.info('Database is up to date.');
+			logger.info('Database is up to date.');
 		} else {
-			databaseLogger.info(
+			logger.info(
 				`Successfully applied ${appliedCount} database migration${
 					appliedCount === 1 ? '' : 's'
 				}.`
 			);
 		}
 	} catch (error) {
-		databaseLogger.error(
+		logger.error(
 			`CRITICAL: Migration execution failed: ${error instanceof Error ? error.message : String(error)}`
 		);
 		throw error;
 	} finally {
 		sqlite.close();
-		databaseLogger.info('Migration runner closed database connection.');
+		logger.info('Migration runner closed database connection.');
 	}
 }

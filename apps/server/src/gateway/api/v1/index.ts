@@ -1,5 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 
+import { authRouter } from './auth';
+import { integrationsRouter } from './integrations';
 import { usersRouter } from './users';
 import { userSessionsRouter } from './user-sessions';
 import { botCommandsRouter } from './bot-commands';
@@ -11,6 +13,8 @@ import { githubRepositoriesRouter } from './github-repositories';
 
 export const v1Router = new OpenAPIHono();
 
+v1Router.route('/auth', authRouter);
+v1Router.route('/integrations', integrationsRouter);
 v1Router.route('/users', usersRouter);
 v1Router.route('/user-sessions', userSessionsRouter);
 v1Router.route('/bot-commands', botCommandsRouter);

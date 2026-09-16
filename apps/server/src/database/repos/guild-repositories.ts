@@ -1,21 +1,26 @@
-import { and, eq, type InferSelectModel } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { GuildRepository } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { guildRepositories } from '../generated';
 import { BaseRepo } from './base';
+import { guildRepositoryMapper } from '../mappers';
 
-export type GuildRepositoryEntity = InferSelectModel<typeof guildRepositories>;
-
-export class GuildRepositoriesRepo extends BaseRepo<typeof guildRepositories> {
+export class GuildRepositoriesRepo extends BaseRepo<
+	typeof guildRepositories,
+	GuildRepository.Model,
+	GuildRepository.CreateInput,
+	GuildRepository.UpdateInput
+> {
 	constructor(database: typeof db = db) {
-		super(guildRepositories, database);
+		super(guildRepositories, guildRepositoryMapper, database);
 	}
 
 	findByCommandChannelId(
 		commandChannelId: string
-	): GuildRepositoryEntity | undefined {
-		databaseLogger.debug(
+	): GuildRepository.Model | undefined {
+		logger.debug(
 			`Executing findByCommandChannelId with channelId: ${commandChannelId}`
 		);
 		const result = this.db
@@ -25,18 +30,19 @@ export class GuildRepositoriesRepo extends BaseRepo<typeof guildRepositories> {
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(
+			logger.debug(
 				`No guild repository found for command channel id: ${commandChannelId}`
 			);
+			return undefined;
 		}
-		return result;
+		return guildRepositoryMapper.toDomain(result);
 	}
 
 	findByGuildAndGithubRepositoryId(
 		guildId: string,
 		githubRepositoryId: string
-	): GuildRepositoryEntity | undefined {
-		databaseLogger.debug(
+	): GuildRepository.Model | undefined {
+		logger.debug(
 			`Executing findByGuildAndGithubRepositoryId with guildId: ${guildId}, githubRepositoryId: ${githubRepositoryId}`
 		);
 		const result = this.db
@@ -51,33 +57,32 @@ export class GuildRepositoriesRepo extends BaseRepo<typeof guildRepositories> {
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(
+			logger.debug(
 				`No guild repository found for guild: ${guildId}, githubRepositoryId: ${githubRepositoryId}`
 			);
+			return undefined;
 		}
-		return result;
+		return guildRepositoryMapper.toDomain(result);
 	}
 
-	findByGuildId(guildId: string): GuildRepositoryEntity[] {
-		databaseLogger.debug(
-			`Executing findByGuildId with guildId: ${guildId}`
-		);
+	findByGuildId(guildId: string): GuildRepository.Model[] {
+		logger.debug(`Executing findByGuildId with guildId: ${guildId}`);
 		const results = this.db
 			.select()
 			.from(this.table)
 			.where(eq(this.table.guildId, guildId))
 			.all();
 
-		databaseLogger.debug(
+		logger.debug(
 			`Retrieved ${results.length} guild repository(s) for guildId: ${guildId}`
 		);
-		return results;
+		return guildRepositoryMapper.toDomainList(results);
 	}
 
 	findByGithubRepositoryId(
 		githubRepositoryId: string
-	): GuildRepositoryEntity[] {
-		databaseLogger.debug(
+	): GuildRepository.Model[] {
+		logger.debug(
 			`Executing findByGithubRepositoryId with id: ${githubRepositoryId}`
 		);
 		const results = this.db
@@ -86,10 +91,10 @@ export class GuildRepositoriesRepo extends BaseRepo<typeof guildRepositories> {
 			.where(eq(this.table.githubRepositoryId, githubRepositoryId))
 			.all();
 
-		databaseLogger.debug(
+		logger.debug(
 			`Retrieved ${results.length} guild repository(s) for github repository id: ${githubRepositoryId}`
 		);
-		return results;
+		return guildRepositoryMapper.toDomainList(results);
 	}
 }
 

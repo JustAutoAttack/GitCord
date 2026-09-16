@@ -36,33 +36,51 @@ export async function getNotificationChannels(
 		);
 	}
 
-	const settingsMap = new Map<string, string>();
+	const settingsMap = new Map<
+		string,
+		{ systemChannelId: string; notifyOnConnection: boolean }
+	>();
 	for (const setting of allSettings) {
-		if (setting?.guildId && setting?.systemChannelId) {
-			settingsMap.set(setting.guildId, setting.systemChannelId);
+		if (setting?.guildId) {
+			settingsMap.set(setting.guildId, {
+				systemChannelId: setting.systemChannelId,
+				notifyOnConnection: setting.notifyOnConnection ?? true
+			});
 		}
 	}
 
 	for (const guild of client.guilds.cache.values()) {
 		try {
-			let channelId = settingsMap.get(guild.id);
+			let settingRecord = settingsMap.get(guild.id);
 
-			if (!channelId) {
+			if (!settingRecord) {
 				try {
-					const created = await ServerAPIGuildSettingService.create({
-						guildId: guild.id,
-						systemChannelId: guild.systemChannelId ?? ''
-					});
-					channelId = created?.systemChannelId;
+					const fetched =
+						await ServerAPIGuildSettingService.getByGuildId(
+							guild.id
+						);
+					if (fetched) {
+						settingRecord = {
+							systemChannelId: fetched.systemChannelId,
+							notifyOnConnection:
+								fetched.notifyOnConnection ?? true
+						};
+					}
 				} catch {
-					// Ignore creation failure if already exists or server error
+					// Ignore fetch failure
 				}
 			}
 
+			if (!settingRecord) {
+				continue;
+			}
+
+			if (settingRecord.notifyOnConnection === false) {
+				continue;
+			}
+
+			const channelId = settingRecord.systemChannelId;
 			if (!channelId) {
-				logger.warn(
-					`No system channel configured for guild: ${guild.id} (${guild.name})`
-				);
 				continue;
 			}
 
@@ -168,12 +186,22 @@ async function handleGuildCreate(guild: Guild): Promise<void> {
 	logger.info(`Joined new guild: ${guild.id} (${guild.name})`);
 
 	try {
-		await ServerAPIGuildSettingService.create({
-			guildId: guild.id,
-			systemChannelId: guild.systemChannelId ?? ''
-		}).catch(() => {
-			// Ignore if settings already exist
-		});
+		let setting;
+		try {
+			setting = await ServerAPIGuildSettingService.getByGuildId(guild.id);
+		} catch {
+			// Not found or network error, proceed to create
+		}
+
+		if (!setting && guild.systemChannelId) {
+			await ServerAPIGuildSettingService.create({
+				guildId: guild.id,
+				systemChannelId: guild.systemChannelId,
+				notifyOnConnection: true
+			}).catch(() => {
+				// Ignore if settings already exist
+			});
+		}
 
 		const systemChannel = guild.systemChannel;
 		if (!systemChannel || !systemChannel.isTextBased()) {

@@ -1,12 +1,12 @@
 import type { MiddlewareHandler } from 'hono';
-import { httpLogger } from '../loggers';
+import { appLogger } from '../loggers';
 
 export const httpLoggerMiddleware = (): MiddlewareHandler => {
 	return async (ctx, next) => {
 		const start = performance.now();
 		const { method, path } = ctx.req;
 
-		httpLogger.info(`Incoming request: ${method} ${path}`);
+		appLogger.info(`Incoming request: ${method} ${path}`);
 
 		await next();
 
@@ -14,15 +14,15 @@ export const httpLoggerMiddleware = (): MiddlewareHandler => {
 		const status = ctx.res.status;
 
 		if (status >= 500) {
-			httpLogger.error(
+			appLogger.error(
 				`Request failed: ${method} ${path} - Status: ${status} - Duration: ${durationMs}ms`
 			);
 		} else if (status >= 400) {
-			httpLogger.warn(
+			appLogger.warn(
 				`Request client error: ${method} ${path} - Status: ${status} - Duration: ${durationMs}ms`
 			);
 		} else {
-			httpLogger.info(
+			appLogger.info(
 				`Request completed: ${method} ${path} - Status: ${status} - Duration: ${durationMs}ms`
 			);
 		}

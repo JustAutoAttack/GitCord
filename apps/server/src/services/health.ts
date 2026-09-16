@@ -1,9 +1,9 @@
-import { httpLogger } from '@core';
+import { appLogger } from '@core';
 import { checkDbHealth, DbHealthResult } from '@database';
 
 export class HealthService {
 	getLiveness() {
-		httpLogger.debug('Liveness probe check requested.');
+		appLogger.debug('Liveness probe check requested.');
 		return {
 			success: true,
 			message: 'Server process is responsive',
@@ -17,11 +17,11 @@ export class HealthService {
 		checks: { database: DbHealthResult };
 		timestamp: string;
 	} {
-		httpLogger.debug('Readiness probe check requested.');
+		appLogger.debug('Readiness probe check requested.');
 		const dbCheck = checkDbHealth();
 
 		if (!dbCheck.success) {
-			httpLogger.warn(
+			appLogger.warn(
 				`Readiness check failed: Database connection issue detected. Message: ${dbCheck.message}`
 			);
 		}
@@ -45,11 +45,11 @@ export class HealthService {
 		timestamp: string;
 		checks: { database: DbHealthResult };
 	} {
-		httpLogger.debug('Full health overview requested.');
+		appLogger.debug('Full health overview requested.');
 		const dbCheck = checkDbHealth();
 
 		if (!dbCheck.success) {
-			httpLogger.error(
+			appLogger.error(
 				`System health degradation detected: Database failure during full health overview. Message: ${dbCheck.message}`
 			);
 		}

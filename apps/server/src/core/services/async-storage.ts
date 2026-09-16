@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { AppError, ErrorCode } from '@core';
 import type { RequestContextData } from '../types';
 
-class AsyncLocalStorageService {
+export class AsyncLocalStorageService {
 	private readonly storage = new AsyncLocalStorage<RequestContextData>();
 
 	public run<T>(context: RequestContextData, callback: () => T): T {

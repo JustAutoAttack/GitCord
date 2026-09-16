@@ -3,8 +3,9 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
-import { ENV, databaseLogger } from '@core';
+import { ENV } from '@core';
 import * as schema from './generated/schema';
+import { logger } from './logger';
 
 export interface DatabaseClient {
 	sqlite: Database.Database;
@@ -21,7 +22,7 @@ export function createDatabase(databaseUrl: string): DatabaseClient {
 	const isMemoryDatabase =
 		databaseUrl === ':memory:' || databaseUrl === 'file::memory:';
 
-	databaseLogger.info(
+	logger.info(
 		`Initializing database connection (mode: ${isMemoryDatabase ? 'in-memory' : 'file-backed'})...`
 	);
 
@@ -34,7 +35,7 @@ export function createDatabase(databaseUrl: string): DatabaseClient {
 	sqlite.pragma('foreign_keys = ON');
 	sqlite.pragma('synchronous = NORMAL');
 
-	databaseLogger.info(
+	logger.info(
 		'SQLite pragmas applied (WAL, foreign_keys=ON, synchronous=NORMAL).'
 	);
 
@@ -42,7 +43,7 @@ export function createDatabase(databaseUrl: string): DatabaseClient {
 		schema
 	});
 
-	databaseLogger.info('Drizzle ORM client successfully initialized.');
+	logger.info('Drizzle ORM client successfully initialized.');
 
 	return {
 		sqlite,
@@ -59,11 +60,11 @@ function createFileDatabase(databaseUrl: string): Database.Database {
 	const dbDir = path.dirname(dbPath);
 
 	if (!fs.existsSync(dbDir)) {
-		databaseLogger.info(`Creating missing database directory: ${dbDir}`);
+		logger.info(`Creating missing database directory: ${dbDir}`);
 		fs.mkdirSync(dbDir, { recursive: true });
 	}
 
-	databaseLogger.info(`Opening file-backed SQLite database at: ${dbPath}`);
+	logger.info(`Opening file-backed SQLite database at: ${dbPath}`);
 	return new Database(dbPath);
 }
 

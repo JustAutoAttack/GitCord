@@ -2313,11 +2313,13 @@ export interface paths {
         };
         /**
          * List guild settings
-         * @description Returns all guild settings configurations.
+         * @description Returns all guild settings configurations, optionally filtered by notifyOnConnection.
          */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    notifyOnConnection?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -2337,6 +2339,11 @@ export interface paths {
                             guildId: string;
                             /** @example 123456789012345679 */
                             systemChannelId: string;
+                            /**
+                             * @description Whether to notify on connection
+                             * @example true
+                             */
+                            notifyOnConnection: boolean;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -2365,6 +2372,11 @@ export interface paths {
                         guildId: string;
                         /** @example 123456789012345679 */
                         systemChannelId: string;
+                        /**
+                         * @description Whether to notify on connection
+                         * @example true
+                         */
+                        notifyOnConnection?: boolean;
                     };
                 };
             };
@@ -2382,6 +2394,11 @@ export interface paths {
                             guildId: string;
                             /** @example 123456789012345679 */
                             systemChannelId: string;
+                            /**
+                             * @description Whether to notify on connection
+                             * @example true
+                             */
+                            notifyOnConnection: boolean;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -2446,6 +2463,11 @@ export interface paths {
                             guildId: string;
                             /** @example 123456789012345679 */
                             systemChannelId: string;
+                            /**
+                             * @description Whether to notify on connection
+                             * @example true
+                             */
+                            notifyOnConnection: boolean;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -2524,6 +2546,11 @@ export interface paths {
                         guildId?: string;
                         /** @example 123456789012345679 */
                         systemChannelId?: string;
+                        /**
+                         * @description Whether to notify on connection
+                         * @example true
+                         */
+                        notifyOnConnection?: boolean;
                     };
                 };
             };
@@ -2541,6 +2568,11 @@ export interface paths {
                             guildId: string;
                             /** @example 123456789012345679 */
                             systemChannelId: string;
+                            /**
+                             * @description Whether to notify on connection
+                             * @example true
+                             */
+                            notifyOnConnection: boolean;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -2601,6 +2633,11 @@ export interface paths {
                             guildId: string;
                             /** @example 123456789012345679 */
                             systemChannelId: string;
+                            /**
+                             * @description Whether to notify on connection
+                             * @example true
+                             */
+                            notifyOnConnection: boolean;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -2660,6 +2697,11 @@ export interface paths {
                             guildId: string;
                             /** @example 123456789012345679 */
                             systemChannelId: string;
+                            /**
+                             * @description Whether to notify on connection
+                             * @example true
+                             */
+                            notifyOnConnection: boolean;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -3185,8 +3227,11 @@ export interface webhooks {
                         /** @example 1723917300000 */
                         timestamp: number;
                         data: {
-                            /** @example guild_settings */
-                            tableName: string;
+                            /**
+                             * @example guild_settings
+                             * @enum {string}
+                             */
+                            tableName: "users" | "user_sessions" | "github_app_installations" | "github_repositories" | "bot_commands" | "guild_user_permissions" | "guild_repositories" | "guild_settings";
                             /**
                              * @example UPDATE
                              * @enum {string}

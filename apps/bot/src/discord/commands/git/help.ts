@@ -1,9 +1,14 @@
 import {
 	ChatInputCommandInteraction,
 	SlashCommandSubcommandBuilder,
-	MessageFlags
+	MessageFlags,
+	ContainerBuilder,
+	TextDisplayBuilder,
+	SeparatorBuilder,
+	SeparatorSpacingSize
 } from 'discord.js';
 
+import { CONFIG } from '@core';
 import { logger } from '../../logger';
 import { COMMAND_DOCS } from '../constants';
 
@@ -33,29 +38,64 @@ export async function executeHelp(
 	if (query) {
 		const match = (COMMAND_DOCS as Record<string, any>)[query];
 		if (!match) {
+			const container = new ContainerBuilder().addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					`Could not find documentation for \`/git ${query}\`. Use \`/git help\` to view all commands.`
+				)
+			);
 			await interaction.reply({
-				content: `Could not find documentation for \`/git ${query}\`. Use \`/git help\` to view all commands.`,
-				flags: [MessageFlags.Ephemeral]
+				components: [container],
+				flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 			});
 			return;
 		}
 
+		const container = new ContainerBuilder()
+			.setAccentColor(CONFIG.github.colors.push ?? 0x2b2d31)
+			.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(`### ${match.title}`)
+			)
+			.addSeparatorComponents(
+				new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+			)
+			.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(
+					[
+						`• **Description:** ${match.description}`,
+						`• **Syntax:** \`${match.syntax}\``,
+						`• **Details:** ${match.details}`
+					].join('\n')
+				)
+			);
+
 		await interaction.reply({
-			content: `**${match.title}**\n\n• **Description:** ${match.description}\n• **Syntax:** \`${match.syntax}\`\n• **Details:** ${match.details}`,
-			flags: [MessageFlags.Ephemeral]
+			components: [container],
+			flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 		});
 		return;
 	}
 
-	let summary = '**GitCord Command Reference**\n\n';
+	let summary = '';
 	for (const [key, doc] of Object.entries(COMMAND_DOCS)) {
 		summary += `• **\`/git ${key}\`** — ${doc.description}\n`;
 	}
 	summary +=
-		'\n*Use `/git help <command>` (e.g., `/git help remote add`) for detailed syntax and usage.*';
+		'\n-# Use \`/git help <command>\` (e.g., \`/git help remote add\`) for detailed syntax and usage.';
+
+	const container = new ContainerBuilder()
+		.setAccentColor(CONFIG.github.colors.push ?? 0x2b2d31)
+		.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent('### GitCord Command Reference')
+		)
+		.addSeparatorComponents(
+			new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+		)
+		.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(summary.trim())
+		);
 
 	await interaction.reply({
-		content: summary,
-		flags: [MessageFlags.Ephemeral]
+		components: [container],
+		flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
 	});
 }

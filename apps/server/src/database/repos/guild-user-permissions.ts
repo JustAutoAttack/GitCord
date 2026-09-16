@@ -1,42 +1,41 @@
-import { and, eq, type InferSelectModel } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { GuildUserPermission } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { guildUserPermissions } from '../generated';
 import { BaseRepo } from './base';
-
-export type GuildUserPermissionEntity = InferSelectModel<
-	typeof guildUserPermissions
->;
+import { guildUserPermissionMapper } from '../mappers';
 
 export class GuildUserPermissionsRepo extends BaseRepo<
-	typeof guildUserPermissions
+	typeof guildUserPermissions,
+	GuildUserPermission.Model,
+	GuildUserPermission.CreateInput,
+	GuildUserPermission.UpdateInput
 > {
 	constructor(database: typeof db = db) {
-		super(guildUserPermissions, database);
+		super(guildUserPermissions, guildUserPermissionMapper, database);
 	}
 
-	findByGuildId(guildId: string): GuildUserPermissionEntity[] {
-		databaseLogger.debug(
-			`Executing findByGuildId with guildId: ${guildId}`
-		);
+	findByGuildId(guildId: string): GuildUserPermission.Model[] {
+		logger.debug(`Executing findByGuildId with guildId: ${guildId}`);
 		const results = this.db
 			.select()
 			.from(this.table)
 			.where(eq(this.table.guildId, guildId))
 			.all();
 
-		databaseLogger.debug(
+		logger.debug(
 			`Retrieved ${results.length} permission record(s) for guildId: ${guildId}`
 		);
-		return results;
+		return guildUserPermissionMapper.toDomainList(results);
 	}
 
 	findByGuildAndUser(
 		guildId: string,
 		discordUserId: string
-	): GuildUserPermissionEntity[] {
-		databaseLogger.debug(
+	): GuildUserPermission.Model[] {
+		logger.debug(
 			`Executing findByGuildAndUser with guildId: ${guildId}, discordUserId: ${discordUserId}`
 		);
 		const results = this.db
@@ -50,18 +49,18 @@ export class GuildUserPermissionsRepo extends BaseRepo<
 			)
 			.all();
 
-		databaseLogger.debug(
+		logger.debug(
 			`Retrieved ${results.length} permission record(s) for user ${discordUserId} in guild ${guildId}`
 		);
-		return results;
+		return guildUserPermissionMapper.toDomainList(results);
 	}
 
 	findByGuildUserAndCommand(
 		guildId: string,
 		discordUserId: string,
 		commandId: string
-	): GuildUserPermissionEntity | undefined {
-		databaseLogger.debug(
+	): GuildUserPermission.Model | undefined {
+		logger.debug(
 			`Executing findByGuildUserAndCommand for guildId: ${guildId}, discordUserId: ${discordUserId}, commandId: ${commandId}`
 		);
 		const result = this.db
@@ -77,11 +76,12 @@ export class GuildUserPermissionsRepo extends BaseRepo<
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(
+			logger.debug(
 				`No permission record found for user ${discordUserId} on command ${commandId} in guild ${guildId}`
 			);
+			return undefined;
 		}
-		return result;
+		return guildUserPermissionMapper.toDomain(result);
 	}
 }
 

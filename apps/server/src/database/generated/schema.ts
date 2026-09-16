@@ -1,4 +1,4 @@
-import { sqliteTable, AnySQLiteColumn, uniqueIndex, text, foreignKey, integer } from "drizzle-orm/sqlite-core"
+import { sqliteTable, AnySQLiteColumn, uniqueIndex, text, foreignKey, integer, numeric } from "drizzle-orm/sqlite-core"
   import { sql } from "drizzle-orm"
 
 export const users = sqliteTable("users", {
@@ -91,6 +91,7 @@ export const guildSettings = sqliteTable("guild_settings", {
 	id: text().primaryKey().notNull(),
 	guildId: text("guild_id").notNull(),
 	systemChannelId: text("system_channel_id").notNull(),
+	notifyOnConnection: numeric("notify_on_connection").notNull(),
 	updatedAt: text("updated_at").notNull(),
 	createdAt: text("created_at").notNull(),
 },

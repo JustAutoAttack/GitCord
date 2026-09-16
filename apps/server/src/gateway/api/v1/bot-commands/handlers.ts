@@ -1,6 +1,6 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 
-import { AppError, ErrorCode, httpLogger } from '@core';
+import { AppError, ErrorCode } from '@core';
 import { botCommandsService } from '@services';
 import {
 	createRoute,
@@ -10,9 +10,10 @@ import {
 	listRoute,
 	updateRoute
 } from './routes';
+import { logger } from '../../logger';
 
 export const listHandler: RouteHandler<typeof listRoute> = async (ctx) => {
-	httpLogger.debug('API Request: List all bot commands');
+	logger.debug('API Request: List all bot commands');
 	const commands = await botCommandsService.list();
 	return ctx.json(commands, 200);
 };

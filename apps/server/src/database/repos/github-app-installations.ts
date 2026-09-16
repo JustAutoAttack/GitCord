@@ -1,25 +1,26 @@
-import { eq, type InferSelectModel } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { databaseLogger } from '@core';
+import type { GithubAppInstallation } from '@domain';
+import { logger } from '../logger';
 import { db } from '../client';
 import { githubAppInstallations } from '../generated';
 import { BaseRepo } from './base';
-
-export type GithubAppInstallationEntity = InferSelectModel<
-	typeof githubAppInstallations
->;
+import { githubAppInstallationMapper } from '../mappers';
 
 export class GithubAppInstallationsRepo extends BaseRepo<
-	typeof githubAppInstallations
+	typeof githubAppInstallations,
+	GithubAppInstallation.Model,
+	GithubAppInstallation.CreateInput,
+	GithubAppInstallation.UpdateInput
 > {
 	constructor(database: typeof db = db) {
-		super(githubAppInstallations, database);
+		super(githubAppInstallations, githubAppInstallationMapper, database);
 	}
 
 	findByInstallationId(
 		installationId: number
-	): GithubAppInstallationEntity | undefined {
-		databaseLogger.debug(
+	): GithubAppInstallation.Model | undefined {
+		logger.debug(
 			`Executing findByInstallationId with installationId: ${installationId}`
 		);
 		const result = this.db
@@ -29,11 +30,12 @@ export class GithubAppInstallationsRepo extends BaseRepo<
 			.get();
 
 		if (!result) {
-			databaseLogger.debug(
+			logger.debug(
 				`No GitHub app installation found for installation ID: ${installationId}`
 			);
+			return undefined;
 		}
-		return result;
+		return githubAppInstallationMapper.toDomain(result);
 	}
 }
 
