@@ -1,14 +1,4 @@
-import path from 'path';
-import dotenv from 'dotenv';
 import { z } from 'zod';
-
-const nodeEnv = process.env.NODE_ENV || 'development';
-const envFile =
-	nodeEnv === 'production' ? '.env.production' : '.env.development';
-
-dotenv.config({
-	path: path.resolve(process.cwd(), envFile)
-});
 
 const envSchema = z.object({
 	SERVER_DOCS_URL: z
@@ -19,8 +9,33 @@ const envSchema = z.object({
 
 export type EnvDTO = z.infer<typeof envSchema>;
 
-export function getEnv(customEnv = process.env): EnvDTO {
-	const _env = envSchema.safeParse(customEnv);
+export function getEnv(customEnv: Record<string, unknown> = {}): EnvDTO {
+	// If we are in the browser, fall back gracefully to defaults or window config
+	if (typeof window !== 'undefined') {
+		return envSchema.parse({});
+	}
+
+	// Only load dotenv and resolve paths if running in a Node.js environment
+	try {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const path = require('node:path');
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const dotenv = require('dotenv');
+
+		const nodeEnv = process.env.NODE_ENV || 'development';
+		const envFile =
+			nodeEnv === 'production' ? '.env.production' : '.env.development';
+
+		dotenv.config({
+			path: path.resolve(process.cwd(), envFile)
+		});
+	} catch {
+		// Fallback if require is unavailable
+	}
+
+	const targetEnv =
+		Object.keys(customEnv).length > 0 ? customEnv : process.env;
+	const _env = envSchema.safeParse(targetEnv);
 
 	if (!_env.success) {
 		throw new Error(
@@ -31,4 +46,6 @@ export function getEnv(customEnv = process.env): EnvDTO {
 	return _env.data;
 }
 
-export const ENV = getEnv();
+// Lazy-evaluated or guarded export to prevent top-level browser crashes
+export const ENV =
+	typeof window !== 'undefined' ? envSchema.parse({}) : getEnv();

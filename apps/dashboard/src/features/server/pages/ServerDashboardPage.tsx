@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 
-export const ServerDashboardView = () => {
+export const ServerDashboardPage = () => {
 	const { serverId } = useParams();
 	const navigate = useNavigate();
 

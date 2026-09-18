@@ -1,14 +1,14 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 
-import { discordAuthRoute, discordCallbackRoute, signOutRoute } from './routes';
+import { signUpRoute, signOutRoute, discordCallbackRoute } from './routes';
 import {
-	discordAuthHandler,
-	discordCallbackHandler,
-	signOutHandler
+	signUpHandler,
+	signOutHandler,
+	discordCallbackHandler
 } from './handlers';
 
 export const authRouter = new OpenAPIHono();
 
-authRouter.openapi(discordAuthRoute, discordAuthHandler);
-authRouter.openapi(discordCallbackRoute, discordCallbackHandler);
+authRouter.openapi(signUpRoute, signUpHandler);
 authRouter.openapi(signOutRoute, signOutHandler);
+authRouter.openapi(discordCallbackRoute, discordCallbackHandler);

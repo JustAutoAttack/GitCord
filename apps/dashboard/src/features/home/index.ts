@@ -1,1 +1,3 @@
-export * from './HomeView';
+export * from './pages';
+export * from './useHome';
+export * from './HomeProvider';

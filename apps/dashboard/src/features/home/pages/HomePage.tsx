@@ -33,7 +33,7 @@ const INITIAL_SERVERS: DiscordGuild[] = [
 	}
 ];
 
-export const HomeView = () => {
+export const HomePage = () => {
 	const navigate = useNavigate();
 	const [servers] = useState<DiscordGuild[]>(INITIAL_SERVERS);
 	const [isModalOpen, setIsModalOpen] = useState(false);

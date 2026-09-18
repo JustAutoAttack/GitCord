@@ -1,34 +1,23 @@
 import { createRoute as createHonoRoute } from '@hono/zod-openapi';
 
 import { requireAuth } from '@core';
+
 import { response } from '../../../utils';
 import { ResponseSchema } from '../base-schemas';
-import { DiscordCallbackQuerySchema, AuthSuccessSchema } from './schemas';
 
-export const discordAuthRoute = createHonoRoute({
+import { DiscordCallbackQuerySchema, SignUpQuerySchema } from './schemas';
+
+export const signUpRoute = createHonoRoute({
 	method: 'get',
-	path: '/discord',
+	path: '/sign-up',
 	tags: ['Auth'],
 	summary: 'Redirect to Discord OAuth',
 	description: 'Initiates Discord OAuth2 authentication flow.',
-	responses: {
-		302: response('Redirects to Discord')
-	}
-});
-
-export const discordCallbackRoute = createHonoRoute({
-	method: 'get',
-	path: '/discord/callback',
-	tags: ['Auth'],
-	summary: 'Discord OAuth Callback',
-	description:
-		'Handles the OAuth callback from Discord, logs in or registers the user, and creates/updates their session.',
 	request: {
-		query: DiscordCallbackQuerySchema
+		query: SignUpQuerySchema
 	},
 	responses: {
-		200: response('Successfully authenticated', AuthSuccessSchema),
-		401: response('Authentication failed')
+		302: response('Redirects to Discord')
 	}
 });
 
@@ -42,5 +31,21 @@ export const signOutRoute = createHonoRoute({
 	responses: {
 		200: response('Signed out successfully', ResponseSchema),
 		401: response('Unauthorized')
+	}
+});
+
+export const discordCallbackRoute = createHonoRoute({
+	method: 'get',
+	path: '/discord/callback',
+	tags: ['Auth'],
+	summary: 'Discord OAuth Callback',
+	description:
+		'Handles the OAuth callback from Discord, logs in or registers the user, creates their session, and redirects to the frontend.',
+	request: {
+		query: DiscordCallbackQuerySchema
+	},
+	responses: {
+		302: response('Redirects to frontend application'),
+		401: response('Authentication failed')
 	}
 });

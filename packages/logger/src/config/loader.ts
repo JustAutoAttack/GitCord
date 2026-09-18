@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { parse } from 'smol-toml';
 
 import { DEFAULT_LOGGER_CONFIG } from './defaults';
@@ -12,10 +10,7 @@ import type {
 	TimestampFormat
 } from '../types';
 
-const CONFIG_FILENAMES = [
-	'gitcord-logger.toml',
-	path.join('config', 'gitcord-logger.toml')
-] as const;
+const CONFIG_FILENAME = 'gitcord-logger.toml';
 
 let cachedConfig: LoggerConfig | undefined;
 
@@ -31,18 +26,6 @@ function cloneDefaultConfig(): LoggerConfig {
 	};
 }
 
-function findConfigFile(): string | undefined {
-	for (const filename of CONFIG_FILENAMES) {
-		const filePath = path.resolve(process.cwd(), filename);
-
-		if (fs.existsSync(filePath)) {
-			return filePath;
-		}
-	}
-
-	return undefined;
-}
-
 function parseTimestampFormat(value: unknown): TimestampFormat {
 	if (typeof value !== 'string') {
 		return DEFAULT_LOGGER_CONFIG.timestampFormat;
@@ -51,13 +34,10 @@ function parseTimestampFormat(value: unknown): TimestampFormat {
 	switch (value.trim().toUpperCase()) {
 		case 'ISO':
 			return 'ISO';
-
 		case 'LOCALE':
 			return 'LOCALE';
-
 		case 'UNIX':
 			return 'UNIX';
-
 		default:
 			return DEFAULT_LOGGER_CONFIG.timestampFormat;
 	}
@@ -137,29 +117,34 @@ export function loadLoggerConfig(): LoggerConfig {
 		return cachedConfig;
 	}
 
-	const configPath = findConfigFile();
-
-	if (!configPath) {
+	// Safely short-circuit if running in a browser environment
+	if (typeof window !== 'undefined') {
 		cachedConfig = cloneDefaultConfig();
 		return cachedConfig;
 	}
 
 	try {
-		const content = fs.readFileSync(configPath, 'utf8');
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const fs = require('node:fs');
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const path = require('node:path');
 
-		cachedConfig = parseConfig(content);
+		const filePath = path.resolve(process.cwd(), CONFIG_FILENAME);
 
-		return cachedConfig;
+		if (fs.existsSync(filePath)) {
+			const content = fs.readFileSync(filePath, 'utf8');
+			cachedConfig = parseConfig(content);
+			return cachedConfig;
+		}
 	} catch (error) {
 		console.error(
-			`[Logger] Failed to load configuration from ${configPath}:`,
+			`[Logger] Failed to load configuration from ${CONFIG_FILENAME}:`,
 			error
 		);
-
-		cachedConfig = cloneDefaultConfig();
-
-		return cachedConfig;
 	}
+
+	cachedConfig = cloneDefaultConfig();
+	return cachedConfig;
 }
 
 export function resetLoggerConfig(): void {

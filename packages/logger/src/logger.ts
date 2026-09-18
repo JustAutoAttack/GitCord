@@ -1,9 +1,13 @@
-import path from 'node:path';
 import { loadLoggerConfig } from './config';
+import { DEFAULT_LOGGER_CONFIG } from './config/defaults';
 import { LogLevel, parseLogLevel } from './levels';
-import { colorize, getTimestamp, parseHex } from './utils';
-import { getCallerInfo } from './utils/caller';
-import { parseHighlights } from './utils/highlighter';
+import {
+	colorize,
+	getTimestamp,
+	parseHex,
+	getCallerInfo,
+	parseHighlights
+} from './utils';
 import type {
 	ILogger,
 	LoggerConfig,
@@ -35,8 +39,21 @@ export class Logger implements ILogger {
 			this.color !== undefined
 				? colorize(rawPrefix, this.color)
 				: rawPrefix;
-		this.config = loadLoggerConfig();
-		this.homeDir = options.home ? path.resolve(options.home) : undefined;
+
+		// Guard configuration and path resolution for browser environments
+		if (typeof window !== 'undefined') {
+			this.config = DEFAULT_LOGGER_CONFIG;
+			this.homeDir = options.home;
+		} else {
+			this.config = loadLoggerConfig();
+			// Dynamically require node:path only on the server side
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
+			const path = require('node:path');
+			this.homeDir = options.home
+				? path.resolve(options.home)
+				: undefined;
+		}
+
 		this.showFilePath =
 			options.showFilePath ?? this.config.showFilePath ?? false;
 		this.showLoc = options.showLoc ?? this.config.showLoc ?? false;

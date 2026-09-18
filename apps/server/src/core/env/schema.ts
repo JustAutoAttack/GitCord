@@ -19,6 +19,7 @@ export const envSchema = z.object({
 	DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 	BOT_WEBHOOK_URL: z.string().url('BOT_WEBHOOK_URL must be a valid URL'),
 	BOT_WEBHOOK_SECRET: z.string().min(1, 'BOT_WEBHOOK_SECRET is required'),
+	DASHBOARD_URL: z.string().min(1, 'DASHBOARD_URL is required'),
 	GITHUB_APP_ID: z.coerce.number().min(1, 'GITHUB_APP_ID is required'),
 	GITHUB_APP_SLUG: z.string().min(1, 'GITHUB_APP_SLUG is required'),
 	GITHUB_CLIENT_ID: z.string().min(1, 'GITHUB_CLIENT_ID is required'),

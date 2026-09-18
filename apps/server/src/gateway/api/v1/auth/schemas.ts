@@ -1,9 +1,22 @@
 import { z } from '@hono/zod-openapi';
 
+export const AuthClientSchema = z.enum(['browser', 'tauri']);
+
+export const SignUpQuerySchema = z.object({
+	client: AuthClientSchema.openapi({
+		example: 'browser',
+		description: 'Client initiating the authentication flow'
+	})
+});
+
 export const DiscordCallbackQuerySchema = z.object({
 	code: z.string().min(1).openapi({
 		example: 'discord_auth_code_123',
 		description: 'Discord OAuth authorization code'
+	}),
+	state: z.string().min(1).openapi({
+		example: '...',
+		description: 'OAuth state containing the originating client'
 	})
 });
 

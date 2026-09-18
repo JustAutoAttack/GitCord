@@ -30,8 +30,6 @@
 			"@features/*": ["./src/features/*"],
 			"@lib/*": ["./src/lib/*"],
 			"@lib*": ["./src/lib/index.ts"],
-			"@router/*": ["./src/router/*"],
-			"@router*": ["./src/router/index.ts"],
 			"@types/*": ["./src/types/*"],
 			"@types*": ["./src/types/index.ts"]
 		}

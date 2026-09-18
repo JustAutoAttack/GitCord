@@ -1,1 +1,1 @@
-export * from './ServerDashboardView';
+export * from './pages';

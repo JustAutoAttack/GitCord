@@ -14,6 +14,29 @@ export type HealthLiveResponse =
 export type HealthReadyResponse =
 	paths['/api/health/ready']['get']['responses'][200]['content']['application/json'];
 
+// Auth
+export type AuthSignUpQuery =
+	paths['/api/v1/auth/sign-up']['get']['parameters']['query'];
+
+export type AuthSignUpResponse =
+	paths['/api/v1/auth/sign-up']['get']['responses'][302];
+
+export type AuthSignOutResponse =
+	paths['/api/v1/auth/sign-out']['post']['responses'][200]['content']['application/json'];
+
+export type AuthDiscordCallbackQuery =
+	paths['/api/v1/auth/discord/callback']['get']['parameters']['query'];
+
+export type AuthDiscordCallbackResponse =
+	paths['/api/v1/auth/discord/callback']['get']['responses'][302];
+
+// Integrations
+export type DiscordInstallCallbackQuery =
+	paths['/api/v1/integrations/discord/install-callback']['get']['parameters']['query'];
+
+export type DiscordInstallCallbackResponse =
+	paths['/api/v1/integrations/discord/install-callback']['get']['responses'][200]['content']['application/json'];
+
 // Users
 export type UserResponse =
 	paths['/api/v1/users']['get']['responses'][200]['content']['application/json'];
@@ -156,11 +179,11 @@ export type DeleteGuildRepositoryResponse =
 
 // GitHub Incoming Webhook
 export type GitHubWebhookRequest = NonNullable<
-    paths['/webhook/github']['post']['requestBody']
+	paths['/webhook/github']['post']['requestBody']
 >['content']['application/json'];
 
 export type GitHubWebhookResponse =
-    paths['/webhook/github']['post']['responses'][200]['content']['application/json'];
+	paths['/webhook/github']['post']['responses'][200]['content']['application/json'];
 
 // ===
 // Webhooks
