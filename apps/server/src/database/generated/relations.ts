@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { users, userSessions, githubAppInstallations, githubRepositories, botCommands, guildUserPermissions, guildRepositories } from "./schema";
+import { users, userSessions, discordSessions, githubAppInstallations, githubRepositories, botCommands, guildUserPermissions, guildRepositories } from "./schema";
 
 export const userSessionsRelations = relations(userSessions, ({one}) => ({
 	user: one(users, {
@@ -10,6 +10,14 @@ export const userSessionsRelations = relations(userSessions, ({one}) => ({
 
 export const usersRelations = relations(users, ({many}) => ({
 	userSessions: many(userSessions),
+	discordSessions: many(discordSessions),
+}));
+
+export const discordSessionsRelations = relations(discordSessions, ({one}) => ({
+	user: one(users, {
+		fields: [discordSessions.userId],
+		references: [users.id]
+	}),
 }));
 
 export const githubRepositoriesRelations = relations(githubRepositories, ({one, many}) => ({

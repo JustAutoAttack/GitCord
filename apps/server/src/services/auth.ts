@@ -1,102 +1,75 @@
 import {
 	AppError,
 	ErrorCode,
-	ENV,
 	appLogger,
-	asyncLocalStorageService
+	asyncLocalStorageService,
+	cryptoService,
+	jwtService
 } from '@core';
-import type { User } from '@domain';
+import type { OAuthState, User } from '@domain';
+import { discordAuthService } from './discord-auth';
+import { discordSessionsService } from './discord-sessions';
+import { oauthStatesService } from './oauth-states';
 import { usersService } from './users';
 import { userSessionsService } from './user-sessions';
 
-type AuthClient = 'browser' | 'tauri';
-
-interface DiscordTokenResponse {
-	access_token: string;
-	refresh_token: string;
-	expires_in: number;
-}
-
-interface DiscordUserProfile {
-	id: string;
-	username: string;
-	avatar: string | null;
-}
-
 export class AuthService {
-	getDiscordAuthUrl(client: AuthClient): string {
+	startDiscordAuthentication(client: OAuthState.Client): {
+		authorizationUrl: string;
+		browserBinding: string | null;
+	} {
 		const requestId = asyncLocalStorageService.getServerRequestId();
 
 		appLogger.debug(
-			`[Request ID: ${requestId}] Generating Discord OAuth URL for ${client} client`
+			`[Request ID: ${requestId}] Starting Discord authentication for ${client} client`
 		);
 
-		const params = new URLSearchParams({
-			client_id: ENV.DISCORD_CLIENT_ID,
-			redirect_uri: ENV.DISCORD_REDIRECT_URI,
-			response_type: 'code',
-			scope: 'identify',
-			state: client
-		});
+		const oauthState = oauthStatesService.create(client);
 
-		return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+		const authorizationUrl = discordAuthService.getAuthorizationUrl(
+			oauthState.state
+		);
+
+		return {
+			authorizationUrl,
+			browserBinding: oauthState.browserBinding
+		};
 	}
 
-	async handleDiscordCallback(code: string): Promise<User.Model> {
+	async handleDiscordCallback(
+		code: string,
+		state: string,
+		browserBinding: string | null
+	): Promise<{
+		user: User.Model;
+		client: OAuthState.Client;
+	}> {
 		const requestId = asyncLocalStorageService.getServerRequestId();
 
 		appLogger.debug(
-			`[Req: ${requestId}] Processing Discord OAuth code exchange`
+			`[Req: ${requestId}] Processing Discord OAuth callback`
 		);
 
-		const tokenResponse = await fetch(
-			'https://discord.com/api/oauth2/token',
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
-				},
-				body: new URLSearchParams({
-					client_id: ENV.DISCORD_CLIENT_ID,
-					client_secret: ENV.DISCORD_CLIENT_SECRET,
-					grant_type: 'authorization_code',
-					code,
-					redirect_uri: ENV.DISCORD_REDIRECT_URI
-				})
-			}
+		/*
+		 * Validate and consume the OAuth state before exchanging
+		 * the authorization code.
+		 *
+		 * This establishes that the callback belongs to an
+		 * authentication flow that GitCord actually initiated.
+		 */
+		const oauthState = oauthStatesService.consume(state, browserBinding);
+
+		const discordTokens = await discordAuthService.exchangeCode(code);
+
+		const discordUser = await discordAuthService.getUser(
+			discordTokens.accessToken
 		);
-
-		if (!tokenResponse.ok) {
-			throw new AppError(
-				ErrorCode.UNAUTHORIZED,
-				'Failed to authenticate with Discord'
-			);
-		}
-
-		const tokenData = (await tokenResponse.json()) as DiscordTokenResponse;
-
-		const userResponse = await fetch('https://discord.com/api/users/@me', {
-			headers: {
-				Authorization: `Bearer ${tokenData.access_token}`
-			}
-		});
-
-		if (!userResponse.ok) {
-			throw new AppError(
-				ErrorCode.UNAUTHORIZED,
-				'Failed to fetch Discord user profile'
-			);
-		}
-
-		const discordUser = (await userResponse.json()) as DiscordUserProfile;
 
 		const avatarUrl = discordUser.avatar
 			? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
 			: null;
 
-		let user: User.Model | null = await usersService.getByDiscordId(
-			discordUser.id
-		);
+		let user = await usersService.getByDiscordId(discordUser.id);
 
 		if (!user) {
 			user = await usersService.create({
@@ -106,28 +79,100 @@ export class AuthService {
 			});
 		}
 
-		const expiresAt = new Date(
-			Date.now() + tokenData.expires_in * 1000
+		const discordExpiresAt = new Date(
+			Date.now() + discordTokens.expiresIn * 1000
 		).toISOString();
 
-		const existingSession = await userSessionsService.getByUserId(user.id);
+		/*
+		 * Discord credentials are long-lived credentials owned by
+		 * Discord. They must remain recoverable so GitCord can use
+		 * the refresh token to obtain new Discord access tokens.
+		 *
+		 * DiscordSessionsService / its mapper encrypts both tokens
+		 * before they are persisted.
+		 */
+		const existingDiscordSession = await discordSessionsService.getByUserId(
+			user.id
+		);
 
-		if (!existingSession) {
-			await userSessionsService.create({
+		if (existingDiscordSession) {
+			await discordSessionsService.update(existingDiscordSession.id, {
+				accessToken: discordTokens.accessToken,
+				refreshToken: discordTokens.refreshToken,
+				expiresAt: discordExpiresAt,
+				revokedAt: null
+			});
+		} else {
+			await discordSessionsService.create({
 				userId: user.id,
-				accessTokenEncrypted: tokenData.access_token,
-				refreshTokenEncrypted: tokenData.refresh_token,
-				expiresAt
+				accessToken: discordTokens.accessToken,
+				refreshToken: discordTokens.refreshToken,
+				expiresAt: discordExpiresAt,
+				revokedAt: null
 			});
 		}
 
-		return user;
+		/*
+		 * Generate a new GitCord authentication session.
+		 *
+		 * The access token is a short-lived JWT.
+		 * The refresh token is an opaque random credential and is
+		 * stored only as a one-way hash.
+		 */
+		const accessToken = jwtService.sign({
+			sub: user.id
+		});
+
+		const refreshToken = cryptoService.generateToken(32);
+		const refreshTokenHash = await cryptoService.hashString(refreshToken);
+
+		const gitcordExpiresAt = new Date(
+			Date.now() + 15 * 60 * 1000
+		).toISOString();
+
+		/*
+		 * Current session model: one GitCord session per user.
+		 *
+		 * This means a new login replaces an existing session.
+		 * Consequently, logging in on a second device (for example,
+		 * desktop after logging in on a phone) signs the first device
+		 * out.
+		 *
+		 * TODO: Support multiple concurrent GitCord sessions per user,
+		 * with independent device/session revocation. At that point,
+		 * user_sessions should no longer enforce one session per user.
+		 */
+		const existingUserSession = await userSessionsService.getByUserId(
+			user.id
+		);
+
+		if (existingUserSession) {
+			await userSessionsService.update(existingUserSession.id, {
+				accessToken,
+				refreshTokenHash,
+				expiresAt: gitcordExpiresAt,
+				revokedAt: null
+			});
+		} else {
+			await userSessionsService.create({
+				userId: user.id,
+				accessToken,
+				refreshTokenHash,
+				expiresAt: gitcordExpiresAt,
+				revokedAt: null
+			});
+		}
+
+		return {
+			user,
+			client: oauthState.client
+		};
 	}
 
 	async signOut(): Promise<void> {
 		const userId = asyncLocalStorageService.getUserId();
 
-		appLogger.debug(`Signing out user ID: ${userId ?? 'unknown'}`);
+		appLogger.debug(`Signing out GitCord user ID: ${userId ?? 'unknown'}`);
 
 		if (!userId) {
 			throw new AppError(
@@ -136,13 +181,21 @@ export class AuthService {
 			);
 		}
 
+		/*
+		 * GitCord sign-out only terminates the GitCord session.
+		 * It does not terminate the user's Discord OAuth
+		 * authorization.
+		 */
 		const session = await userSessionsService.getByUserId(userId);
 
 		if (!session) {
-			throw new AppError(ErrorCode.NOT_FOUND, 'Active session not found');
+			throw new AppError(
+				ErrorCode.NOT_FOUND,
+				'Active GitCord session not found'
+			);
 		}
 
-		await userSessionsService.delete(session.id);
+		await userSessionsService.revokeCurrentUserSession();
 	}
 }
 

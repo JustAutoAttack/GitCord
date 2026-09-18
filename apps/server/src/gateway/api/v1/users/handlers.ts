@@ -7,6 +7,7 @@ import {
 	deleteRoute,
 	getByDiscordIDRoute,
 	getByIDRoute,
+	getMeRoute,
 	listRoute,
 	updateRoute
 } from './routes';
@@ -34,6 +35,16 @@ export const getByIDHandler: RouteHandler<typeof getByIDRoute> = async (
 	return ctx.json(user, 200);
 };
 
+export const getMeHandler: RouteHandler<typeof getMeRoute> = async (ctx) => {
+	logger.debug('API Request: Get current user');
+
+	const user = await usersService.getCurrentUser();
+
+	logger.debug(`API Success: Returning current user [ID: ${user.id}]`);
+
+	return ctx.json(user, 200);
+};
+
 export const getByDiscordIDHandler: RouteHandler<
 	typeof getByDiscordIDRoute
 > = async (ctx) => {
@@ -50,9 +61,7 @@ export const getByDiscordIDHandler: RouteHandler<
 
 export const createHandler: RouteHandler<typeof createRoute> = async (ctx) => {
 	const body = ctx.req.valid('json');
-	logger.info(
-		`API Request: Create user for Discord ID [${body.discordId}]`
-	);
+	logger.info(`API Request: Create user for Discord ID [${body.discordId}]`);
 
 	const newUser = await usersService.create({
 		discordId: body.discordId,

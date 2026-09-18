@@ -1,5 +1,6 @@
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
+import { cryptoService } from '@core';
 import type { UserSession } from '@domain';
 import type { userSessions } from '../generated';
 
@@ -11,9 +12,10 @@ export const userSessionMapper = {
 		return {
 			id: raw.id,
 			userId: raw.userId,
-			accessTokenEncrypted: raw.accessTokenEncrypted,
-			refreshTokenEncrypted: raw.refreshTokenEncrypted,
+			accessToken: cryptoService.decryptString(raw.accessTokenEncrypted),
+			refreshTokenHash: raw.refreshTokenHash,
 			expiresAt: raw.expiresAt,
+			revokedAt: raw.revokedAt,
 			updatedAt: raw.updatedAt,
 			createdAt: raw.createdAt
 		};
@@ -32,12 +34,16 @@ export const userSessionMapper = {
 
 	toInsert(input: UserSession.CreateInput): UserSessionInsert {
 		const now = new Date().toISOString();
+
 		return {
 			id: crypto.randomUUID(),
 			userId: input.userId,
-			accessTokenEncrypted: input.accessTokenEncrypted,
-			refreshTokenEncrypted: input.refreshTokenEncrypted,
+			accessTokenEncrypted: cryptoService.encryptString(
+				input.accessToken
+			),
+			refreshTokenHash: input.refreshTokenHash,
 			expiresAt: input.expiresAt,
+			revokedAt: input.revokedAt ?? null,
 			createdAt: now,
 			updatedAt: now
 		};
@@ -45,13 +51,31 @@ export const userSessionMapper = {
 
 	toUpdate(input: UserSession.UpdateInput): Partial<UserSessionInsert> {
 		const update: Partial<UserSessionInsert> = {};
-		if (input.userId !== undefined) update.userId = input.userId;
-		if (input.accessTokenEncrypted !== undefined)
-			update.accessTokenEncrypted = input.accessTokenEncrypted;
-		if (input.refreshTokenEncrypted !== undefined)
-			update.refreshTokenEncrypted = input.refreshTokenEncrypted;
-		if (input.expiresAt !== undefined) update.expiresAt = input.expiresAt;
+
+		if (input.userId !== undefined) {
+			update.userId = input.userId;
+		}
+
+		if (input.accessToken !== undefined) {
+			update.accessTokenEncrypted = cryptoService.encryptString(
+				input.accessToken
+			);
+		}
+
+		if (input.refreshTokenHash !== undefined) {
+			update.refreshTokenHash = input.refreshTokenHash;
+		}
+
+		if (input.expiresAt !== undefined) {
+			update.expiresAt = input.expiresAt;
+		}
+
+		if (input.revokedAt !== undefined) {
+			update.revokedAt = input.revokedAt;
+		}
+
 		update.updatedAt = new Date().toISOString();
+
 		return update;
 	}
 };

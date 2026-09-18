@@ -8,6 +8,8 @@ export const envSchema = z.object({
 	BASE_URL: z.string().url('BASE_URL must be a valid URL'),
 	JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
 	JWT_REFRESH_SECRET: z.string().min(1, 'JWT_REFRESH_SECRET is required'),
+	CRYPTO_SECRET: z.string().min(1, 'CRYPTO_SECRET is required'),
+	OAUTH_STATE_SECRET: z.string().min(1, 'OAUTH_STATE_SECRET is required'),
 	DISCORD_BOT_TOKEN: z.string().optional(),
 	DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required'),
 	DISCORD_CLIENT_SECRET: z

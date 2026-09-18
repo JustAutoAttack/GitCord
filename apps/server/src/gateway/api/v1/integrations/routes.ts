@@ -3,24 +3,10 @@ import { createRoute as createHonoRoute } from '@hono/zod-openapi';
 import { requireAuth } from '@core';
 import { response } from '../../../utils';
 import {
-	GitHubAppInstallCallbackQuerySchema,
 	DiscordBotInstallCallbackQuerySchema,
 	IntegrationSuccessSchema
 } from './schemas';
 
-export const githubAppInstallRoute = createHonoRoute({
-	method: 'get',
-	path: '/github/install',
-	tags: ['Integrations'],
-	summary: 'Initiate GitHub App Installation',
-	description:
-		'Generates state token and redirects the user to the GitHub App installation page.',
-	middleware: [requireAuth] as const,
-	responses: {
-		302: response('Redirects to GitHub App installation'),
-		401: response('Unauthorized')
-	}
-});
 
 export const discordBotInstallRoute = createHonoRoute({
 	method: 'get',

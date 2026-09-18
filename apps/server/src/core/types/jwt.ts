@@ -10,7 +10,7 @@ export interface JwtMeta {
 
 export interface JwtBody {
 	readonly sub: string;
-	readonly [key: string]: any;
+	readonly [key: string]: unknown;
 }
 
 export type JwtPayload = JwtBody & JwtMeta;

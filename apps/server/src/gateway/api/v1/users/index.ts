@@ -5,6 +5,7 @@ import {
 	deleteRoute,
 	getByDiscordIDRoute,
 	getByIDRoute,
+	getMeRoute,
 	listRoute,
 	updateRoute
 } from './routes';
@@ -13,6 +14,7 @@ import {
 	deleteHandler,
 	getByDiscordIDHandler,
 	getByIDHandler,
+	getMeHandler,
 	listHandler,
 	updateHandler
 } from './handlers';
@@ -20,6 +22,7 @@ import {
 export const usersRouter = new OpenAPIHono();
 
 usersRouter.openapi(listRoute, listHandler);
+usersRouter.openapi(getMeRoute, getMeHandler);
 usersRouter.openapi(getByDiscordIDRoute, getByDiscordIDHandler);
 usersRouter.openapi(getByIDRoute, getByIDHandler);
 usersRouter.openapi(createRoute, createHandler);

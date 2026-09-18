@@ -9,7 +9,7 @@ export interface EntityMapper<TModel, TRow> {
 	toDomainOptional(raw: TRow | undefined | null): TModel | undefined;
 	toDomainList(raws: TRow[]): TModel[];
 	toInsert(input: any): any;
-	toUpdate(input: any): any;
+	toUpdate?(input: any): any;
 }
 
 export class BaseRepo<
@@ -100,8 +100,11 @@ export class BaseRepo<
 		logger.debug(
 			`Executing update on table: ${this.tableName} for id: ${id}`
 		);
+
 		const payload = this.mapper
-			? this.mapper.toUpdate(data)
+			? this.mapper.toUpdate
+				? this.mapper.toUpdate(data)
+				: data
 			: {
 					...data,
 					updatedAt: new Date().toISOString()
@@ -121,9 +124,11 @@ export class BaseRepo<
 				);
 				return undefined;
 			}
+
 			logger.debug(
 				`Successfully updated record in ${this.tableName} with id: ${id}`
 			);
+
 			return this.mapper
 				? this.mapper.toDomain(result)
 				: (result as unknown as TModel);

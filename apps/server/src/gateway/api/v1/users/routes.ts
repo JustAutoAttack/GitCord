@@ -1,6 +1,7 @@
 import { createRoute as createHonoRoute, z } from '@hono/zod-openapi';
 
-import { response } from '@gateway/utils';
+import { requireAuth } from '@core';
+import { response } from '../../../utils';
 import { IDParamSchema, ResponseSchema } from '../base-schemas';
 import {
 	CreateSchema,
@@ -31,6 +32,20 @@ export const getByIDRoute = createHonoRoute({
 	},
 	responses: {
 		200: response('User', ReadSchema),
+		404: response('User not found')
+	}
+});
+
+export const getMeRoute = createHonoRoute({
+	method: 'get',
+	path: '/me',
+	tags: ['Users'],
+	summary: 'Get current user',
+	description: 'Returns the currently authenticated user.',
+	middleware: [requireAuth] as const,
+	responses: {
+		200: response('Current user', ReadSchema),
+		401: response('Unauthorized'),
 		404: response('User not found')
 	}
 });

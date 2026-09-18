@@ -1,5 +1,22 @@
 PRAGMA foreign_keys = OFF;
 
+-- === 
+-- OAuth States 
+-- ===
+CREATE TABLE IF NOT EXISTS oauth_states (
+    id TEXT PRIMARY KEY NOT NULL,
+    state_hash TEXT NOT NULL,
+    client TEXT NOT NULL,
+    browser_binding_hash TEXT,
+    expires_at TEXT NOT NULL,
+    consumed_at TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_states_state_hash ON oauth_states(state_hash);
+
+CREATE INDEX IF NOT EXISTS idx_oauth_states_expires_at ON oauth_states(expires_at);
+
 -- ===== 
 -- Users (Discord OAuth Identity)
 -- =====
@@ -15,20 +32,38 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_discord_id ON users(discord_id);
 
 -- ===== 
--- User Sessions (Active Dashboard & API Authentication Tokens)
+-- User Sessions (Active GitCord User Session)
 -- =====
 CREATE TABLE IF NOT EXISTS user_sessions (
     id TEXT PRIMARY KEY NOT NULL,
     user_id TEXT NOT NULL,
     access_token_encrypted TEXT NOT NULL,
-    refresh_token_encrypted TEXT NOT NULL,
+    refresh_token_hash TEXT NOT NULL,
     expires_at TEXT NOT NULL,
+    revoked_at TEXT,
     updated_at TEXT NOT NULL,
     created_at TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+
+-- ===== 
+-- Discord Sessions (Active Discord User Sessions)
+-- =====
+CREATE TABLE IF NOT EXISTS discord_sessions (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL,
+    access_token_encrypted TEXT NOT NULL,
+    refresh_token_encrypted TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT,
+    updated_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_discord_sessions_user_id ON discord_sessions(user_id);
 
 -- ===== 
 -- GitHub App Installations

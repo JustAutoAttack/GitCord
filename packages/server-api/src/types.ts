@@ -60,14 +60,21 @@ export type UserSessionResponse =
 export type UserSessionItemResponse =
 	paths['/api/v1/user-sessions/{id}']['get']['responses'][200]['content']['application/json'];
 
-export type CreateUserSessionRequest =
-	paths['/api/v1/user-sessions']['post']['requestBody']['content']['application/json'];
-
-export type UpdateUserSessionRequest =
-	paths['/api/v1/user-sessions/{id}']['patch']['requestBody']['content']['application/json'];
-
 export type DeleteUserSessionResponse =
 	paths['/api/v1/user-sessions/{id}']['delete']['responses'][200]['content']['application/json'];
+
+// Discord Sessions
+export type DiscordSessionResponse =
+	paths['/api/v1/discord-sessions']['get']['responses'][200]['content']['application/json'];
+
+export type DiscordSessionItemResponse =
+	paths['/api/v1/discord-sessions/{id}']['get']['responses'][200]['content']['application/json'];
+
+export type DiscordSessionByUserIdResponse =
+	paths['/api/v1/discord-sessions/user/{userId}']['get']['responses'][200]['content']['application/json'];
+
+export type DeleteDiscordSessionResponse =
+	paths['/api/v1/discord-sessions/{id}']['delete']['responses'][200]['content']['application/json'];
 
 // Bot Commands
 export type BotCommandResponse =

@@ -10,30 +10,42 @@ export const SignUpQuerySchema = z.object({
 });
 
 export const DiscordCallbackQuerySchema = z.object({
-	code: z.string().min(1).openapi({
+	code: z.string().min(1).max(2048).openapi({
 		example: 'discord_auth_code_123',
 		description: 'Discord OAuth authorization code'
 	}),
-	state: z.string().min(1).openapi({
-		example: '...',
-		description: 'OAuth state containing the originating client'
+	state: z.string().min(1).max(256).openapi({
+		example: '9f3a2c8e7b1d4f6a0c5e9b2d8f1a7c3e...',
+		description:
+			'Opaque OAuth state value used to validate the authentication request'
 	})
 });
 
 export const UserResponseSchema = z.object({
-	id: z.string().openapi({ example: 'usr_123456' }),
-	discordId: z.string().openapi({ example: '123456789012345678' }),
-	displayName: z.string().openapi({ example: 'discord_user' }),
-	avatarUrl: z
-		.string()
-		.nullable()
-		.openapi({ example: 'https://cdn.discordapp.com/avatars/...' }),
-	createdAt: z.string().openapi({ example: '2026-08-01T10:00:00.000Z' }),
-	updatedAt: z.string().openapi({ example: '2026-08-17T14:30:00.000Z' })
+	id: z.string().openapi({
+		example: 'usr_123456'
+	}),
+	discordId: z.string().openapi({
+		example: '123456789012345678'
+	}),
+	displayName: z.string().openapi({
+		example: 'discord_user'
+	}),
+	avatarUrl: z.string().nullable().openapi({
+		example: 'https://cdn.discordapp.com/avatars/...'
+	}),
+	createdAt: z.string().openapi({
+		example: '2026-08-01T10:00:00.000Z'
+	}),
+	updatedAt: z.string().openapi({
+		example: '2026-08-17T14:30:00.000Z'
+	})
 });
 
 export const AuthSuccessSchema = z.object({
-	success: z.boolean().openapi({ example: true }),
+	success: z.boolean().openapi({
+		example: true
+	}),
 	data: z.object({
 		user: UserResponseSchema
 	})

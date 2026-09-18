@@ -238,7 +238,7 @@ export interface paths {
         };
         /**
          * Redirect to Discord OAuth
-         * @description Initiates Discord OAuth2 authentication flow.
+         * @description Initiates a Discord OAuth2 authentication flow.
          */
         get: {
             parameters: {
@@ -279,7 +279,7 @@ export interface paths {
         put?: never;
         /**
          * Sign out
-         * @description Clears the current session for the authenticated user.
+         * @description Revokes the current GitCord authentication session.
          */
         post: {
             parameters: {
@@ -328,7 +328,7 @@ export interface paths {
         };
         /**
          * Discord OAuth Callback
-         * @description Handles the OAuth callback from Discord, logs in or registers the user, creates their session, and redirects to the frontend.
+         * @description Validates the OAuth authentication state, completes Discord authentication, establishes the GitCord session, and redirects to the frontend.
          */
         get: {
             parameters: {
@@ -350,50 +350,6 @@ export interface paths {
                     content?: never;
                 };
                 /** @description Authentication failed */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/integrations/github/install": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Initiate GitHub App Installation
-         * @description Generates state token and redirects the user to the GitHub App installation page.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Redirects to GitHub App installation */
-                302: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -622,6 +578,72 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user
+         * @description Returns the currently authenticated user.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Current user */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example usr_123456 */
+                            id: string;
+                            /** @example 123456789012345678 */
+                            discordId: string;
+                            /** @example JohnDoe */
+                            displayName: string;
+                            /** @example https://cdn.discordapp.com/avatars/123/abc.png */
+                            avatarUrl: string | null;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description User not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -882,12 +904,10 @@ export interface paths {
                             id: string;
                             /** @example usr_123456 */
                             userId: string;
-                            /** @example encrypted_access_token_string */
-                            accessTokenEncrypted: string;
-                            /** @example encrypted_refresh_token_string */
-                            refreshTokenEncrypted: string;
                             /** @example 2026-09-17T14:30:00.000Z */
                             expiresAt: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            revokedAt: string;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -898,79 +918,7 @@ export interface paths {
             };
         };
         put?: never;
-        /**
-         * Create user session
-         * @description Creates a new user session.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example usr_123456 */
-                        userId: string;
-                        /** @example encrypted_access_token_string */
-                        accessTokenEncrypted: string;
-                        /** @example encrypted_refresh_token_string */
-                        refreshTokenEncrypted: string;
-                        /** @example 2026-09-17T14:30:00.000Z */
-                        expiresAt: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description User session created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example sess_123456 */
-                            id: string;
-                            /** @example usr_123456 */
-                            userId: string;
-                            /** @example encrypted_access_token_string */
-                            accessTokenEncrypted: string;
-                            /** @example encrypted_refresh_token_string */
-                            refreshTokenEncrypted: string;
-                            /** @example 2026-09-17T14:30:00.000Z */
-                            expiresAt: string;
-                            /** @example 2026-08-17T14:30:00.000Z */
-                            updatedAt: string;
-                            /** @example 2026-08-01T10:00:00.000Z */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description User not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Session already exists for user */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1010,12 +958,10 @@ export interface paths {
                             id: string;
                             /** @example usr_123456 */
                             userId: string;
-                            /** @example encrypted_access_token_string */
-                            accessTokenEncrypted: string;
-                            /** @example encrypted_refresh_token_string */
-                            refreshTokenEncrypted: string;
                             /** @example 2026-09-17T14:30:00.000Z */
                             expiresAt: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            revokedAt: string;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -1073,12 +1019,10 @@ export interface paths {
                             id: string;
                             /** @example usr_123456 */
                             userId: string;
-                            /** @example encrypted_access_token_string */
-                            accessTokenEncrypted: string;
-                            /** @example encrypted_refresh_token_string */
-                            refreshTokenEncrypted: string;
                             /** @example 2026-09-17T14:30:00.000Z */
                             expiresAt: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            revokedAt: string;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -1137,35 +1081,30 @@ export interface paths {
         };
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/discord-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
-         * Update user session
-         * @description Updates an existing user session.
+         * List discord sessions
+         * @description Returns all discord sessions.
          */
-        patch: {
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    id: string;
-                };
+                path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example usr_123456 */
-                        userId?: string;
-                        /** @example encrypted_access_token_string */
-                        accessTokenEncrypted?: string;
-                        /** @example encrypted_refresh_token_string */
-                        refreshTokenEncrypted?: string;
-                        /** @example 2026-09-17T14:30:00.000Z */
-                        expiresAt?: string;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
-                /** @description User session updated */
+                /** @description Discord sessions */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1176,12 +1115,64 @@ export interface paths {
                             id: string;
                             /** @example usr_123456 */
                             userId: string;
-                            /** @example encrypted_access_token_string */
-                            accessTokenEncrypted: string;
-                            /** @example encrypted_refresh_token_string */
-                            refreshTokenEncrypted: string;
                             /** @example 2026-09-17T14:30:00.000Z */
                             expiresAt: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            revokedAt: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/discord-sessions/user/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get discord session by User ID
+         * @description Returns the discord session associated with a specific user ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Discord session */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example sess_123456 */
+                            id: string;
+                            /** @example usr_123456 */
+                            userId: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            expiresAt: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            revokedAt: string;
                             /** @example 2026-08-17T14:30:00.000Z */
                             updatedAt: string;
                             /** @example 2026-08-01T10:00:00.000Z */
@@ -1189,14 +1180,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description User session not found */
+                /** @description Discord session not found */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1205,6 +1189,110 @@ export interface paths {
                 };
             };
         };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/discord-sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get discord session by ID
+         * @description Returns a discord session by ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Discord session */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example sess_123456 */
+                            id: string;
+                            /** @example usr_123456 */
+                            userId: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            expiresAt: string;
+                            /** @example 2026-09-17T14:30:00.000Z */
+                            revokedAt: string;
+                            /** @example 2026-08-17T14:30:00.000Z */
+                            updatedAt: string;
+                            /** @example 2026-08-01T10:00:00.000Z */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Discord session not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete discord session
+         * @description Deletes an existing discord session.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Discord session deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example true */
+                            success: boolean;
+                            /** @example Operation completed successfully */
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Discord session not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/bot-commands": {

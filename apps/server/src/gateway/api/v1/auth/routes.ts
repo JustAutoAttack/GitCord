@@ -1,10 +1,8 @@
 import { createRoute as createHonoRoute } from '@hono/zod-openapi';
 
 import { requireAuth } from '@core';
-
 import { response } from '../../../utils';
 import { ResponseSchema } from '../base-schemas';
-
 import { DiscordCallbackQuerySchema, SignUpQuerySchema } from './schemas';
 
 export const signUpRoute = createHonoRoute({
@@ -12,7 +10,7 @@ export const signUpRoute = createHonoRoute({
 	path: '/sign-up',
 	tags: ['Auth'],
 	summary: 'Redirect to Discord OAuth',
-	description: 'Initiates Discord OAuth2 authentication flow.',
+	description: 'Initiates a Discord OAuth2 authentication flow.',
 	request: {
 		query: SignUpQuerySchema
 	},
@@ -26,7 +24,7 @@ export const signOutRoute = createHonoRoute({
 	path: '/sign-out',
 	tags: ['Auth'],
 	summary: 'Sign out',
-	description: 'Clears the current session for the authenticated user.',
+	description: 'Revokes the current GitCord authentication session.',
 	middleware: [requireAuth] as const,
 	responses: {
 		200: response('Signed out successfully', ResponseSchema),
@@ -40,7 +38,7 @@ export const discordCallbackRoute = createHonoRoute({
 	tags: ['Auth'],
 	summary: 'Discord OAuth Callback',
 	description:
-		'Handles the OAuth callback from Discord, logs in or registers the user, creates their session, and redirects to the frontend.',
+		'Validates the OAuth authentication state, completes Discord authentication, establishes the GitCord session, and redirects to the frontend.',
 	request: {
 		query: DiscordCallbackQuerySchema
 	},

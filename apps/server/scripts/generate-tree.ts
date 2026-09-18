@@ -4,7 +4,7 @@ import * as path from 'path';
 const ROOT_DIR = path.resolve(__dirname, '..');
 const OUTPUT_FILE = path.resolve(ROOT_DIR, 'docs', 'tree.md');
 
-const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', 'coverage'];
+const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', 'coverage', 'tmp'];
 
 function buildTree(currentDir: string, prefix = ''): string[] {
 	let result: string[] = [];
